@@ -10,9 +10,11 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+# Only ignore lib/ in root, not frontend/lib/
+# lib/
 lib64/
-parts/
+# Only ignore parts/ in root, not frontend/app/parts/
+# parts/
 sdist/
 var/
 wheels/
