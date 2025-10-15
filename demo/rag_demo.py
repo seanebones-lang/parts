@@ -7,6 +7,7 @@ import json
 import random
 import os
 import pickle
+import time
 from datetime import datetime
 from typing import Dict, List, Optional
 
@@ -191,6 +192,15 @@ class PersistentRAGStore:
 # Global persistent store
 persistent_store = PersistentRAGStore()
 
+# Hallucination detector
+try:
+    from hallucination_detector import detect_response_hallucination, generate_demo_hallucination_report
+    HALLUCINATION_DETECTOR_AVAILABLE = True
+    print("✅ Hallucination detector enabled")
+except ImportError:
+    HALLUCINATION_DETECTOR_AVAILABLE = False
+    print("⚠️ Hallucination detector not available")
+
 def mock_retrieve(query: str) -> Dict:
     """Enhanced retrieval with persistent FAISS store"""
     try:
@@ -293,9 +303,30 @@ def color_code(score: float, stock: int) -> tuple[str, List[str]]:
         return "🔴 Escalate now", ["Call customer", "Manual lookup", "Escalate to supervisor"]
 
 def process_query(query: str) -> Dict:
-    """Process a parts query and return formatted response"""
+    """Process a parts query and return formatted response with hallucination detection"""
+    print(f"\n🔍 Query: {query}")
+    
     hit = mock_retrieve(query)
-    color, steps = color_code(hit["score"], hit["stock"])
+    
+    # Detect hallucinations if available
+    hallucination_result = None
+    if HALLUCINATION_DETECTOR_AVAILABLE:
+        try:
+            hallucination_result = detect_response_hallucination(query, hit)
+            print(f"🧠 Hallucination Detection: {hallucination_result['risk_level']} (confidence: {hallucination_result['confidence_score']:.3f})")
+            if hallucination_result['issues']:
+                print(f"⚠️ Issues detected: {', '.join(hallucination_result['issues'])}")
+        except Exception as e:
+            print(f"⚠️ Hallucination detection failed: {e}")
+    
+    # Adjust confidence based on hallucination detection
+    confidence = hit["score"]
+    if hallucination_result and hallucination_result['is_hallucination']:
+        confidence = min(confidence, hallucination_result['confidence_score'])
+        print(f"🔍 Adjusted confidence due to hallucination risk: {confidence:.3f}")
+    
+    # Determine color and steps based on adjusted confidence
+    color, steps = color_code(confidence, hit["stock"])
     
     # Generate payment info for green orders
     payment = None
@@ -308,7 +339,7 @@ def process_query(query: str) -> Dict:
             "description": f"Parts order: {hit['part']}"
         }
     
-    return {
+    response = {
         "query": query,
         "result": hit,
         "color": color,
@@ -316,29 +347,246 @@ def process_query(query: str) -> Dict:
         "payment": payment,
         "ui_hint": "success" if "🟢" in color else "warning" if "🟡" in color else "error",
         "timestamp": datetime.now().isoformat(),
-        "confidence": hit["score"]
+        "confidence": confidence
     }
+    
+    # Add hallucination detection info
+    if hallucination_result:
+        response["hallucination_detection"] = {
+            "risk_level": hallucination_result["risk_level"],
+            "confidence_score": hallucination_result["confidence_score"],
+            "issues": hallucination_result["issues"],
+            "is_hallucination": hallucination_result["is_hallucination"]
+        }
+    
+    return response
 
 def serve_api(port: int = 8000):
-    """Simple Flask server for API endpoints"""
+    """Simple Flask server for API endpoints with offline resilience and Prometheus metrics"""
     try:
         from flask import Flask, request, jsonify
+        import json as json_lib
+        
+        # Prometheus metrics
+        try:
+            from prometheus_client import Counter, Histogram, Gauge, generate_latest, CONTENT_TYPE_LATEST
+            PROMETHEUS_AVAILABLE = True
+            
+            # Define metrics
+            RAG_QUERIES_TOTAL = Counter('rag_queries_total', 'Total RAG queries', ['status', 'location'])
+            RAG_QUERY_DURATION = Histogram('rag_query_duration_seconds', 'RAG query duration')
+            RAG_CONFIDENCE_SCORE = Histogram('rag_confidence_score', 'RAG confidence scores')
+            RAG_OFFLINE_QUEUE_SIZE = Gauge('rag_offline_queue_size', 'Number of queries in offline queue')
+            RAG_FAISS_INDEX_SIZE = Gauge('rag_faiss_index_size', 'Number of documents in FAISS index')
+            
+            print("✅ Prometheus metrics enabled")
+        except ImportError:
+            PROMETHEUS_AVAILABLE = False
+            print("⚠️ Prometheus not available - metrics disabled")
         
         app = Flask(__name__)
         
+        # Offline query queue
+        query_queue_file = "demo/query_queue.json"
+        
+        def load_query_queue():
+            """Load offline query queue"""
+            try:
+                if os.path.exists(query_queue_file):
+                    with open(query_queue_file, 'r') as f:
+                        return json_lib.load(f)
+                return []
+            except Exception:
+                return []
+        
+        def save_query_queue(queue):
+            """Save offline query queue"""
+            try:
+                os.makedirs(os.path.dirname(query_queue_file), exist_ok=True)
+                with open(query_queue_file, 'w') as f:
+                    json_lib.dump(queue, f, indent=2)
+            except Exception as e:
+                print(f"⚠️ Failed to save query queue: {e}")
+        
+        def get_cached_response(query: str) -> Optional[Dict]:
+            """Get cached response for offline mode"""
+            # Simple cache based on keywords
+            query_lower = query.lower()
+            cache_keywords = {
+                "brake": {"part": "Brake Pads Honda Civic", "stock": 5, "price": 45, "score": 0.9},
+                "alternator": {"part": "Alternator Ford F-150", "stock": 2, "price": 120, "score": 0.8},
+                "oil": {"part": "Oil Filter Toyota Camry", "stock": 8, "price": 12, "score": 0.85}
+            }
+            
+            for keyword, cached_result in cache_keywords.items():
+                if keyword in query_lower:
+                    return cached_result
+            return None
+        
         @app.route('/query_parts', methods=['POST'])
         def query_parts():
+            start_time = time.time()
             data = request.get_json()
             query = data.get('text', '')
-            result = process_query(query)
-            return jsonify(result)
+            location = data.get('location', 'unknown')
+            
+            # Check if offline mode (simulate network issues)
+            offline_mode = request.headers.get('X-Offline-Mode') == 'true'
+            
+            if offline_mode:
+                # Queue query for later processing
+                queue = load_query_queue()
+                queue.append({
+                    "query": query,
+                    "timestamp": datetime.now().isoformat(),
+                    "status": "queued"
+                })
+                save_query_queue(queue)
+                
+                # Update metrics
+                if PROMETHEUS_AVAILABLE:
+                    RAG_OFFLINE_QUEUE_SIZE.set(len(queue))
+                    RAG_QUERIES_TOTAL.labels(status='offline', location=location).inc()
+                
+                # Return cached response if available
+                cached = get_cached_response(query)
+                if cached:
+                    return jsonify({
+                        "query": query,
+                        "result": cached,
+                        "color": "🟡 Offline Mode",
+                        "next_steps": ["Query queued for sync", "Using cached response"],
+                        "offline": True,
+                        "queue_id": len(queue) - 1
+                    })
+                else:
+                    return jsonify({
+                        "query": query,
+                        "result": {"part": "No cached response", "stock": 0, "price": 0, "score": 0.5},
+                        "color": "🟡 Offline Mode",
+                        "next_steps": ["Query queued for sync", "Connect to network for live results"],
+                        "offline": True,
+                        "queue_id": len(queue) - 1
+                    })
+            
+            # Normal online processing with metrics
+            try:
+                result = process_query(query)
+                
+                # Update Prometheus metrics
+                if PROMETHEUS_AVAILABLE:
+                    duration = time.time() - start_time
+                    RAG_QUERY_DURATION.observe(duration)
+                    RAG_CONFIDENCE_SCORE.observe(result.get('confidence', 0.5))
+                    
+                    # Determine status based on color
+                    color = result.get('color', '')
+                    if '🟢' in color:
+                        status = 'success'
+                    elif '🟡' in color:
+                        status = 'review'
+                    else:
+                        status = 'escalate'
+                    
+                    RAG_QUERIES_TOTAL.labels(status=status, location=location).inc()
+                
+                return jsonify(result)
+                
+            except Exception as e:
+                # Update error metrics
+                if PROMETHEUS_AVAILABLE:
+                    RAG_QUERIES_TOTAL.labels(status='error', location=location).inc()
+                
+                return jsonify({
+                    "query": query,
+                    "error": str(e),
+                    "color": "🔴 Error",
+                    "next_steps": ["System error - contact support"]
+                }), 500
+        
+        @app.route('/sync_queue', methods=['POST'])
+        def sync_queue():
+            """Process queued queries when back online"""
+            queue = load_query_queue()
+            processed = []
+            
+            for item in queue:
+                if item.get("status") == "queued":
+                    try:
+                        result = process_query(item["query"])
+                        item["status"] = "processed"
+                        item["result"] = result
+                        item["processed_at"] = datetime.now().isoformat()
+                        processed.append(item)
+                    except Exception as e:
+                        item["status"] = "error"
+                        item["error"] = str(e)
+                        processed.append(item)
+            
+            save_query_queue(queue)
+            return jsonify({
+                "processed": len(processed),
+                "queue": queue
+            })
+        
+        @app.route('/queue_status', methods=['GET'])
+        def queue_status():
+            """Get offline queue status"""
+            queue = load_query_queue()
+            pending = len([q for q in queue if q.get("status") == "queued"])
+            return jsonify({
+                "pending_queries": pending,
+                "total_queued": len(queue),
+                "last_sync": datetime.now().isoformat()
+            })
+        
+        @app.route('/hallucination_report', methods=['GET'])
+        def hallucination_report():
+            """Get hallucination detection report for demo"""
+            if HALLUCINATION_DETECTOR_AVAILABLE:
+                try:
+                    report = generate_demo_hallucination_report()
+                    return jsonify(report)
+                except Exception as e:
+                    return jsonify({"error": str(e)}), 500
+            else:
+                return jsonify({"error": "Hallucination detector not available"}), 503
+        
+        @app.route('/metrics', methods=['GET'])
+        def metrics():
+            """Prometheus metrics endpoint"""
+            if PROMETHEUS_AVAILABLE:
+                # Update FAISS index size metric
+                try:
+                    if persistent_store and persistent_store.metadata:
+                        RAG_FAISS_INDEX_SIZE.set(len(persistent_store.metadata))
+                except:
+                    pass
+                
+                return generate_latest(), 200, {'Content-Type': CONTENT_TYPE_LATEST}
+            else:
+                return jsonify({"error": "Prometheus not available"}), 503
         
         @app.route('/health', methods=['GET'])
         def health():
-            return jsonify({"status": "healthy", "timestamp": datetime.now().isoformat()})
+            queue = load_query_queue()
+            return jsonify({
+                "status": "healthy", 
+                "timestamp": datetime.now().isoformat(),
+                "offline_support": True,
+                "queue_file": query_queue_file,
+                "prometheus_enabled": PROMETHEUS_AVAILABLE,
+                "pending_queries": len([q for q in queue if q.get("status") == "queued"]),
+                "faiss_index_size": len(persistent_store.metadata) if persistent_store and persistent_store.metadata else 0
+            })
         
         print(f"🚀 Lester's RAG Core API running on http://localhost:{port}")
         print(f"📊 Try: curl -X POST http://localhost:{port}/query_parts -H 'Content-Type: application/json' -d '{{\"text\": \"brake pads Civic\"}}'")
+        print(f"📱 Offline mode: Add header 'X-Offline-Mode: true'")
+        print(f"🔄 Sync queue: POST /sync_queue")
+        print(f"📈 Metrics: http://localhost:{port}/metrics")
+        print(f"🏥 Health: http://localhost:{port}/health")
+        print(f"🧠 Hallucination Report: http://localhost:{port}/hallucination_report")
         
         app.run(host='0.0.0.0', port=port, debug=False)
         

@@ -46,6 +46,9 @@ datasets==2.14.6
 PyJWT==2.8.0
 flask-jwt-extended==4.5.3
 
+# Observability and metrics
+prometheus-client==0.20.0
+
 # Utilities
 python-dotenv==1.0.0
 python-dateutil==2.8.2
