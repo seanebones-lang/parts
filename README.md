@@ -452,6 +452,49 @@ This color-coded system ensures optimal balance between automation efficiency an
 - Support ticket system and escalation procedures
 - Regular training sessions and workshops
 
+## 🎯 Quick Demo (Missing Pieces Included)
+
+For a fast demo without full setup:
+
+```bash
+# Navigate to demo directory
+cd demo
+
+# Run simple demo
+python start_simple_demo.py
+
+# Or run tests
+python test_runner.py --health
+python test_runner.py --quick
+
+# Test the RAG core directly
+python rag_demo.py
+```
+
+### Demo Files Added
+- **`demo/rag_demo.py`**: Core RAG engine with 7 Chicago locations
+- **`demo/test_runner.py`**: Test suite with 10 scenarios
+- **`demo/qa_shield.md`**: Q&A answers for client meetings
+- **`demo/start_simple_demo.py`**: One-click demo starter
+
+### Quick Test Commands
+```bash
+# Health check
+python demo/test_runner.py --health
+
+# Quick test (3 scenarios)
+python demo/test_runner.py --quick
+
+# Full test suite
+python demo/test_runner.py --run
+
+# CLI demo
+python demo/rag_demo.py
+
+# API demo (requires Flask)
+python demo/rag_demo.py --serve
+```
+
 ## Contact Information
 
 For technical support, training inquiries, or system maintenance requests, please contact the implementation team through the designated support channels established during the onboarding process.
