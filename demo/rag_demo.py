@@ -1,5 +1,5 @@
 """
-Runnable RAG Core - Lester's Missing Engine
+Runnable RAG Core - Enterprise Engine
 The heart of the system - loads mock inventory, runs queries with colors, stubs Stripe/email
 """
 
@@ -17,7 +17,7 @@ try:
     FAISS_AVAILABLE = True
 except ImportError:
     FAISS_AVAILABLE = False
-    print("⚠️ FAISS not available - using in-memory storage")
+    print("WARNING: FAISS not available - using in-memory storage")
 
 # Sentence transformers for embeddings
 try:
@@ -25,7 +25,7 @@ try:
     EMBEDDINGS_AVAILABLE = True
 except ImportError:
     EMBEDDINGS_AVAILABLE = False
-    print("⚠️ Sentence transformers not available - using mock embeddings")
+    print("WARNING: Sentence transformers not available - using mock embeddings")
 
 # Mock inventory - your 7 Chicago spots
 INVENTORY = {

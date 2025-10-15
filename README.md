@@ -368,9 +368,9 @@ EMAIL_PASSWORD=your_email_password
 
 The system employs a sophisticated traffic-light triage system for automated decision-making:
 
-- **🟢 Auto-resolved (95%+ confidence)**: System automatically processes orders, generates invoices, and handles routine tasks without human intervention
-- **🟡 Human review (70-95% confidence)**: Flagged for staff review with suggested actions and context
-- **🔴 Escalate now (<70% confidence or urgent)**: Immediate escalation for complex scenarios, zero stock situations, or urgent customer requests
+- **Green Auto-resolved (95%+ confidence)**: System automatically processes orders, generates invoices, and handles routine tasks without human intervention
+- **Yellow Human review (70-95% confidence)**: Flagged for staff review with suggested actions and context
+- **Red Escalate now (<70% confidence or urgent)**: Immediate escalation for complex scenarios, zero stock situations, or urgent customer requests
 
 This color-coded system ensures optimal balance between automation efficiency and human oversight, reducing manual workload while maintaining quality control.
 
@@ -452,7 +452,7 @@ This color-coded system ensures optimal balance between automation efficiency an
 - Support ticket system and escalation procedures
 - Regular training sessions and workshops
 
-## 🎯 Quick Demo (Missing Pieces Included)
+## Quick Demo (Missing Pieces Included)
 
 For a fast demo without full setup:
 

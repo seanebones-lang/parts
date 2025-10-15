@@ -2,7 +2,7 @@
 Inventory model for tracking parts across locations.
 """
 
-from sqlalchemy import Column, Integer, Numeric, Boolean, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, Numeric, Boolean, DateTime, ForeignKey, String
 from sqlalchemy.orm import relationship
 from .base import TimestampMixin
 from app.core.database import Base
@@ -24,6 +24,15 @@ class Inventory(Base, TimestampMixin):
     bin_location = Column(String(50), nullable=True)
     cost = Column(Numeric(10, 2), nullable=True)
     is_active = Column(Boolean, default=True, nullable=False)
+    
+    # Expiration tracking
+    expiration_date = Column(DateTime(timezone=True), nullable=True)
+    batch_number = Column(String(100), nullable=True)
+    lot_number = Column(String(100), nullable=True)
+    manufacture_date = Column(DateTime(timezone=True), nullable=True)
+    shelf_life_days = Column(Integer, nullable=True)
+    is_expired = Column(Boolean, default=False, nullable=False)
+    expiration_warning_days = Column(Integer, default=30, nullable=False)
     
     # Relationships
     location = relationship("Location", back_populates="inventory")

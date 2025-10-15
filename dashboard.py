@@ -1,5 +1,5 @@
 """
-Streamlit Dashboard - Lester's Edition
+Streamlit Dashboard - Enterprise Edition
 Mobile-friendly demo dashboard with real-time RAG integration
 """
 
@@ -18,7 +18,7 @@ st.set_page_config(
     menu_items={
         'Get Help': 'https://github.com/seanmcdonnell/parts-dist-rag',
         'Report a bug': "https://github.com/seanmcdonnell/parts-dist-rag/issues",
-        'About': "Lester's Parts RAG Demo - Enterprise AI for Dealerships"
+        'About': "Parts RAG Demo - Enterprise AI for Dealerships"
     }
 )
 

@@ -5,26 +5,26 @@
 
 set -e
 
-echo "🚀 Setting up AI-Powered Dealership Parts Management System Demo"
+echo "Setting up AI-Powered Dealership Parts Management System Demo"
 echo "=================================================================="
 
 # Check if Docker is installed
 if ! command -v docker &> /dev/null; then
-    echo "❌ Docker is not installed. Please install Docker Desktop for Mac first."
+    echo "ERROR: Docker is not installed. Please install Docker Desktop for Mac first."
     echo "   Download from: https://www.docker.com/products/docker-desktop/"
     exit 1
 fi
 
 # Check if Docker is running
 if ! docker info &> /dev/null; then
-    echo "❌ Docker is not running. Please start Docker Desktop."
+    echo "ERROR: Docker is not running. Please start Docker Desktop."
     exit 1
 fi
 
-echo "✅ Docker is installed and running"
+echo "Docker is installed and running"
 
 # Create demo environment file
-echo "📝 Creating demo environment configuration..."
+echo "Creating demo environment configuration..."
 cat > .env.demo << EOF
 # Demo Environment Configuration
 # AI-Powered Dealership Parts Management System
@@ -70,7 +70,7 @@ DEMO_PARTS=500
 EOF
 
 # Create demo docker-compose file
-echo "🐳 Creating demo Docker Compose configuration..."
+echo "Creating demo Docker Compose configuration..."
 cat > docker-compose.demo.yml << EOF
 version: '3.8'
 
@@ -157,54 +157,54 @@ volumes:
 EOF
 
 # Create demo startup script
-echo "🎬 Creating demo startup script..."
+echo "Creating demo startup script..."
 cat > start-demo.sh << 'EOF'
 #!/bin/bash
 
-echo "🎭 Starting AI-Powered Dealership Parts Management System Demo"
+echo "Starting AI-Powered Dealership Parts Management System Demo"
 echo "=============================================================="
 
 # Copy demo environment
 cp .env.demo .env
 
 # Start demo services
-echo "🚀 Starting demo services..."
+echo "Starting demo services..."
 docker-compose -f docker-compose.demo.yml up --build -d
 
 echo ""
-echo "⏳ Waiting for services to start..."
+echo "Waiting for services to start..."
 sleep 15
 
 echo ""
-echo "🎉 Demo is ready! Access the system at:"
+echo "Demo is ready! Access the system at:"
 echo ""
-echo "📱 Frontend Dashboard: http://localhost:3000"
-echo "🔧 Backend API:        http://localhost:8000"
-echo "📧 Email Interface:    http://localhost:8025"
-echo "📊 API Documentation:  http://localhost:8000/docs"
+echo "Frontend Dashboard: http://localhost:3000"
+echo "Backend API:        http://localhost:8000"
+echo "Email Interface:    http://localhost:8025"
+echo "API Documentation:  http://localhost:8000/docs"
 echo ""
-echo "🔑 Demo Credentials:"
+echo "Demo Credentials:"
 echo "   Email: admin@dealership.com"
 echo "   Password: demo123"
 echo ""
-echo "📋 Demo Features Available:"
-echo "   ✅ Email Classification & Routing"
-echo "   ✅ Parts Inventory Management"
-echo "   ✅ Customer Service Chat"
-echo "   ✅ Order Processing"
-echo "   ✅ Payment Integration"
-echo "   ✅ Shipping Coordination"
-echo "   ✅ Analytics Dashboard"
+echo "Demo Features Available:"
+echo "   Email Classification & Routing"
+echo "   Parts Inventory Management"
+echo "   Customer Service Chat"
+echo "   Order Processing"
+echo "   Payment Integration"
+echo "   Shipping Coordination"
+echo "   Analytics Dashboard"
 echo ""
-echo "🛑 To stop the demo, run: docker-compose -f docker-compose.demo.yml down"
+echo "To stop the demo, run: docker-compose -f docker-compose.demo.yml down"
 echo ""
-echo "📖 For full documentation, see: README.md"
+echo "For full documentation, see: README.md"
 EOF
 
 chmod +x start-demo.sh
 
 # Create demo data seeder
-echo "🌱 Creating demo data seeder..."
+echo "Creating demo data seeder..."
 cat > demo-seed.py << 'EOF'
 #!/usr/bin/env python3
 """
@@ -270,23 +270,23 @@ def generate_demo_orders(num_orders: int = 20) -> List[dict]:
     return orders
 
 if __name__ == "__main__":
-    print("🌱 Demo data seeder created!")
+    print("Demo data seeder created!")
     print("Run this after starting the demo to populate with sample data.")
 EOF
 
 chmod +x demo-seed.py
 
 echo ""
-echo "✅ Demo setup complete!"
+echo "Demo setup complete!"
 echo ""
-echo "🚀 To start the demo, run:"
+echo "To start the demo, run:"
 echo "   ./start-demo.sh"
 echo ""
-echo "📋 What you'll get:"
+echo "What you'll get:"
 echo "   • Full-featured web dashboard at http://localhost:3000"
 echo "   • Backend API with documentation at http://localhost:8000/docs"
 echo "   • Mock email interface at http://localhost:8025"
 echo "   • Pre-populated demo data (locations, parts, customers)"
 echo "   • All AI agents working with mock responses"
 echo ""
-echo "🎭 Perfect for demonstrating the system capabilities!"
+echo "Perfect for demonstrating the system capabilities!"

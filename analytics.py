@@ -1,6 +1,6 @@
 """
-Analytics Engine - Lester's Edition
-Real-time metrics and ROI tracking for boardroom gold
+Analytics Engine - Enterprise Edition
+Real-time metrics and ROI tracking for enterprise operations
 """
 
 import json
@@ -44,7 +44,7 @@ class AnalyticsEngine:
                     return {
                         "timestamp": log_entry.get("timestamp", ""),
                         "query": log_entry.get("query", ""),
-                        "color": log_entry.get("color", "🟡"),
+                        "color": log_entry.get("color", "warning"),
                         "confidence": log_entry.get("confidence", 0),
                         "processing_time_ms": log_entry.get("processing_time_ms", 0),
                         "savings": self._calculate_savings(log_entry),
@@ -57,15 +57,15 @@ class AnalyticsEngine:
     
     def _calculate_savings(self, log_entry: Dict) -> float:
         """Calculate savings based on automation level"""
-        color = log_entry.get("color", "🟡")
+        color = log_entry.get("color", "warning")
         payment_success = log_entry.get("payment", {}).get("success") if log_entry.get("payment") else False
         
         # Base savings per automation level
-        if "🟢" in color:
+        if "Auto-resolved" in color:
             base_savings = 45.00  # Full automation
             if payment_success:
                 base_savings += 15.00  # Payment automation bonus
-        elif "🟡" in color:
+        elif "Human review" in color:
             base_savings = 20.00  # Partial automation
         else:
             base_savings = 0.00  # Manual processing

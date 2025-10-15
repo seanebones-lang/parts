@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Thursday Demo Flow Script - Lester's Precision Orchestration
-Scripts the perfect 8-minute demo flow for client domination
+Complete Demo Flow Script - Enterprise Orchestration
+Scripts the perfect 8-minute demo flow for client presentation
 """
 
 import subprocess
@@ -11,33 +11,33 @@ import json
 from datetime import datetime
 
 def print_banner():
-    """Print Lester's demo banner"""
+    """Print demo banner"""
     print("=" * 80)
-    print("🚗 LESTER'S PARTS RAG - THURSDAY DEMO FLOW 🚗")
+    print("PARTS RAG - COMPLETE DEMO FLOW")
     print("=" * 80)
-    print("🎯 Precision-engineered for client domination")
-    print("⚡ 8-minute flow from setup to deployment")
-    print("💎 Swiss-watch precision with enterprise features")
+    print("Precision-engineered for client presentation")
+    print("8-minute flow from setup to deployment")
+    print("Swiss-watch precision with enterprise features")
     print("=" * 80)
 
 def run_command(command, description, wait_time=2):
     """Run a command with description"""
-    print(f"\n🔧 {description}")
+    print(f"\n{description}")
     print(f"   Command: {command}")
     try:
         result = subprocess.run(command, shell=True, check=True, capture_output=True, text=True)
-        print(f"   ✅ Success")
+        print(f"   SUCCESS")
         if result.stdout:
             print(f"   Output: {result.stdout.strip()}")
         time.sleep(wait_time)
         return True
     except subprocess.CalledProcessError as e:
-        print(f"   ❌ Failed: {e.stderr}")
+        print(f"   FAILED: {e.stderr}")
         return False
 
 def demo_scenario(query, description, expected_color):
     """Run a demo scenario"""
-    print(f"\n🎬 Scenario: {description}")
+    print(f"\nScenario: {description}")
     print(f"   Query: '{query}'")
     print(f"   Expected: {expected_color}")
     
@@ -46,7 +46,7 @@ def demo_scenario(query, description, expected_color):
     print(f"   API Call: {api_call}")
     
     # In a real demo, you'd actually make the call
-    print(f"   ✅ Demo ready - execute in browser/Postman")
+    print(f"   Demo ready - execute in browser/Postman")
 
 def main():
     """Main demo flow"""

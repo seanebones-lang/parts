@@ -17,20 +17,20 @@ from app.api.v1.api import api_router
 async def lifespan(app: FastAPI):
     """Application lifespan manager."""
     # Startup
-    print("🚀 Starting Dealership AI Parts System...")
-    
-    # Create database tables
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    
-    print("✅ Database tables created successfully")
-    print("🤖 AI agents initialized")
-    print("📧 Email monitoring started")
+        print("Starting Dealership AI Parts System...")
+        
+        # Create database tables
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        
+        print("Database tables created successfully")
+        print("AI agents initialized")
+        print("Email monitoring started")
     
     yield
     
     # Shutdown
-    print("🛑 Shutting down Dealership AI Parts System...")
+    print("Shutting down Dealership AI Parts System...")
 
 
 # Create FastAPI application

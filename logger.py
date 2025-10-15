@@ -1,5 +1,5 @@
 """
-Demo Logging System - Lester's Edition
+Demo Logging System - Enterprise Edition
 Professional logging for demo traceability and audit trails
 """
 

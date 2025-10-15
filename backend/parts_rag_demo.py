@@ -109,7 +109,7 @@ class EnhancedResponse(BaseModel):
     inventory_matches: List[Dict]
     # Mobile/Web UI enhancements
     ui_hint: str
-    color_emoji: str
+    status_indicator: str
     priority: str
     action_required: bool
     next_steps: List[str]
@@ -160,7 +160,7 @@ def determine_traffic_light(confidence: float, urgency: str) -> tuple[str, List[
         yellow_threshold = 0.5
     
     if confidence >= green_threshold:
-        color = "🟢 Auto-resolved"
+        color = "Auto-resolved"
         suggestions = [
             "Generate invoice automatically",
             "Process payment via Stripe",
@@ -168,12 +168,12 @@ def determine_traffic_light(confidence: float, urgency: str) -> tuple[str, List[
             "Send confirmation email"
         ]
         ui_hint = "display-success"
-        color_emoji = "🟢"
+        status_indicator = "success"
         priority = "low"
         action_required = False
         next_steps = ["Process order", "Send confirmation"]
     elif confidence >= yellow_threshold:
-        color = "🟡 Human review"
+        color = "Human review"
         suggestions = [
             "Verify part compatibility",
             "Check customer vehicle details",
@@ -181,12 +181,12 @@ def determine_traffic_light(confidence: float, urgency: str) -> tuple[str, List[
             "Review before processing"
         ]
         ui_hint = "display-warning"
-        color_emoji = "🟡"
+        status_indicator = "warning"
         priority = "medium"
         action_required = True
         next_steps = ["Review details", "Confirm with customer"]
     else:
-        color = "🔴 Escalate now"
+        color = "Escalate now"
         suggestions = [
             "Contact customer for clarification",
             "Check supplier availability",
@@ -194,14 +194,14 @@ def determine_traffic_light(confidence: float, urgency: str) -> tuple[str, List[
             "Consider alternative parts"
         ]
         ui_hint = "display-alert"
-        color_emoji = "🔴"
+        status_indicator = "error"
         priority = "high"
         action_required = True
         next_steps = ["Escalate immediately", "Contact specialist"]
     
     mobile_hints = {
         "ui_hint": ui_hint,
-        "color_emoji": color_emoji,
+        "status_indicator": status_indicator,
         "priority": priority,
         "action_required": action_required,
         "next_steps": next_steps

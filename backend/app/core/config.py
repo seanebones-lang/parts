@@ -20,6 +20,16 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "your-secret-key-change-in-production"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 30
+    
+    # MFA Settings
+    MFA_ISSUER_NAME: str = "Dealership Parts System"
+    MFA_BACKUP_CODES_COUNT: int = 10
+    
+    # Password Policy
+    MIN_PASSWORD_LENGTH: int = 8
+    MAX_LOGIN_ATTEMPTS: int = 5
+    ACCOUNT_LOCKOUT_MINUTES: int = 30
     
     # Database
     POSTGRES_HOST: str = "localhost"

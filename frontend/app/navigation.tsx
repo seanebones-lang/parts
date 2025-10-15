@@ -7,13 +7,13 @@ interface NavigationProps {
 
 export function Navigation({ className }: NavigationProps) {
   const navItems = [
-    { href: '/', label: 'Dashboard', icon: '📊' },
-    { href: '/ai-agents', label: 'AI Agents', icon: '🤖' },
-    { href: '/emails', label: 'Emails', icon: '📧' },
-    { href: '/orders', label: 'Orders', icon: '📦' },
-    { href: '/inventory', label: 'Inventory', icon: '📋' },
-    { href: '/customers', label: 'Customers', icon: '👥' },
-    { href: '/analytics', label: 'Analytics', icon: '📈' },
+    { href: '/', label: 'Dashboard', icon: 'Dashboard' },
+    { href: '/ai-agents', label: 'AI Agents', icon: 'AI' },
+    { href: '/emails', label: 'Emails', icon: 'Email' },
+    { href: '/orders', label: 'Orders', icon: 'Orders' },
+    { href: '/inventory', label: 'Inventory', icon: 'Inventory' },
+    { href: '/customers', label: 'Customers', icon: 'Customers' },
+    { href: '/analytics', label: 'Analytics', icon: 'Analytics' },
   ]
 
   return (
