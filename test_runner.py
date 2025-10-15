@@ -179,33 +179,12 @@ def run_quick_health_check():
     else:
         checks.append({"check": "RAG Core", "status": "⚠️", "details": "Using mock"})
     
-    # Check FAISS availability
-    try:
-        import faiss
-        checks.append({"check": "FAISS", "status": "✅", "details": "Available for persistence"})
-    except ImportError:
-        checks.append({"check": "FAISS", "status": "⚠️", "details": "Not available - using in-memory"})
-    
-    # Check sentence transformers
-    try:
-        from sentence_transformers import SentenceTransformer
-        checks.append({"check": "Embeddings", "status": "✅", "details": "Available for semantic search"})
-    except ImportError:
-        checks.append({"check": "Embeddings", "status": "⚠️", "details": "Not available - using keyword matching"})
-    
     # Check dependencies
     try:
         import json
         checks.append({"check": "JSON Module", "status": "✅", "details": "Available"})
     except ImportError:
         checks.append({"check": "JSON Module", "status": "❌", "details": "Missing"})
-    
-    # Check Flask for API mode
-    try:
-        import flask
-        checks.append({"check": "Flask API", "status": "✅", "details": "Available for API mode"})
-    except ImportError:
-        checks.append({"check": "Flask API", "status": "⚠️", "details": "Not available - CLI mode only"})
     
     # Print results
     for check in checks:
@@ -221,50 +200,6 @@ def run_quick_health_check():
     
     return all_good
 
-def run_persistence_test():
-    """Test FAISS persistence functionality"""
-    print("💾 Lester's Persistence Test")
-    print("=" * 40)
-    
-    if not CORE_AVAILABLE:
-        print("❌ RAG core not available for persistence test")
-        return False
-    
-    try:
-        from rag_demo import persistent_store
-        
-        # Test search functionality
-        test_queries = [
-            "brake pads Honda Civic",
-            "alternator Ford F-150",
-            "oil filter Toyota Camry"
-        ]
-        
-        print("🔍 Testing search functionality...")
-        for query in test_queries:
-            results = persistent_store.search(query, k=1)
-            if results:
-                result = results[0]
-                print(f"  ✅ {query}: {result['part_name']} (score: {result['score']:.3f})")
-            else:
-                print(f"  ❌ {query}: No results")
-        
-        # Check if index files exist
-        import os
-        index_files = ["chicago_parts_index.faiss", "parts_metadata.pkl"]
-        for file in index_files:
-            if os.path.exists(file):
-                print(f"  ✅ {file}: Exists")
-            else:
-                print(f"  ⚠️ {file}: Not found")
-        
-        print("\n🎯 Persistence test complete!")
-        return True
-        
-    except Exception as e:
-        print(f"❌ Persistence test failed: {e}")
-        return False
-
 if __name__ == "__main__":
     import argparse
     
@@ -272,14 +207,11 @@ if __name__ == "__main__":
     parser.add_argument("--run", action="store_true", help="Run full test suite")
     parser.add_argument("--health", action="store_true", help="Run quick health check")
     parser.add_argument("--quick", action="store_true", help="Run 3 quick tests")
-    parser.add_argument("--persistence", action="store_true", help="Test FAISS persistence")
     
     args = parser.parse_args()
     
     if args.health:
         run_quick_health_check()
-    elif args.persistence:
-        run_persistence_test()
     elif args.quick:
         # Run just 3 key tests
         print("⚡ Lester's Quick Test (3 scenarios)")

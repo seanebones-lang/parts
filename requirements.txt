@@ -38,6 +38,14 @@ flask==3.0.0
 # Sentence transformers for embeddings
 sentence-transformers==2.2.2
 
+# Machine learning for fine-tuning
+torch==2.1.0
+datasets==2.14.6
+
+# Security and authentication
+PyJWT==2.8.0
+flask-jwt-extended==4.5.3
+
 # Utilities
 python-dotenv==1.0.0
 python-dateutil==2.8.2
