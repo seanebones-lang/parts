@@ -3,7 +3,7 @@ Payment Agent - Handles payment processing and tracking.
 """
 
 import time
-from typing import Dict, Any, Optional
+from typing import Any, Dict, List, Optional
 from app.agents.base_agent import BaseAgent, AgentResult
 from app.models.agent_log import AgentType
 from app.services.payment_service import PaymentService
