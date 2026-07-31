@@ -300,19 +300,17 @@ export async function getDmsStatus(): Promise<DmsStatus> {
     ok: typeof o.ok === "boolean" ? o.ok : o.status === "ok" || o.status === "healthy",
     status: str(o.status),
     db_path: str(o.db_path),
-    catalog_count: num(o.catalog_count) ?? num(o.parts),
+    catalog_count: num(o.catalog_count) ?? num(o.catalog_parts) ?? num(o.parts),
     inventory_rows:
       num(o.inventory_rows) ?? num(o.inventory_count) ?? num(o.inventory),
     customer_count: num(o.customer_count) ?? num(o.customers),
     order_count: num(o.order_count) ?? num(o.orders),
     location_count: num(o.location_count) ?? num(o.locations),
-    oem_configured:
-      typeof o.oem_configured === "boolean"
-        ? o.oem_configured
-        : Boolean(o.oem_feed_url_set),
-    oem_feed_url_set:
-      typeof o.oem_feed_url_set === "boolean" ? o.oem_feed_url_set : undefined,
-    last_oem_sync: str(o.last_oem_sync) ?? null,
+    last_oem_sync:
+      str(o.last_oem_sync) ??
+      (o.last_oem_sync && typeof o.last_oem_sync === "object"
+        ? JSON.stringify(o.last_oem_sync)
+        : null),
     message: str(o.message),
   };
 }
