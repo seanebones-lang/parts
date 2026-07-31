@@ -2,7 +2,7 @@
 Email model for tracking email threads and AI processing.
 """
 
-from sqlalchemy import Column, String, Text, Integer, Boolean, DateTime, ForeignKey, Enum, JSON
+from sqlalchemy import Column, String, Text, Integer, Numeric, Boolean, DateTime, ForeignKey, Enum, JSON
 from sqlalchemy.orm import relationship
 import enum
 from .base import TimestampMixin

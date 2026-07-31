@@ -1,10 +1,30 @@
 # AI-Powered Multi-Location Dealership Parts Management System
 
+## Status (2026-07-31 honesty)
+
+| Layer | Path | Maturity |
+|-------|------|----------|
+| **Modern core (SoT for retrieval)** | `src/parrts/` | Hybrid RAG package — install with `pip install -e ".[dev]"` |
+| **Enterprise API + agents** | `backend/` | FastAPI + LangGraph scaffold; boot fixes in progress |
+| **Legacy pitch demos** | root `*.py`, `demo/` | Streamlit / FAISS / mocks — still useful for client walkthroughs |
+| **Frontend** | `frontend/` | Next.js 15 App Router UI |
+
+Execution backlog: [`docs/CTO_BACKLOG.md`](docs/CTO_BACKLOG.md) · Agent ownership: [`docs/AGENTS.md`](docs/AGENTS.md)
+
+```bash
+# Preferred quick path (no API keys required)
+python3 -m venv .venv && source .venv/bin/activate
+pip install -e ".[dev]"
+python -m parrts ingest
+python -m parrts query "brake pads for 2019 Honda Civic" --no-llm
+pytest -q
+```
+
 ## Executive Summary
 
-This enterprise-grade AI system replaces 28-35 manual email processors across 7 dealership locations with an automated solution that handles email routing, customer service, order processing, invoicing, payment collection, inventory management, parts sourcing, and shipping/receiving operations with minimal human intervention.
+This enterprise-grade AI system targets replacement of 28-35 manual email processors across 7 dealership locations with automated email routing, customer service, order processing, invoicing, payment collection, inventory management, parts sourcing, and shipping/receiving — with human-in-the-loop on yellow/red confidence.
 
-**System Impact**: 80-90% reduction in manual processing, response time improvement from hours to seconds, 24/7 operation capability, cross-location inventory visibility, and automated customer follow-ups.
+**Target impact**: large reduction in manual processing, seconds-scale responses for green-path lookups, 24/7 capable automation, cross-location inventory visibility, and automated follow-ups. Marketing ROI figures in older docs are projections, not measured production telemetry.
 
 ## Architecture Overview
 

@@ -3,21 +3,36 @@ Parts Lookup Agent - Semantic search across parts catalog.
 """
 
 import time
-import json
 from typing import Dict, Any, List, Optional
+
 from app.agents.base_agent import BaseAgent, AgentResult
 from app.models.agent_log import AgentType
 from app.services.vector_service import VectorService
 from app.services.parts_service import PartsService
 
+# Optional core engine (owned by CORE under src/parrts) — use when importable
+try:
+    from parrts.engine import PartsRAGEngine  # type: ignore
+
+    _PARRTS_ENGINE_AVAILABLE = True
+except ImportError:
+    PartsRAGEngine = None  # type: ignore
+    _PARRTS_ENGINE_AVAILABLE = False
+
 
 class PartsLookupAgent(BaseAgent):
     """Agent for semantic parts lookup and inventory checking."""
-    
+
     def __init__(self, db):
         super().__init__(db, AgentType.PARTS_LOOKUP)
         self.vector_service = VectorService()
         self.parts_service = PartsService(db)
+        self.parrts_engine = None
+        if _PARRTS_ENGINE_AVAILABLE and PartsRAGEngine is not None:
+            try:
+                self.parrts_engine = PartsRAGEngine()
+            except Exception:
+                self.parrts_engine = None
     
     async def process(self, input_data: Dict[str, Any]) -> AgentResult:
         """Process parts lookup request."""
@@ -85,17 +100,111 @@ class PartsLookupAgent(BaseAgent):
     
     async def _semantic_search(self, query: str, vehicle_info: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Perform semantic search on parts catalog."""
-        # Enhanced query with vehicle context
         enhanced_query = self._enhance_query(query, vehicle_info)
-        
-        # Get semantic search results
-        search_results = await self.vector_service.semantic_search(
+        filters = self._build_filters(vehicle_info)
+
+        # Prefer CORE PartsRAGEngine when present (semantic search / demo path)
+        if self.parrts_engine is not None:
+            try:
+                engine_results = await self._search_via_parrts(enhanced_query, vehicle_info, filters)
+                if engine_results:
+                    return engine_results
+            except Exception:
+                # Fall through to vector_service
+                pass
+
+        return await self.vector_service.semantic_search(
             query=enhanced_query,
             limit=10,
-            filters=self._build_filters(vehicle_info)
+            filters=filters,
         )
-        
-        return search_results
+
+    async def _search_via_parrts(
+        self,
+        query: str,
+        vehicle_info: Dict[str, Any],
+        filters: Dict[str, Any],
+    ) -> List[Dict[str, Any]]:
+        """Adapter around parrts.engine.PartsRAGEngine if available."""
+        engine = self.parrts_engine
+        if engine is None:
+            return []
+
+        search_fn = None
+        for name in ("semantic_search", "search", "query", "lookup"):
+            if hasattr(engine, name):
+                search_fn = getattr(engine, name)
+                break
+        if search_fn is None:
+            return []
+
+        import inspect
+
+        call_attempts = [
+            lambda: search_fn(
+                query=query, limit=10, filters=filters, vehicle_info=vehicle_info
+            ),
+            lambda: search_fn(query=query, limit=10, filters=filters),
+            lambda: search_fn(query=query, top_k=10),
+            lambda: search_fn(query=query),
+            lambda: search_fn(query),
+        ]
+
+        raw = None
+        last_err: Optional[Exception] = None
+        for attempt in call_attempts:
+            try:
+                result = attempt()
+                if inspect.isawaitable(result):
+                    raw = await result
+                else:
+                    raw = result
+                break
+            except TypeError as exc:
+                last_err = exc
+                continue
+            except Exception as exc:
+                last_err = exc
+                break
+
+        if raw is None:
+            if last_err:
+                raise last_err
+            return []
+
+        return self._normalize_parrts_results(raw)
+
+    def _normalize_parrts_results(self, raw: Any) -> List[Dict[str, Any]]:
+        """Normalize engine output to list[dict] with relevance_score when possible."""
+        if raw is None:
+            return []
+        if isinstance(raw, dict):
+            for key in ("results", "parts", "items", "hits", "data"):
+                if key in raw and isinstance(raw[key], list):
+                    raw = raw[key]
+                    break
+            else:
+                return [raw]
+        if not isinstance(raw, list):
+            return []
+
+        normalized: List[Dict[str, Any]] = []
+        for item in raw:
+            if hasattr(item, "model_dump"):
+                item = item.model_dump()
+            elif hasattr(item, "dict"):
+                item = item.dict()
+            elif not isinstance(item, dict):
+                item = {"value": item}
+            if "relevance_score" not in item:
+                score = item.get("score", item.get("similarity_score", item.get("similarity")))
+                if score is not None:
+                    try:
+                        item["relevance_score"] = float(score)
+                    except (TypeError, ValueError):
+                        item["relevance_score"] = 0.0
+            normalized.append(item)
+        return normalized
     
     async def _check_inventory(self, parts: List[Dict[str, Any]], preferred_location_id: Optional[int] = None) -> List[Dict[str, Any]]:
         """Check inventory for parts across all locations."""
@@ -158,18 +267,19 @@ class PartsLookupAgent(BaseAgent):
             return query
     
     def _build_filters(self, vehicle_info: Dict[str, Any]) -> Dict[str, Any]:
-        """Build filters for vector search."""
-        filters = {}
-        
+        """Build filters for vector search (plain scalars for bound SQL params)."""
+        filters: Dict[str, Any] = {}
+
         if vehicle_info.get("make"):
             filters["make"] = vehicle_info["make"]
         if vehicle_info.get("model"):
             filters["model"] = vehicle_info["model"]
         if vehicle_info.get("year"):
             year = vehicle_info["year"]
-            filters["year_from"] = {"$lte": year}
-            filters["year_to"] = {"$gte": year}
-        
+            # Vehicle year must fall within part year_from/year_to range
+            filters["year_from"] = year
+            filters["year_to"] = year
+
         return filters
     
     def _calculate_availability(self, inventory: List[Dict[str, Any]], preferred_location_id: Optional[int] = None) -> Dict[str, Any]:

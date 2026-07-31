@@ -2,7 +2,7 @@
 Shipment model for tracking shipping and delivery.
 """
 
-from sqlalchemy import Column, String, Text, Integer, Numeric, Boolean, DateTime, ForeignKey, Enum
+from sqlalchemy import Column, String, Text, Integer, Numeric, Boolean, DateTime, ForeignKey, Enum, JSON
 from sqlalchemy.orm import relationship
 import enum
 from .base import TimestampMixin

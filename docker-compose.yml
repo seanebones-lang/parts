@@ -5,17 +5,22 @@ services:
   postgres:
     image: pgvector/pgvector:pg16
     container_name: dealership_postgres
+    env_file:
+      - path: .env
+        required: false
+      - path: .env.example
+        required: false
     environment:
-      POSTGRES_DB: dealership_parts
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
+      POSTGRES_DB: ${POSTGRES_DB:-dealership_parts}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -41,12 +46,17 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: dealership_backend
+    env_file:
+      - path: .env
+        required: false
+      - path: .env.example
+        required: false
     environment:
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
-      - POSTGRES_DB=dealership_parts
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=${POSTGRES_DB:-dealership_parts}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-password}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
     ports:
@@ -59,6 +69,16 @@ services:
       redis:
         condition: service_healthy
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -fsS http://127.0.0.1:8000/health || wget -q -O - http://127.0.0.1:8000/health || exit 1",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   # Celery Worker
   celery:
@@ -66,12 +86,17 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: dealership_celery
+    env_file:
+      - path: .env
+        required: false
+      - path: .env.example
+        required: false
     environment:
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
-      - POSTGRES_DB=dealership_parts
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=${POSTGRES_DB:-dealership_parts}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-password}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
     volumes:
@@ -89,12 +114,17 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: dealership_celery_beat
+    env_file:
+      - path: .env
+        required: false
+      - path: .env.example
+        required: false
     environment:
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
-      - POSTGRES_DB=dealership_parts
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=${POSTGRES_DB:-dealership_parts}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-password}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
     volumes:
@@ -117,8 +147,15 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules
+    env_file:
+      - path: .env
+        required: false
+      - path: .env.example
+        required: false
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+    depends_on:
+      - backend
     command: npm run dev
 
   # Flower (Celery Monitoring)

@@ -87,6 +87,13 @@ build/
 *.pkl
 *.model
 *.weights
+.parrts/
+*.faiss
+.coverage
+htmlcov/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
 
 # Scraping
 scraped_data/

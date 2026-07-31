@@ -2,7 +2,7 @@
 Supplier model for external parts sourcing.
 """
 
-from sqlalchemy import Column, String, Text, Integer, Numeric, Boolean, DateTime, JSON
+from sqlalchemy import Column, String, Text, Integer, Numeric, Boolean, DateTime, JSON, ForeignKey
 from sqlalchemy.orm import relationship
 from .base import TimestampMixin
 from app.core.database import Base

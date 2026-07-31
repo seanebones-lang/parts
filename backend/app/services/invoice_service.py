@@ -5,13 +5,23 @@ Invoice service for generating PDF invoices and managing invoice operations.
 from typing import Dict, Any, Optional, List
 from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
-from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.units import inch
-from reportlab.lib import colors
 import os
 import uuid
+
+try:
+    from reportlab.lib.pagesizes import letter
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import inch
+    from reportlab.lib import colors
+    REPORTLAB_AVAILABLE = True
+except ImportError:  # pragma: no cover
+    letter = None  # type: ignore
+    SimpleDocTemplate = Paragraph = Spacer = Table = TableStyle = None  # type: ignore
+    getSampleStyleSheet = ParagraphStyle = None  # type: ignore
+    inch = None  # type: ignore
+    colors = None  # type: ignore
+    REPORTLAB_AVAILABLE = False
 
 
 class InvoiceService:
@@ -27,6 +37,10 @@ class InvoiceService:
     
     async def generate_invoice_pdf(self, invoice_data: Dict[str, Any]) -> str:
         """Generate PDF invoice."""
+        if not REPORTLAB_AVAILABLE:
+            raise RuntimeError(
+                "reportlab is not installed. pip install reportlab to enable PDF invoices."
+            )
         try:
             invoice_number = invoice_data.get("invoice_number", f"INV-{uuid.uuid4().hex[:8].upper()}")
             filename = f"{invoice_number}.pdf"

@@ -6,13 +6,22 @@ from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text, Foreign
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.models.base import TimestampMixin
-import pyotp
-import qrcode
+from app.core.database import Base
 import io
 import base64
 
+try:
+    import pyotp
+except ImportError:  # pragma: no cover
+    pyotp = None  # type: ignore
 
-class User(TimestampMixin):
+try:
+    import qrcode
+except ImportError:  # pragma: no cover
+    qrcode = None  # type: ignore
+
+
+class User(Base, TimestampMixin):
     """User model with MFA support."""
     
     __tablename__ = "users"
@@ -44,12 +53,16 @@ class User(TimestampMixin):
     
     def generate_mfa_secret(self) -> str:
         """Generate a new MFA secret."""
+        if pyotp is None:
+            raise RuntimeError("pyotp is required for MFA: pip install pyotp")
         secret = pyotp.random_base32()
         self.mfa_secret = secret
         return secret
     
     def generate_mfa_qr_code(self, username: str) -> str:
         """Generate QR code for MFA setup."""
+        if pyotp is None or qrcode is None:
+            raise RuntimeError("pyotp and qrcode required for MFA QR: pip install pyotp qrcode")
         if not self.mfa_secret:
             self.generate_mfa_secret()
         
@@ -75,7 +88,7 @@ class User(TimestampMixin):
     
     def verify_mfa_code(self, code: str) -> bool:
         """Verify MFA code."""
-        if not self.mfa_secret:
+        if pyotp is None or not self.mfa_secret:
             return False
         
         totp = pyotp.TOTP(self.mfa_secret)

@@ -2,6 +2,14 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pgvector";
 
+-- HNSW index example for pgvector embeddings (run after parts_catalog.embedding exists):
+-- CREATE INDEX IF NOT EXISTS idx_parts_catalog_embedding_hnsw
+--   ON parts_catalog
+--   USING hnsw (embedding vector_cosine_ops)
+--   WITH (m = 16, ef_construction = 64);
+-- For L2 distance use vector_l2_ops; for inner product use vector_ip_ops.
+-- Tune ef_search at query time: SET hnsw.ef_search = 40;
+
 -- Create initial locations (sample data)
 INSERT INTO locations (name, address, city, state, zip_code, phone, email, manager_name, is_active, created_at, updated_at) VALUES
 ('Downtown Dealership', '123 Main St', 'Downtown', 'CA', '90210', '(555) 123-4567', 'downtown@dealership.com', 'John Smith', true, NOW(), NOW()),

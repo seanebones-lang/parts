@@ -1,0 +1,70 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "parrts"
+version = "0.2.0"
+description = "Modern hybrid RAG core for multi-location auto parts inventory"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Parrts" }]
+dependencies = [
+    "numpy>=1.26",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.4",
+]
+embeddings = [
+    "sentence-transformers>=3.0",
+]
+faiss = [
+    "faiss-cpu>=1.8",
+]
+bm25 = [
+    "rank-bm25>=0.2.2",
+]
+rerank = [
+    "sentence-transformers>=3.0",
+]
+openai = [
+    "openai>=1.40",
+]
+anthropic = [
+    "anthropic>=0.34",
+]
+api = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    "pydantic>=2.9",
+]
+all = [
+    "parrts[embeddings,faiss,bm25,rerank,openai,anthropic,api,dev]",
+]
+
+[project.scripts]
+parrts = "parrts.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/parrts"]
+
+[tool.hatch.build.targets.wheel.sources]
+"src/parrts" = "parrts"
+
+[tool.hatch.build.targets.sdist]
+include = ["src/parrts", "tests", "README.md", "pyproject.toml"]
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]

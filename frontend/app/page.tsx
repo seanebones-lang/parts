@@ -6,6 +6,14 @@ import { Activity, Mail, Package, Truck, Users, DollarSign } from 'lucide-react'
 export default function HomePage() {
   return (
     <div className="container mx-auto p-6">
+      <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900">
+        <strong className="font-semibold">Architecture note:</strong> when the{" "}
+        <code className="text-xs">parrts</code> hybrid RAG core is installed and the
+        API is reachable, parts search uses dense + BM25 retrieval with traffic-light
+        stock policy. Otherwise this UI falls back to mock catalog data so demos still
+        run offline.
+      </div>
+
       <div className="mb-8">
         <h1 className="text-4xl font-bold text-foreground mb-2">
           Dealership AI Parts System
