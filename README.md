@@ -1,530 +1,211 @@
-# AI-Powered Multi-Location Dealership Parts Management System
-
-## Status (2026-07-31 honesty)
-
-| Layer | Path | Maturity |
-|-------|------|----------|
-| **Modern core (SoT for retrieval)** | `src/parrts/` | Hybrid RAG **v0.4.2** — `pip install -e ".[dev]"` |
-| **Enterprise API + agents** | `backend/` | FastAPI boots; **15/15** `/api/v1`; LangGraph specialists soft-fail offline |
-| **Legacy pitch demos** | root `*.py`, `demo/` | Streamlit / FAISS / mocks — client walkthroughs |
-| **Frontend** | `frontend/` | Next.js 15 App Router + typed client + traffic-light badge |
-
-**Ship remote:** https://github.com/seanebones-lang/parts  
-
-Execution backlog: [`docs/CTO_BACKLOG.md`](docs/CTO_BACKLOG.md) · Agent ownership: [`docs/AGENTS.md`](docs/AGENTS.md)
-
-```bash
-# Preferred quick path (no API keys required)
-python3 -m venv .venv && source .venv/bin/activate
-pip install -e ".[dev]"
-python -m parrts ingest
-python -m parrts query "brake pads for 2019 Honda Civic" --no-llm
-pytest -q
-
-# Full backend /api/v1 boot smoke
-pip install -e ".[dev,api]" && pip install -r backend/requirements.txt
-PYTHONPATH=backend:src python scripts/verify_boot.py
-```
-
-## Executive Summary
-
-This enterprise-grade AI system targets replacement of 28-35 manual email processors across 7 dealership locations with automated email routing, customer service, order processing, invoicing, payment collection, inventory management, parts sourcing, and shipping/receiving — with human-in-the-loop on yellow/red confidence.
-
-**Target impact**: large reduction in manual processing, seconds-scale responses for green-path lookups, 24/7 capable automation, cross-location inventory visibility, and automated follow-ups. Marketing ROI figures in older docs are projections, not measured production telemetry.
-
-## Architecture Overview
-
-### Multi-Agent System Architecture
-
-The system employs 13 specialized AI agents orchestrated by a supervisor agent:
-
-- **Email Classifier Agent**: Routes incoming emails to appropriate departments
-- **Customer Service Agent**: Handles customer queries and provides information
-- **Parts Lookup Agent**: Performs semantic search across inventory locations
-- **Inventory Manager Agent**: Manages stock levels and reorder triggers
-- **Pricing & Invoice Agent**: Generates quotes and invoices with tax calculations
-- **Payment Agent**: Processes payments and manages payment workflows
-- **Shipping Coordinator Agent**: Arranges shipping and tracks deliveries
-- **Supplier Sourcing Agent**: Sources parts from external suppliers when unavailable
-- **Follow-up Agent**: Manages automated customer follow-up workflows
-- **Supervisor Agent**: Orchestrates agent collaboration and complex workflows
-
-### Technology Stack
-
-**Backend Infrastructure**:
-- Python 3.12+ with FastAPI framework
-- LangGraph for multi-agent orchestration
-- PostgreSQL 16 with pgvector extension for vector embeddings
-- Redis for caching and job queues
-- Celery for asynchronous task processing
-- Docker containerization
-
-**AI/LLM Integration**:
-- Claude 3.5 Sonnet (primary) with GPT-4 fallback
-- LangGraph for agent workflow orchestration
-- Vector embeddings for semantic parts search
-- Function calling for structured actions
-
-**Frontend Application**:
-- Next.js 15 with React Server Components
-- Shadcn/ui component library with TailwindCSS
-- Recharts for analytics visualization
-- WebSocket connections for real-time updates
-
-**External Integrations**:
-- Stripe for payment processing
-- Multi-carrier shipping APIs (UPS, FedEx, USPS, DHL)
-- Email providers (IMAP/SMTP)
-- Web scraping for parts sourcing
-
-## System Features
-
-### Email Intelligence Hub
-- IMAP polling every 30 seconds for new emails
-- AI-powered email classification and routing
-- Thread context preservation
-- Automated response generation
-
-### Parts Catalog & Inventory Management
-- Real-time inventory across 7 locations
-- Semantic search capabilities ("brake pads for 2019 Honda Civic")
-- Cross-location availability checking
-- Automated low-stock alerts and reorder triggers
-
-### Order Processing Engine
-- AI extraction of vehicle information and part requirements
-- Location-specific pricing with tax calculations
-- Multi-location fulfillment optimization
-- Automated order confirmation workflows
-
-### Payment & Invoice System
-- Automated PDF invoice generation with dealership branding
-- Stripe payment link integration
-- Payment tracking and reconciliation
-- Automated payment reminder workflows
-
-### Shipping & Receiving Module
-- Multi-carrier rate shopping and label generation
-- Tracking number capture and customer notifications
-- Barcode scanning support for receiving
-- Automated inventory updates on receipt
-
-### Parts Sourcing Engine
-- Web scraping of major supplier websites
-- Price comparison and availability checking
-- Automated supplier order placement where APIs are available
-
-### Follow-up Automation
-- Scheduled follow-up workflows for quotes and payments
-- Customer satisfaction surveys
-- Automated reminder systems
-
-### Analytics Dashboard
-- Real-time metrics and performance monitoring
-- Agent performance tracking
-- Revenue analytics and reporting
-- Customer satisfaction monitoring
-
-## Deployment Strategy
-
-### Production Environment Setup
-
-**Infrastructure Requirements**:
-- PostgreSQL 16+ database server with pgvector extension
-- Redis server for caching and job queues
-- Docker container orchestration
-- SSL certificate configuration
-- Domain name and DNS setup
-
-**Deployment Process**:
-1. Infrastructure provisioning and configuration
-2. Database schema deployment with initial data seeding
-3. Application container deployment
-4. SSL certificate installation and configuration
-5. DNS configuration and domain routing
-6. Health check validation and monitoring setup
-
-### Environment Configuration
-
-**Production Environment Variables**:
-```
-DATABASE_URL=postgresql://user:password@host:port/database
-REDIS_URL=redis://host:port
-OPENAI_API_KEY=your_openai_key
-ANTHROPIC_API_KEY=your_anthropic_key
-STRIPE_SECRET_KEY=your_stripe_key
-EMAIL_HOST=your_smtp_host
-EMAIL_USERNAME=your_email_username
-EMAIL_PASSWORD=your_email_password
-```
-
-### Monitoring and Observability
-
-**System Monitoring**:
-- Application performance monitoring with Sentry
-- AI agent performance tracking with LangSmith
-- Database performance monitoring
-- Infrastructure health checks
-
-**Logging Configuration**:
-- Structured logging with correlation IDs
-- Agent action logging for audit trails
-- Error tracking and alerting
-- Performance metrics collection
-
-## Onboarding Process
-
-### Initial System Setup
-
-**Phase 1: Infrastructure Deployment (Week 1)**
-- Server provisioning and configuration
-- Database setup with initial schema
-- Application deployment and configuration
-- SSL certificate installation
-- Basic health check validation
-
-**Phase 2: Data Migration (Week 2)**
-- Customer database import
-- Parts catalog data ingestion with vector embeddings
-- Historical order data migration
-- Inventory data synchronization across locations
-
-**Phase 3: Integration Setup (Week 3)**
-- Email account configuration and testing
-- Payment gateway integration and testing
-- Shipping carrier API configuration
-- Supplier API connections
-
-**Phase 4: Testing and Validation (Week 4)**
-- End-to-end workflow testing
-- Agent performance validation
-- Integration testing with external systems
-- Performance benchmarking
-
-### Staff Training Program
-
-**Training Modules**:
-
-1. **System Overview (4 hours)**
-   - Introduction to AI agents and their roles
-   - System architecture and workflow understanding
-   - Navigation and basic operations
-
-2. **Email Management (6 hours)**
-   - Email classification and routing
-   - Manual intervention procedures
-   - Exception handling workflows
-
-3. **Order Processing (8 hours)**
-   - Order validation and confirmation
-   - Pricing and invoicing procedures
-   - Payment processing workflows
-
-4. **Inventory Management (6 hours)**
-   - Inventory tracking and updates
-   - Reorder point management
-   - Cross-location inventory transfers
-
-5. **Exception Handling (4 hours)**
-   - Complex order scenarios
-   - System error resolution
-   - Escalation procedures
-
-**Training Delivery**:
-- Instructor-led training sessions
-- Hands-on practice with test data
-- Documentation and reference materials
-- Assessment and certification process
-
-## Continued Training and Support
-
-### Ongoing Training Program
-
-**Monthly Training Sessions**:
-- System updates and new features
-- Performance optimization techniques
-- Advanced troubleshooting procedures
-- Best practices refinement
-
-**Quarterly Reviews**:
-- Performance metrics analysis
-- Process optimization recommendations
-- Staff feedback integration
-- System enhancement planning
-
-### Support Structure
-
-**Tier 1 Support (Business Hours)**:
-- Basic system operations assistance
-- User account management
-- Standard troubleshooting procedures
-- Documentation and training materials
-
-**Tier 2 Support (24/7)**:
-- Technical issue resolution
-- System performance optimization
-- Integration problem resolution
-- Emergency response procedures
-
-**Tier 3 Support (Enterprise)**:
-- Architecture-level issues
-- Custom development requests
-- Performance optimization consulting
-- Strategic planning support
-
-## Location Rollout Strategy
-
-### Rollout Timeline
-
-**Location 1 (Pilot) - Weeks 1-4**:
-- Complete system deployment and testing
-- Staff training and certification
-- Performance monitoring and optimization
-- Process refinement based on real-world usage
-
-**Locations 2-7 - 2-Week Intervals**:
-- Week 1: Infrastructure setup and data migration
-- Week 2: Staff training and go-live preparation
-- Week 3: Go-live with support team on-site
-- Week 4: Performance monitoring and optimization
-
-### Rollout Process
-
-**Pre-Deployment (2 weeks before)**:
-- Infrastructure assessment and preparation
-- Data migration planning and execution
-- Staff identification and training scheduling
-- Integration testing and validation
-
-**Deployment Week**:
-- System installation and configuration
-- Staff training delivery
-- Integration testing and validation
-- Go-live preparation and support
-
-**Post-Deployment (2 weeks after)**:
-- Performance monitoring and optimization
-- Issue resolution and process refinement
-- Staff support and additional training
-- Success metrics validation
-
-### Success Metrics per Location
-
-**Technical Metrics**:
-- System uptime: 99.5% minimum
-- Email processing time: Under 60 seconds
-- Order processing time: Under 5 minutes
-- Agent accuracy: 95% minimum
-
-**Business Metrics**:
-- Staff productivity improvement: 60% minimum
-- Customer satisfaction: 4.0/5 minimum
-- Error reduction: 70% minimum
-- Cost savings: $50,000 annual minimum per location
-
-## Contractor Expense Expectations
-
-### Development and Implementation Costs
-
-**Initial Development (10 months)**:
-- Senior Full-Stack Developer: $150,000
-- AI/ML Engineer: $120,000
-- DevOps Engineer: $100,000
-- Project Management: $50,000
-- Infrastructure Setup: $25,000
-- **Total Development Investment: $445,000**
-
-### Ongoing Operational Costs
-
-**Annual Support and Maintenance**:
-- System maintenance and updates: $60,000
-- AI API usage (Claude/GPT-4): $24,000
-- Infrastructure hosting and services: $18,000
-- Monitoring and security services: $12,000
-- **Total Annual Operational Cost: $114,000**
-
-### Location Rollout Costs
-
-**Per Location Deployment**:
-- Infrastructure setup: $8,000
-- Data migration and integration: $12,000
-- Staff training delivery: $15,000
-- Go-live support and monitoring: $10,000
-- **Total per Location: $45,000**
-
-**Total Rollout Cost (7 locations): $315,000**
-
-### Total Project Investment
-
-**Year 1 Investment**:
-- Development: $445,000
-- Location rollouts: $315,000
-- Operational costs: $114,000
-- **Total Year 1: $874,000**
-
-**Annual Operational Cost (Years 2+)**: $114,000
-
-### Return on Investment Analysis
-
-**Current State Costs**:
-- 28-35 employees × $40,000 average salary = $1,120,000 - $1,400,000 annually
-- Benefits and overhead (30%): $336,000 - $420,000
-- **Total Current Annual Cost: $1,456,000 - $1,820,000**
-
-**Future State Costs**:
-- 14-21 oversight staff × $40,000 = $560,000 - $840,000
-- Benefits and overhead (30%): $168,000 - $252,000
-- System operational costs: $114,000
-- **Total Future Annual Cost: $842,000 - $1,206,000**
-
-**Annual Savings**: $614,000 - $614,000
-
-**ROI Timeline**: System pays for itself in 14-16 months
-
-## Risk Management
-
-### Technical Risks
-
-**AI Accuracy and Reliability**:
-- Mitigation: Human oversight dashboard with confidence thresholds
-- Escalation procedures for low-confidence decisions
-- Continuous model training and improvement
-
-### Exception Handling & Traffic-Light System
-
-The system employs a sophisticated traffic-light triage system for automated decision-making:
-
-- **Green Auto-resolved (95%+ confidence)**: System automatically processes orders, generates invoices, and handles routine tasks without human intervention
-- **Yellow Human review (70-95% confidence)**: Flagged for staff review with suggested actions and context
-- **Red Escalate now (<70% confidence or urgent)**: Immediate escalation for complex scenarios, zero stock situations, or urgent customer requests
-
-This color-coded system ensures optimal balance between automation efficiency and human oversight, reducing manual workload while maintaining quality control.
-
-**System Performance and Scalability**:
-- Mitigation: Load testing and performance optimization
-- Horizontal scaling capabilities
-- Monitoring and alerting systems
-
-**Integration Dependencies**:
-- Mitigation: Comprehensive testing and staged rollout
-- Fallback procedures for external service failures
-- Service level agreements with integration partners
-
-### Business Risks
-
-**Staff Adoption and Change Management**:
-- Mitigation: Comprehensive training program
-- Gradual rollout with support and feedback
-- Clear communication of benefits and time savings
-
-**Data Security and Compliance**:
-- Mitigation: Encryption, access controls, and audit logs
-- Regular security assessments and compliance checks
-- Data backup and disaster recovery procedures
-
-## Maintenance and Updates
-
-### Regular Maintenance Schedule
-
-**Weekly Tasks**:
-- System health checks and performance monitoring
-- Database maintenance and optimization
-- Security patch application and validation
-- Backup verification and testing
-
-**Monthly Tasks**:
-- Performance metrics analysis and optimization
-- Agent model updates and retraining
-- Integration testing and validation
-- Documentation updates and training material review
-
-**Quarterly Tasks**:
-- Comprehensive system security assessment
-- Performance benchmarking and optimization
-- Feature enhancement planning and implementation
-- Staff training updates and certification renewal
-
-### System Updates and Enhancements
-
-**Minor Updates (Monthly)**:
-- Bug fixes and performance optimizations
-- Agent prompt improvements
-- Integration updates and enhancements
-- User interface improvements
-
-**Major Updates (Quarterly)**:
-- New feature development and deployment
-- Agent capability enhancements
-- Integration expansions
-- Performance and scalability improvements
-
-## Documentation and Resources
-
-### Technical Documentation
-- System architecture and design documents
-- API documentation and integration guides
-- Database schema and data model documentation
-- Deployment and configuration guides
-
-### User Documentation
-- User manuals and training materials
-- Process workflows and procedures
-- Troubleshooting guides and FAQs
-- Best practices and optimization tips
-
-### Support Resources
-- Knowledge base and documentation portal
-- Video training materials and tutorials
-- Support ticket system and escalation procedures
-- Regular training sessions and workshops
-
-## Quick Demo (Missing Pieces Included)
-
-For a fast demo without full setup:
-
-```bash
-# Navigate to demo directory
-cd demo
-
-# Run simple demo
-python start_simple_demo.py
-
-# Or run tests
-python test_runner.py --health
-python test_runner.py --quick
-
-# Test the RAG core directly
-python rag_demo.py
-```
-
-### Demo Files Added
-- **`demo/rag_demo.py`**: Core RAG engine with 7 Chicago locations
-- **`demo/test_runner.py`**: Test suite with 10 scenarios
-- **`demo/qa_shield.md`**: Q&A answers for client meetings
-- **`demo/start_simple_demo.py`**: One-click demo starter
-
-### Quick Test Commands
-```bash
-# Health check
-python demo/test_runner.py --health
-
-# Quick test (3 scenarios)
-python demo/test_runner.py --quick
-
-# Full test suite
-python demo/test_runner.py --run
-
-# CLI demo
-python demo/rag_demo.py
-
-# API demo (requires Flask)
-python demo/rag_demo.py --serve
-```
-
-## Contact Information
-
-For technical support, training inquiries, or system maintenance requests, please contact the implementation team through the designated support channels established during the onboarding process.
+# Parts — Multi-Location Dealership Parts AI
+
+**Repository:** https://github.com/seanebones-lang/parts  
+**Owner:** NextEleven LLC  
+**Package:** `parrts` v0.4.2  
+**License:** Proprietary — NextEleven LLC (see `LICENSE`)
 
 ---
 
-*This system transforms the parts department from a labor-intensive operation into a highly efficient, AI-powered solution that operates 24/7 with minimal human intervention while maintaining exceptional customer service standards.*
+## What this is
+
+**Parts** is an AI-assisted **multi-location dealership parts** platform:
+
+1. **`parrts` core** — offline-capable hybrid RAG (dense + BM25 + RRF), traffic-light stock policy, CLI & thin API  
+2. **Enterprise backend** — FastAPI, 15 `/api/v1` route groups, LangGraph specialist agents, optional Postgres/pgvector  
+3. **Frontend** — Next.js 15 parts search UI with live API + mock fallback  
+4. **Ops** — Docker Compose profiles, CI matrix, eval harness, pgvector seed script  
+
+Natural language example:
+
+```bash
+python -m parrts query "brake pads for 2019 Honda Civic" --no-llm
+```
+
+Returns ranked SKUs across locations with **green / yellow / red** confidence for human-in-the-loop.
+
+---
+
+## Honesty table (read this first)
+
+| Layer | Path | What works today |
+|-------|------|------------------|
+| **Retrieval SoT** | `src/parrts/` | Hybrid RAG, traffic-light, offline tests, eval **12/12 hit@5** |
+| **Enterprise API** | `backend/` | Boots without Postgres for `/`, `/health`, `/query`, `/metrics`; **15/15** `/api/v1` modules load |
+| **Agents** | `backend/app/agents/` | LangGraph graph with specialists; soft-fail offline; parts path uses `parrts` |
+| **Frontend** | `frontend/` | Typed client, traffic-light badge, TypeScript clean |
+| **Legacy demos** | root `*.py`, `demo/` | Streamlit / pitch walkthroughs — not the modern SoT |
+| **Payments / shipping** | services | **Mock** unless Stripe / EasyPost keys present |
+| **Live LLM** | optional | Needs `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` |
+
+Older marketing copy that claims full production SLA for 13 agents, always-live supplier scraping, or guaranteed ROI is **aspirational**. Sell and demo against **measured** paths below.
+
+---
+
+## Quick start (no API keys)
+
+```bash
+git clone https://github.com/seanebones-lang/parts.git
+cd parts
+python3 -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
+pip install -e ".[dev]"
+python -m parrts ingest --force
+python -m parrts query "brake pads for 2019 Honda Civic" --no-llm
+python -m parrts query "oil filter Toyota Camry" --no-llm --expand-parent
+pytest -q
+python scripts/eval_retrieval.py
+```
+
+### Backend smoke (enterprise surface)
+
+```bash
+pip install -e ".[dev,api]"
+pip install -r backend/requirements.txt
+PYTHONPATH=backend:src python scripts/verify_boot.py
+# from backend/ with PYTHONPATH=backend:src
+# uvicorn main:app --reload --port 8000
+```
+
+### Frontend
+
+```bash
+cd frontend
+npm ci   # or npm install
+npm run type-check
+npm run dev   # http://localhost:3000
+```
+
+Set `NEXT_PUBLIC_API_URL=http://127.0.0.1:8000` if the API is local.
+
+### Docker (optional)
+
+```bash
+# Requires Docker Desktop running
+docker compose --profile core up -d      # postgres (pgvector image) + redis
+docker compose --profile api up -d       # + backend
+docker compose --profile full up -d      # + frontend + workers
+PGVECTOR_ENABLED=true python scripts/seed_pgvector.py
+```
+
+Profiles: `core` | `pgvector` | `api` | `full` | `obs` (Flower).
+
+---
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Frontend (Next.js)     Streamlit UI     CLI `parrts`         │
+└────────────┬──────────────────┬───────────────┬─────────────┘
+             │                  │               │
+             ▼                  ▼               ▼
+┌──────────────────── Thin /query + FastAPI main ─────────────┐
+│  /  /health  /query  /metrics  /api/v1/*                      │
+└────────────┬───────────────────────────────┬────────────────┘
+             │                               │
+             ▼                               ▼
+┌────────────────────────┐     ┌─────────────────────────────┐
+│ parrts core (SoT)      │     │ LangGraph specialists         │
+│ hybrid dense+BM25 RRF  │◄────│ parts, CS, inventory, pricing │
+│ traffic-light policy   │     │ payment, shipping, supplier…  │
+│ HashingEmbedder default│     │ soft-fail if DB/LLM down      │
+└────────────────────────┘     └─────────────────────────────┘
+             │
+             ▼ optional
+      Postgres + pgvector + Redis + Celery
+```
+
+---
+
+## CLI reference
+
+| Command | Purpose |
+|---------|---------|
+| `parrts ingest [--force]` | Build inventory + indexes under `.parrts/` |
+| `parrts query "…" [--no-llm] [-k 5] [--location NAME] [--rerank] [--expand-parent]` | JSON retrieval |
+| `parrts status` | Index / inventory summary |
+
+Embedder: `PARRTS_EMBEDDER=hash|st|bge|openai|auto` or `--embedder`.
+
+---
+
+## Environment (high signal)
+
+Copy `.env.example` → `.env`.
+
+| Variable | Default | Meaning |
+|----------|---------|---------|
+| `AUTH_MODE` | `demo` | `demo` = JWT optional on wired writes; `production` = JWT required |
+| `PGVECTOR_ENABLED` | `false` | Opt-in SQL vector path |
+| `VECTOR_BACKEND` | `auto` | `auto` \| `parrts` \| `pgvector` |
+| `PARRTS_EMBEDDER` | `hash` | Offline-safe default |
+| `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` | empty | Optional LLM synthesis |
+| `STRIPE_*` / `EASYPOST_API_KEY` | empty | Live pay/ship only if set |
+| `NEXT_PUBLIC_API_URL` | `http://127.0.0.1:8000` | Frontend API base |
+
+---
+
+## Testing & quality
+
+```bash
+pytest -q                                          # core + backend when deps present
+PYTHONPATH=backend:src pytest -q tests/test_backend_boot.py
+PYTHONPATH=backend:src python scripts/verify_boot.py
+python scripts/eval_retrieval.py --dataset default -k 5
+python scripts/eval_retrieval.py --dataset extended -k 5
+# Optional heavy:
+# PARRTS_TEST_ST=1 pytest -q tests/test_optional_st_embedder.py
+```
+
+**Last measured (2026-07-31):** 59 passed, 2 skipped; eval 12/12 @ hit@5; FE `tsc` clean.
+
+CI (GitHub Actions): Python 3.11/3.12 core, backend-smoke job, frontend type-check, compose config.
+
+---
+
+## Repo map
+
+```
+src/parrts/           # hybrid RAG package (SoT)
+backend/              # FastAPI + agents + services
+frontend/             # Next.js UI
+scripts/              # eval_retrieval, verify_boot, seed_pgvector
+tests/                # offline unit + boot + workflow + mocks
+docs/                 # CTO_BACKLOG, AGENTS, ROADMAP
+demo/ + root *.py     # legacy pitch demos
+docker-compose.yml    # profiles core/api/full/pgvector/obs
+```
+
+Agent ownership for multi-agent development: [`docs/AGENTS.md`](docs/AGENTS.md)  
+Execution history: [`docs/CTO_BACKLOG.md`](docs/CTO_BACKLOG.md)
+
+---
+
+## Security & licensing
+
+- **Proprietary.** Not open source. See `LICENSE` (NextEleven LLC).  
+- Do not bind the API to `0.0.0.0` in production without auth and network controls.  
+- Demo mode is for controlled demos only — use `AUTH_MODE=production` with JWT for real deployments.
+
+---
+
+## Support / commercial
+
+**NextEleven LLC** — Frisco, Texas  
+Product & sales materials: local Desktop folder `parts docs` (sales packet, LinkedIn, email, dealership info).  
+Engineering ship target: https://github.com/seanebones-lang/parts  
+
+---
+
+## Changelog snapshot
+
+| Version | Highlights |
+|---------|------------|
+| **0.4.2** | LangGraph specialists expand; Pydantic v2 schemas |
+| **0.4.1** | Full `/api/v1` 15/15; verify_boot |
+| **0.4.0** | Parent expand, eval metrics, compose profiles, `/metrics` |
+| **0.3.x** | Modern core hybrid RAG + backend boot honesty |
+
+---
+
+*This README replaces aspirational monologues with a dual-stack truth: ship the core, grow the enterprise surface with keys and Docker when ready.*
