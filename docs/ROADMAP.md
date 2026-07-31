@@ -1,6 +1,6 @@
 # Parrts-Dist-RAG Roadmap
 
-Last updated: 2026-07-31 (Wave 8)
+Last updated: 2026-07-31 (Wave 9)
 
 ## Ship target
 
@@ -9,20 +9,22 @@ Local: `~/Desktop/Parrts-Dist-RAG`
 
 ## Shipped (max-opt loop)
 
-1. `parrts` core hybrid retrieval + traffic-light + offline tests (**v0.4.1**)  
+1. `parrts` core hybrid retrieval + traffic-light + offline tests (**v0.4.2**)  
 2. Backend boots Pydantic v2 / async LLM / honest health  
-3. **Full `/api/v1`**: 15/15 routers soft-loaded (auth get_db + metadata rename)  
+3. **Full `/api/v1`**: 15/15 routers soft-loaded  
 4. Frontend typed client + traffic-light badge + type-check CI  
 5. CI matrix + backend-smoke + compose profiles + `/metrics`  
 6. Parent SKU expansion, lazy rerank, eval MRR/recall/latency  
-7. Opt-in pgvector path (`PGVECTOR_ENABLED`)
+7. Opt-in pgvector path (`PGVECTOR_ENABLED`)  
+8. LangGraph full specialist graph (soft offline stubs)  
+9. Pydantic v2 schema hygiene (auth/location)
 
 ## Next
 
-- Optional ST/BGE smoke when embeddings extra installed (local download)  
 - Seeded pgvector e2e under compose `--profile api` when Docker DB up  
-- Wire remaining LangGraph specialists beyond parts_lookup  
-- Demo mode JWT-optional hardening pass on mutating routes  
+- Demo mode optional JWT on mutating `/api/v1` routes (production already expects JWT)  
+- Live ST/BGE local smoke: `PARRTS_TEST_ST=1 pytest -q tests/test_optional_st_embedder.py`  
+- Deeper agent unit tests with mocked InventoryService / Stripe  
 
 ## Later
 

@@ -1,14 +1,16 @@
 """
-Authentication schemas for MFA support.
+Authentication schemas for MFA support (Pydantic v2).
 """
 
-from typing import Optional, List
-from pydantic import BaseModel, EmailStr, validator
 from datetime import datetime
+from typing import List, Optional
+
+from pydantic import BaseModel, ConfigDict, EmailStr, field_validator
 
 
 class UserBase(BaseModel):
     """Base user schema."""
+
     username: str
     email: EmailStr
     full_name: str
@@ -18,17 +20,20 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     """Schema for creating a user."""
+
     password: str
-    
-    @validator('password')
-    def validate_password(cls, v):
+
+    @field_validator("password")
+    @classmethod
+    def validate_password(cls, v: str) -> str:
         if len(v) < 8:
-            raise ValueError('Password must be at least 8 characters long')
+            raise ValueError("Password must be at least 8 characters long")
         return v
 
 
 class UserUpdate(BaseModel):
     """Schema for updating a user."""
+
     username: Optional[str] = None
     email: Optional[EmailStr] = None
     full_name: Optional[str] = None
@@ -39,6 +44,9 @@ class UserUpdate(BaseModel):
 
 class UserResponse(UserBase):
     """Schema for user responses."""
+
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     is_active: bool
     is_superuser: bool
@@ -46,13 +54,11 @@ class UserResponse(UserBase):
     last_login: Optional[datetime] = None
     created_at: datetime
     updated_at: datetime
-    
-    class Config:
-        from_attributes = True
 
 
 class LoginRequest(BaseModel):
     """Schema for login request."""
+
     username: str
     password: str
     mfa_code: Optional[str] = None
@@ -60,6 +66,7 @@ class LoginRequest(BaseModel):
 
 class LoginResponse(BaseModel):
     """Schema for login response."""
+
     access_token: str
     token_type: str = "bearer"
     expires_in: int
@@ -69,11 +76,13 @@ class LoginResponse(BaseModel):
 
 class MFASetupRequest(BaseModel):
     """Schema for MFA setup request."""
+
     password: str
 
 
 class MFASetupResponse(BaseModel):
     """Schema for MFA setup response."""
+
     qr_code: str
     secret: str
     backup_codes: List[str]
@@ -81,46 +90,54 @@ class MFASetupResponse(BaseModel):
 
 class MFAVerifyRequest(BaseModel):
     """Schema for MFA verification request."""
+
     code: str
 
 
 class MFAVerifyResponse(BaseModel):
     """Schema for MFA verification response."""
+
     success: bool
     message: str
 
 
 class PasswordChangeRequest(BaseModel):
     """Schema for password change request."""
+
     current_password: str
     new_password: str
-    
-    @validator('new_password')
-    def validate_new_password(cls, v):
+
+    @field_validator("new_password")
+    @classmethod
+    def validate_new_password(cls, v: str) -> str:
         if len(v) < 8:
-            raise ValueError('Password must be at least 8 characters long')
+            raise ValueError("Password must be at least 8 characters long")
         return v
 
 
 class PasswordResetRequest(BaseModel):
     """Schema for password reset request."""
+
     email: EmailStr
 
 
 class PasswordResetConfirm(BaseModel):
     """Schema for password reset confirmation."""
+
     token: str
     new_password: str
-    
-    @validator('new_password')
-    def validate_new_password(cls, v):
+
+    @field_validator("new_password")
+    @classmethod
+    def validate_new_password(cls, v: str) -> str:
         if len(v) < 8:
-            raise ValueError('Password must be at least 8 characters long')
+            raise ValueError("Password must be at least 8 characters long")
         return v
 
 
 class SessionInfo(BaseModel):
     """Schema for session information."""
+
     user_id: int
     username: str
     role: str
@@ -133,11 +150,13 @@ class SessionInfo(BaseModel):
 
 class TokenRefreshRequest(BaseModel):
     """Schema for token refresh request."""
+
     refresh_token: str
 
 
 class TokenRefreshResponse(BaseModel):
     """Schema for token refresh response."""
+
     access_token: str
     token_type: str = "bearer"
     expires_in: int

@@ -1,13 +1,15 @@
 """
-Location schemas for API requests and responses.
+Location schemas for API requests and responses (Pydantic v2).
 """
 
 from typing import Optional
-from pydantic import BaseModel, EmailStr
+
+from pydantic import BaseModel, ConfigDict, EmailStr
 
 
 class LocationBase(BaseModel):
     """Base location schema."""
+
     name: str
     address: str
     city: str
@@ -21,11 +23,13 @@ class LocationBase(BaseModel):
 
 class LocationCreate(LocationBase):
     """Schema for creating a location."""
+
     pass
 
 
 class LocationUpdate(BaseModel):
     """Schema for updating a location."""
+
     name: Optional[str] = None
     address: Optional[str] = None
     city: Optional[str] = None
@@ -39,9 +43,9 @@ class LocationUpdate(BaseModel):
 
 class LocationResponse(LocationBase):
     """Schema for location responses."""
+
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     created_at: str
     updated_at: str
-    
-    class Config:
-        from_attributes = True

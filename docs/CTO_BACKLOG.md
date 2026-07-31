@@ -101,6 +101,14 @@
 - [x] W8.6 CI `backend-smoke` job (`pip install -r backend/requirements.txt`)
 - [x] W8.7 parrts **v0.4.1** / API surface 1.3.0
 
+## Wave 9 — Agents + schema hygiene (2026-07-31 cont)
+
+- [x] W9.1 Pydantic v2: `field_validator` + `ConfigDict` on auth/location schemas
+- [x] W9.2 LangGraph expanded specialists: inventory, pricing, payment, shipping, supplier, follow_up (soft-fail offline)
+- [x] W9.3 Workflow tests: graph node registry + offline parts path
+- [x] W9.4 Optional ST/BGE smoke test (`PARRTS_TEST_ST=1`, skipped by default)
+- [x] W9.5 parrts **v0.4.2**
+
 ---
 
 ## Verify commands
