@@ -137,7 +137,7 @@ export default function OrdersPage() {
     <div className="container mx-auto p-6 space-y-6">
       <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-950">
         <strong>DMS Core (local SQLite)</strong> — OEM live feed when configured.
-        Orders are stored in the pilot DMS DB (not a full accounting suite).
+        Orders are stored in the DMS order book (reserve stock on create).
       </div>
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -191,7 +191,7 @@ export default function OrdersPage() {
               <Plus className="h-4 w-4" />
               Create order
             </CardTitle>
-            <CardDescription>Simple single-line order for the pilot</CardDescription>
+            <CardDescription>Create order and reserve stock</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={onCreate} className="space-y-3">

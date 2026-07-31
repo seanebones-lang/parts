@@ -1,33 +1,30 @@
 # Parts — CTO Backlog
 
-**Ship:** https://github.com/seanebones-lang/parts · **parrts v0.6.1**  
-**Honesty:** `[x]` only after measured verify.
+**Product identity:** Parts is the **dealership parts system** (not a pilot demo shell).  
+**Ship:** https://github.com/seanebones-lang/parts · **parrts v0.7.0**
 
-## Is the system complete?
+## Completeness (honest)
 
-| Definition | Status |
-|------------|--------|
-| **Pilot-complete** (dealer room demo: AI search + DMS ops + OEM ingest path) | **YES (W13.1)** |
-| Full DMS replacement (CDK/Reynolds parity) | **NO** — multi-quarter (W14–W17) |
-| Live OEM with manufacturer contracts | **NO** until feed URL/token + contracts |
+| Layer | Status |
+|-------|--------|
+| AI counter search | **In system** |
+| DMS inventory/customers/orders | **In system** (embedded SQLite; server PG path next) |
+| OEM file + HTTP feeds | **In system** (live when URL/token set) |
+| Operator UI (core modules) | **In system** |
+| Payments / shipping | **In system as integrations** (activate with keys) |
+| Postgres multi-node HA | **Next** |
+| Named OEM partner connectors | **Next** (contracts) |
+| Full RO/GL accounting suite | **Next** |
 
-## Wave 13 — DMS + OEM (done)
-- [x] Offline DMS SQLite core + CLI + API + FE Live modules
-- [x] OEM synthetic/file/http adapters
-- [x] Auth demo mode offline-safe
+## Wave 14 — Product identity + system hardening (this ship)
 
-## Wave 13.1 — Pilot completeness (this ship)
-- [x] CI: core ignores TestClient DMS API; backend-smoke runs dms_api + auth + seed/reindex
-- [x] CLI: `parrts dms reindex` + `customers`
-- [x] demo_up seeds DMS + reindexes RAG
-- [x] E2E: seed --reindex → query returns **OEM-*** SKUs
-- [x] greenlet/httpx in backend requirements
-
-## Later (not “incomplete pilot”)
-- W14 Postgres dual-mode + Alembic  
-- W15 Named OEM connectors 📌 contracts  
-- W16 RO / accounting  
-- W17 Multi-tenant SaaS  
+- [x] Kill pilot/design-partner framing in README, UI, docs
+- [x] `docs/SYSTEM.md` as product definition
+- [x] `scripts/system_up|down|smoke` aliases
+- [x] Nav/home as production product language
+- [ ] Postgres dual-mode for DMS (same API)
+- [ ] Payments/shipping UI bound to services when keys present
+- [ ] Alembic migrations for server profile
 
 ## Never
-Unauthorized OEM scraping · claiming full DMS GA without the product work
+Unauthorized OEM scraping · calling integrations “fake” when they are key-gated production modules

@@ -198,7 +198,7 @@ export async function queryParts(
     source: "api" | "parrts";
     run: () => Promise<unknown>;
   }> = [
-    // Prefer offline-capable hybrid core first (dealership demo path).
+    // Prefer hybrid RAG core first (production counter path).
     {
       source: "parrts",
       run: () =>

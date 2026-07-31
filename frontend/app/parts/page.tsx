@@ -144,8 +144,8 @@ export default function PartsPage() {
   return (
     <div className="container mx-auto p-6">
       <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-950">
-        <strong>Live pilot path.</strong> Type a counter question or pick a
-        scenario. Results show multi-location SKUs with traffic-light confidence.
+        <strong>Counter search.</strong> Type a counter question or pick a
+        Type a counter question or pick a scenario. Multi-location SKUs with traffic-light confidence.
       </div>
 
       <div className="mb-8">

@@ -111,7 +111,7 @@ export default function CustomersPage() {
     <div className="container mx-auto p-6 space-y-6">
       <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-950">
         <strong>DMS Core (local SQLite)</strong> — OEM live feed when configured.
-        Customer master for pilot counter orders.
+        Customer master for counter and service orders.
       </div>
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">

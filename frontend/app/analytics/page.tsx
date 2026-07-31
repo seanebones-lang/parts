@@ -4,7 +4,7 @@ export default function AnalyticsPage() {
   return (
     <RoadmapPreview
       title="Analytics"
-      description="Charts and agent KPIs will bind to live telemetry after pilot instrumentation — not shown as production metrics today."
+      description="Charts and agent KPIs will bind to live telemetry as operational telemetry is connected."
     />
   )
 }

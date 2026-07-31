@@ -6,9 +6,9 @@ import { Navigation } from './navigation'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Parts — Dealership Parts AI | NextEleven',
+  title: 'Parts — Dealership Parts System | NextEleven',
   description:
-    'Multi-location dealership parts search with hybrid RAG and traffic-light confidence. Design-partner pilot.',
+    'Multi-location dealership parts system: AI search, DMS inventory/orders, OEM feed ingest.',
 }
 
 export default function RootLayout({
@@ -30,7 +30,7 @@ export default function RootLayout({
                   <div>
                     <h1 className="text-lg font-bold leading-tight">Parts</h1>
                     <p className="text-xs text-muted-foreground">
-                      NextEleven · multi-location parts AI · pilot
+                      NextEleven · dealership parts system
                     </p>
                   </div>
                 </div>

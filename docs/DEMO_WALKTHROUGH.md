@@ -1,36 +1,24 @@
-# Demo walkthrough
-
-## Dealership room (preferred)
+# Demo / system bring-up
 
 ```bash
+./scripts/system_up.sh    # preferred alias
+# or
 ./scripts/demo_up.sh
-# UI:  http://127.0.0.1:3000/parts
-# API: http://127.0.0.1:8000/demo/scenarios
-./scripts/demo_smoke.sh
+
+# Counter + DMS UI
+open http://127.0.0.1:3000/parts
+open http://127.0.0.1:3000/inventory
+
+./scripts/system_smoke.sh
+./scripts/system_down.sh
 ```
 
-Talk track: [`DEALERSHIP_PITCH.md`](DEALERSHIP_PITCH.md)
-
-## CLI-only
+Load production catalog:
 
 ```bash
-pip install -e ".[dev]"
-python -m parrts ingest --force
-python -m parrts query "brake pads for 2019 Honda Civic" --no-llm
-python scripts/eval_retrieval.py -k 5
+parrts dms sync-oem --source file --path ./data/oem/sample_oem_catalog.json --reindex
+# live:
+# OEM_FEED_URL=... OEM_FEED_TOKEN=... parrts dms sync-oem --source http --reindex
 ```
 
-## Backend boot
-
-```bash
-pip install -e ".[dev,api]"
-pip install -r backend/requirements.txt
-PYTHONPATH=backend:src python scripts/verify_boot.py
-```
-
-## Tests
-
-```bash
-pytest -q
-cd frontend && npm run build
-```
+Product definition: [`SYSTEM.md`](SYSTEM.md)

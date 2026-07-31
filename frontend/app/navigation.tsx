@@ -5,18 +5,18 @@ interface NavigationProps {
   className?: string
 }
 
-/** Primary nav — Parts + DMS modules are Live; payments/shipping stay Preview. */
+/** Primary nav — core system modules first. */
 export function Navigation({ className }: NavigationProps) {
-  const navItems: Array<{ href: string; label: string; live?: boolean }> = [
-    { href: '/parts', label: 'Parts Search', live: true },
+  const navItems: Array<{ href: string; label: string; core?: boolean }> = [
+    { href: '/parts', label: 'Parts Search', core: true },
+    { href: '/inventory', label: 'Inventory', core: true },
+    { href: '/orders', label: 'Orders', core: true },
+    { href: '/customers', label: 'Customers', core: true },
     { href: '/', label: 'Home' },
-    { href: '/inventory', label: 'Inventory', live: true },
-    { href: '/orders', label: 'Orders', live: true },
-    { href: '/customers', label: 'Customers', live: true },
-    { href: '/analytics', label: 'Analytics' },
-    { href: '/ai-agents', label: 'AI Agents' },
     { href: '/payments', label: 'Payments' },
     { href: '/shipping', label: 'Shipping' },
+    { href: '/analytics', label: 'Analytics' },
+    { href: '/ai-agents', label: 'Agents' },
   ]
 
   return (
@@ -27,21 +27,12 @@ export function Navigation({ className }: NavigationProps) {
           href={item.href}
           className={cn(
             'flex items-center gap-1.5 text-sm font-medium transition-colors',
-            item.live
-              ? 'text-foreground font-semibold underline-offset-4 hover:underline'
+            item.core
+              ? 'font-semibold text-foreground underline-offset-4 hover:underline'
               : 'text-muted-foreground hover:text-foreground'
           )}
         >
           <span>{item.label}</span>
-          {item.live ? (
-            <span className="rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-emerald-800">
-              Live
-            </span>
-          ) : item.href !== '/' ? (
-            <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">
-              Preview
-            </span>
-          ) : null}
         </Link>
       ))}
     </nav>

@@ -2,18 +2,15 @@ import Link from 'next/link'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { MapPin, Search, Shield, Zap } from 'lucide-react'
+import { MapPin, Search, Shield, Database, Truck } from 'lucide-react'
 
 export default function HomePage() {
   return (
     <div className="container mx-auto p-6">
-      <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-        <strong className="font-semibold">Design-partner pilot.</strong> Live demo path is{' '}
-        <Link href="/parts" className="font-semibold underline underline-offset-2">
-          Parts Search
-        </Link>
-        — natural language lookup across locations with green / yellow / red confidence.
-        Other menu items are <em>roadmap previews</em>, not live DMS data.
+      <div className="mb-6 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900">
+        <strong className="font-semibold">Parts</strong> — dealership parts system: AI counter
+        search, multi-location DMS, and OEM/distributor feed ingest. Configure production auth and
+        feeds for live rooftops.
       </div>
 
       <div className="mb-10 grid gap-8 lg:grid-cols-2 lg:items-center">
@@ -22,31 +19,35 @@ export default function HomePage() {
             NextEleven LLC
           </Badge>
           <h1 className="mb-3 text-4xl font-bold tracking-tight text-foreground">
-            Counter-ready parts search for multi-location dealers
+            Parts operating system for multi-location dealers
           </h1>
           <p className="mb-6 text-lg text-muted-foreground">
-            Staff type what the customer says. The system ranks SKUs across your
-            rooftops and lights confidence so a human stays in control.
+            Counter lookup, inventory, customers, and orders — with hybrid AI ranking and
+            traffic-light confidence so staff stay in control.
           </p>
           <div className="flex flex-wrap gap-3">
             <Button asChild size="lg">
               <Link href="/parts">
                 <Search className="mr-2 h-4 w-4" />
-                Open Parts Search
+                Parts Search
               </Link>
             </Button>
             <Button asChild variant="outline" size="lg">
-              <a href="http://127.0.0.1:8000/demo/scenarios" target="_blank" rel="noreferrer">
-                Demo scenarios API
-              </a>
+              <Link href="/inventory">
+                <Database className="mr-2 h-4 w-4" />
+                Inventory
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="lg">
+              <Link href="/orders">Orders</Link>
             </Button>
           </div>
         </div>
 
         <Card className="border-slate-200 shadow-sm">
           <CardHeader>
-            <CardTitle className="text-base">Try these in the room</CardTitle>
-            <CardDescription>Pre-loaded demo catalog · no dealer DMS required</CardDescription>
+            <CardTitle className="text-base">Counter examples</CardTitle>
+            <CardDescription>Works against your DMS/OEM catalog after feed sync</CardDescription>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
             {[
@@ -72,40 +73,50 @@ export default function HomePage() {
         <Card>
           <CardHeader className="pb-2">
             <MapPin className="mb-2 h-5 w-5 text-slate-700" />
-            <CardTitle className="text-base">Multi-location</CardTitle>
+            <CardTitle className="text-base">Multi-location DMS</CardTitle>
           </CardHeader>
           <CardContent className="text-sm text-muted-foreground">
-            Demo catalog spans 7 locations — same part, different stock and price.
+            Catalog, stock by rooftop, customers, and orders with stock reserve.
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <Zap className="mb-2 h-5 w-5 text-slate-700" />
-            <CardTitle className="text-base">Hybrid retrieval</CardTitle>
+            <Search className="mb-2 h-5 w-5 text-slate-700" />
+            <CardTitle className="text-base">Hybrid AI retrieval</CardTitle>
           </CardHeader>
           <CardContent className="text-sm text-muted-foreground">
-            Dense + keyword fusion (RRF). Works offline for the pilot demo path.
+            Dense + keyword fusion (RRF) over the live DMS catalog after reindex.
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <Shield className="mb-2 h-5 w-5 text-slate-700" />
-            <CardTitle className="text-base">Human in the loop</CardTitle>
+            <Truck className="mb-2 h-5 w-5 text-slate-700" />
+            <CardTitle className="text-base">OEM / distributor feeds</CardTitle>
           </CardHeader>
           <CardContent className="text-sm text-muted-foreground">
-            Traffic-light confidence — green / yellow / red — not silent automation.
+            File drop or HTTP feed (`OEM_FEED_URL`). Fails closed if the feed is down.
           </CardContent>
         </Card>
       </div>
 
-      <Card className="border-dashed">
+      <Card>
         <CardHeader>
-          <CardTitle className="text-base">What we are not claiming today</CardTitle>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Shield className="h-4 w-4" />
+            Production configuration
+          </CardTitle>
         </CardHeader>
-        <CardContent className="text-sm text-muted-foreground space-y-1">
-          <p>· Not a full DMS replacement or live OEM feed (yet).</p>
-          <p>· Payments, shipping, and analytics pages are previews.</p>
-          <p>· Production needs your catalog, auth, and network controls.</p>
+        <CardContent className="space-y-1 text-sm text-muted-foreground">
+          <p>
+            · Set <code className="text-xs">AUTH_MODE=production</code>, strong{' '}
+            <code className="text-xs">SECRET_KEY</code>, <code className="text-xs">DEBUG=false</code>.
+          </p>
+          <p>
+            · Load catalog via <code className="text-xs">parrts dms sync-oem</code> (file or HTTP).
+          </p>
+          <p>
+            · Enable Stripe / EasyPost with keys when you turn on payments and shipping.
+          </p>
         </CardContent>
       </Card>
     </div>

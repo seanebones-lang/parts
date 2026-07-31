@@ -4,7 +4,7 @@ export default function AiAgentsPage() {
   return (
     <RoadmapPreview
       title="AI Agents"
-      description="LangGraph specialists exist offline with soft stubs. The room demo highlights Parts Search, not full agent SLA."
+      description="LangGraph specialists exist offline with service graph. LangGraph specialists for email, inventory, pricing, and more."
     />
   )
 }
