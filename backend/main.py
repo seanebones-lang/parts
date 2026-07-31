@@ -294,6 +294,63 @@ async def parrts_query_post(payload: dict):
     return result.to_dict()
 
 
+# Fixed counter scenarios for live dealership demos (no DB).
+_DEMO_SCENARIOS = [
+    {
+        "id": "brakes-civic",
+        "title": "Everyday counter ask",
+        "query": "brake pads for 2019 Honda Civic",
+        "talking_point": "Natural language → ranked SKUs across locations + traffic light",
+    },
+    {
+        "id": "oil-camry",
+        "title": "Oil service lane",
+        "query": "oil filter Toyota Camry 2020",
+        "talking_point": "Fast lookup during service write-up",
+    },
+    {
+        "id": "spark-ngk",
+        "title": "Brand + model",
+        "query": "spark plugs NGK Civic",
+        "talking_point": "Mix of brand and vehicle language",
+    },
+    {
+        "id": "rotors-f150",
+        "title": "Truck brakes",
+        "query": "front rotors 2018 Ford F-150",
+        "talking_point": "Higher AOV parts still retrieve cleanly",
+    },
+    {
+        "id": "wipers",
+        "title": "Quick add-on",
+        "query": "wiper blades 22 inch",
+        "talking_point": "Universal size language",
+    },
+    {
+        "id": "battery",
+        "title": "Battery group",
+        "query": "battery group 51R Honda",
+        "talking_point": "Technical group size + make",
+    },
+]
+
+
+@app.get("/demo/scenarios")
+async def demo_scenarios():
+    """Dealership room demo scripts — safe, offline catalog queries."""
+    return {
+        "product": "Parts — multi-location dealership parts AI",
+        "mode": settings.AUTH_MODE,
+        "positioning": "design-partner pilot",
+        "ui": "http://127.0.0.1:3000/parts",
+        "scenarios": _DEMO_SCENARIOS,
+        "notes": [
+            "Payments/shipping/analytics screens are roadmap previews, not live DMS data.",
+            "Demo catalog is synthetic multi-location inventory for ranking UX.",
+        ],
+    }
+
+
 if __name__ == "__main__":
     uvicorn.run(
         "main:app",

@@ -1,178 +1,113 @@
-import { Suspense } from 'react'
+import Link from 'next/link'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Activity, Mail, Package, Truck, Users, DollarSign } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { MapPin, Search, Shield, Zap } from 'lucide-react'
 
 export default function HomePage() {
   return (
     <div className="container mx-auto p-6">
-      <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900">
-        <strong className="font-semibold">Architecture note:</strong> when the{" "}
-        <code className="text-xs">parrts</code> hybrid RAG core is installed and the
-        API is reachable, parts search uses dense + BM25 retrieval with traffic-light
-        stock policy. Otherwise this UI falls back to mock catalog data so demos still
-        run offline.
+      <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+        <strong className="font-semibold">Design-partner pilot.</strong> Live demo path is{' '}
+        <Link href="/parts" className="font-semibold underline underline-offset-2">
+          Parts Search
+        </Link>
+        — natural language lookup across locations with green / yellow / red confidence.
+        Other menu items are <em>roadmap previews</em>, not live DMS data.
       </div>
 
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold text-foreground mb-2">
-          Dealership AI Parts System
-        </h1>
-        <p className="text-xl text-muted-foreground">
-          AI-powered multi-location dealership parts management system
-        </p>
-      </div>
+      <div className="mb-10 grid gap-8 lg:grid-cols-2 lg:items-center">
+        <div>
+          <Badge className="mb-3" variant="secondary">
+            NextEleven LLC
+          </Badge>
+          <h1 className="mb-3 text-4xl font-bold tracking-tight text-foreground">
+            Counter-ready parts search for multi-location dealers
+          </h1>
+          <p className="mb-6 text-lg text-muted-foreground">
+            Staff type what the customer says. The system ranks SKUs across your
+            rooftops and lights confidence so a human stays in control.
+          </p>
+          <div className="flex flex-wrap gap-3">
+            <Button asChild size="lg">
+              <Link href="/parts">
+                <Search className="mr-2 h-4 w-4" />
+                Open Parts Search
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="lg">
+              <a href="http://127.0.0.1:8000/demo/scenarios" target="_blank" rel="noreferrer">
+                Demo scenarios API
+              </a>
+            </Button>
+          </div>
+        </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Emails Processed</CardTitle>
-            <Mail className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">1,234</div>
-            <p className="text-xs text-muted-foreground">
-              +20.1% from last hour
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Orders Today</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">89</div>
-            <p className="text-xs text-muted-foreground">
-              +12.5% from yesterday
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Revenue</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">$45,231</div>
-            <p className="text-xs text-muted-foreground">
-              +8.2% from last month
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Locations</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">7</div>
-            <p className="text-xs text-muted-foreground">
-              All locations operational
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Shipments Today</CardTitle>
-            <Truck className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">67</div>
-            <p className="text-xs text-muted-foreground">
-              +5.3% from yesterday
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">System Status</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <Badge variant="default" className="bg-green-500">
-              All Systems Operational
-            </Badge>
-            <p className="text-xs text-muted-foreground mt-2">
-              AI agents running smoothly
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
+        <Card className="border-slate-200 shadow-sm">
           <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
-            <CardDescription>
-              Latest system activity and AI agent actions
-            </CardDescription>
+            <CardTitle className="text-base">Try these in the room</CardTitle>
+            <CardDescription>Pre-loaded demo catalog · no dealer DMS required</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center space-x-4">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium">Email processed successfully</p>
-                  <p className="text-xs text-muted-foreground">2 minutes ago</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-4">
-                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium">New order created</p>
-                  <p className="text-xs text-muted-foreground">5 minutes ago</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-4">
-                <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium">Parts sourcing in progress</p>
-                  <p className="text-xs text-muted-foreground">8 minutes ago</p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>AI Agent Status</CardTitle>
-            <CardDescription>
-              Current status of all AI agents
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Email Classifier</span>
-                <Badge variant="default" className="bg-green-500">Active</Badge>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Customer Service</span>
-                <Badge variant="default" className="bg-green-500">Active</Badge>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Parts Lookup</span>
-                <Badge variant="default" className="bg-green-500">Active</Badge>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Inventory Manager</span>
-                <Badge variant="default" className="bg-green-500">Active</Badge>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Pricing & Invoice</span>
-                <Badge variant="default" className="bg-green-500">Active</Badge>
-              </div>
-            </div>
+          <CardContent className="space-y-2 text-sm">
+            {[
+              'brake pads for 2019 Honda Civic',
+              'oil filter Toyota Camry 2020',
+              'spark plugs NGK Civic',
+              'front rotors 2018 Ford F-150',
+              'battery group 51R Honda',
+            ].map((q) => (
+              <Link
+                key={q}
+                href={`/parts?q=${encodeURIComponent(q)}`}
+                className="block rounded-md border bg-muted/40 px-3 py-2 font-mono text-xs hover:bg-muted"
+              >
+                {q}
+              </Link>
+            ))}
           </CardContent>
         </Card>
       </div>
+
+      <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3">
+        <Card>
+          <CardHeader className="pb-2">
+            <MapPin className="mb-2 h-5 w-5 text-slate-700" />
+            <CardTitle className="text-base">Multi-location</CardTitle>
+          </CardHeader>
+          <CardContent className="text-sm text-muted-foreground">
+            Demo catalog spans 7 locations — same part, different stock and price.
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <Zap className="mb-2 h-5 w-5 text-slate-700" />
+            <CardTitle className="text-base">Hybrid retrieval</CardTitle>
+          </CardHeader>
+          <CardContent className="text-sm text-muted-foreground">
+            Dense + keyword fusion (RRF). Works offline for the pilot demo path.
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <Shield className="mb-2 h-5 w-5 text-slate-700" />
+            <CardTitle className="text-base">Human in the loop</CardTitle>
+          </CardHeader>
+          <CardContent className="text-sm text-muted-foreground">
+            Traffic-light confidence — green / yellow / red — not silent automation.
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card className="border-dashed">
+        <CardHeader>
+          <CardTitle className="text-base">What we are not claiming today</CardTitle>
+        </CardHeader>
+        <CardContent className="text-sm text-muted-foreground space-y-1">
+          <p>· Not a full DMS replacement or live OEM feed (yet).</p>
+          <p>· Payments, shipping, and analytics pages are previews.</p>
+          <p>· Production needs your catalog, auth, and network controls.</p>
+        </CardContent>
+      </Card>
     </div>
   )
 }

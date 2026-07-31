@@ -138,6 +138,8 @@ function normalizePart(item: unknown): PartResult {
     manufacturer: (o.manufacturer ?? o.brand ?? o.mfr) as string | undefined,
     price: o.price as number | string | undefined,
     quantity: (o.quantity ?? o.stock ?? o.qty) as number | undefined,
+    stock: (o.stock ?? o.quantity ?? o.qty) as number | undefined,
+    location: (o.location ?? o.store ?? o.site) as string | undefined,
     category: o.category as string | undefined,
     availability: (o.availability ?? o.status) as string | undefined,
     score: (o.score ?? o.similarity ?? o.rrf_score) as number | undefined,
@@ -196,6 +198,16 @@ export async function queryParts(
     source: "api" | "parrts";
     run: () => Promise<unknown>;
   }> = [
+    // Prefer offline-capable hybrid core first (dealership demo path).
+    {
+      source: "parrts",
+      run: () =>
+        getJson(`/query`, {
+          baseUrl,
+          method: "POST",
+          body: JSON.stringify({ text: q, query: q }),
+        }),
+    },
     {
       source: "api",
       run: () =>
@@ -208,15 +220,6 @@ export async function queryParts(
       source: "api",
       run: () =>
         getJson(`/api/v1/parts/search`, {
-          baseUrl,
-          method: "POST",
-          body: JSON.stringify({ text: q, query: q }),
-        }),
-    },
-    {
-      source: "parrts",
-      run: () =>
-        getJson(`/query`, {
           baseUrl,
           method: "POST",
           body: JSON.stringify({ text: q, query: q }),

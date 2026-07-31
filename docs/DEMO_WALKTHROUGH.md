@@ -1,45 +1,36 @@
-# Demo walkthrough (5 minutes)
+# Demo walkthrough
 
-Safe path for technical presentations. All commands from monorepo root with venv active.
+## Dealership room (preferred)
 
-## 1. Retrieval core (no keys)
+```bash
+./scripts/demo_up.sh
+# UI:  http://127.0.0.1:3000/parts
+# API: http://127.0.0.1:8000/demo/scenarios
+./scripts/demo_smoke.sh
+```
+
+Talk track: [`DEALERSHIP_PITCH.md`](DEALERSHIP_PITCH.md)
+
+## CLI-only
 
 ```bash
 pip install -e ".[dev]"
 python -m parrts ingest --force
 python -m parrts query "brake pads for 2019 Honda Civic" --no-llm
 python scripts/eval_retrieval.py -k 5
-# expect: hit_rate@5 = 12/12, mode=parrts
 ```
 
-## 2. Backend boot
+## Backend boot
 
 ```bash
 pip install -e ".[dev,api]"
 pip install -r backend/requirements.txt
 PYTHONPATH=backend:src python scripts/verify_boot.py
-# expect: api_v1 loaded_count=15, parrts traffic_light green
 ```
 
-## 3. Tests
+## Tests
 
 ```bash
 pytest -q
-# expect: 67+ passed, skips only optional live deps
+cd frontend && npm run build
 ```
-
-## 4. Frontend (optional live UI)
-
-```bash
-cd frontend && npm ci && npm run build && npm run dev
-# Parts search: http://localhost:3000/parts
-```
-
-## Talking points
-
-- **SoT:** `src/parrts` hybrid dense + BM25 + RRF + traffic-light  
-- **Enterprise shell:** FastAPI 15 route groups, honest health, demo vs production auth  
-- **Not claimed live:** Stripe/EasyPost, supplier scrape SLA, multi-tenant GA  
-- **Legacy pitch:** `archive/legacy-pitch/` only  
-
-Ship: https://github.com/seanebones-lang/parts

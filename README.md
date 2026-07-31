@@ -46,9 +46,22 @@ Older marketing copy that claims full production SLA for 13 agents, always-live 
 
 ## Quick start (no API keys)
 
+### Dealership room demo (recommended)
+
 ```bash
 git clone https://github.com/seanebones-lang/parts.git
 cd parts
+./scripts/demo_up.sh          # API :8000 + UI :3000 + ingest
+# open http://127.0.0.1:3000/parts
+./scripts/demo_smoke.sh       # optional health check
+./scripts/demo_down.sh        # stop
+```
+
+Pitch script: [`docs/DEALERSHIP_PITCH.md`](docs/DEALERSHIP_PITCH.md)
+
+### CLI only
+
+```bash
 python3 -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -e ".[dev]"
 python -m parrts ingest --force
