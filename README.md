@@ -185,6 +185,7 @@ docker-compose.yml    # dev profiles
 docker-compose.prod.yml
 ```
 
+**5-minute demo script:** [`docs/DEMO_WALKTHROUGH.md`](docs/DEMO_WALKTHROUGH.md)  
 Agent ownership: [`docs/AGENTS.md`](docs/AGENTS.md)  
 Execution history: [`docs/CTO_BACKLOG.md`](docs/CTO_BACKLOG.md)
 

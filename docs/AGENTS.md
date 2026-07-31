@@ -1,6 +1,6 @@
 # Agent ownership — Parts / Parrts-Dist-RAG
 
-**Root:** `/Users/nexteleven/Desktop/Parrts-Dist-RAG`  
+**Root:** monorepo clone of `seanebones-lang/parts`  
 **Ship remote:** `origin` → `https://github.com/seanebones-lang/parts`  
 **Rule:** children **do not commit**. Orchestrator integrates, verifies, commits, pushes.
 

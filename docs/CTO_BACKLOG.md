@@ -1,6 +1,6 @@
 # Parts (parrts) — CTO Backlog
 
-**Root:** `/Users/nexteleven/Desktop/Parrts-Dist-RAG`  
+**Root:** monorepo (local clone of `seanebones-lang/parts`)  
 **Ship:** `https://github.com/seanebones-lang/parts` (`origin` / `main`)  
 **Package:** `parrts` **v0.5.0**  
 **SoT:** this file. Mark `[x]` only after real execution + verification.

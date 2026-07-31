@@ -10,11 +10,7 @@ dist/
 downloads/
 eggs/
 .eggs/
-# Only ignore lib/ in root, not frontend/lib/
-# lib/
 lib64/
-# Only ignore parts/ in root, not frontend/app/parts/
-# parts/
 sdist/
 var/
 wheels/
@@ -33,9 +29,10 @@ ENV/
 env.bak/
 venv.bak/
 
-# IDEs
+# IDEs / agent local
 .vscode/
 .idea/
+.cursor/
 *.swp
 *.swo
 *~
@@ -57,9 +54,6 @@ logs/
 *.db
 *.sqlite3
 
-# Docker
-.dockerignore
-
 # Node.js
 node_modules/
 npm-debug.log*
@@ -71,7 +65,6 @@ yarn-error.log*
 # Next.js
 .next/
 out/
-build/
 *.tsbuildinfo
 
 # Environment variables
@@ -80,11 +73,15 @@ build/
 .env.test.local
 .env.production.local
 
-# Temporary files
+# Temporary / runtime artifacts
 *.tmp
 *.temp
+generated_invoices/
+generated_pdfs/
+scraped_data/
+screenshots/
 
-# AI/ML
+# AI/ML local index
 *.pkl
 *.model
 *.weights
@@ -95,13 +92,6 @@ htmlcov/
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
-
-# Scraping
-scraped_data/
-screenshots/
-
-# PDFs
-generated_pdfs/
 
 # Redis dump
 dump.rdb

@@ -1,9 +1,15 @@
-# Dealership parts stack — compose profiles:
-#   docker compose --profile core up          # postgres + redis only
-#   docker compose --profile api up           # + backend
-#   docker compose --profile full up          # + frontend + workers
-#   docker compose --profile pgvector up      # alias for core (already pgvector image)
-#   docker compose --profile obs up           # + flower
+# Dealership parts stack — compose profiles (DEV):
+#   docker compose --profile core up -d       # postgres + redis only
+#   docker compose --profile api up -d        # + backend (reload)
+#   docker compose --profile full up -d       # + frontend + workers
+#   docker compose --profile pgvector up -d   # alias for core (pgvector image)
+#   docker compose --profile obs up -d        # + flower
+#
+# Production-style (no reload, required secrets):
+#   docker compose -f docker-compose.prod.yml up -d --build
+#
+# Backend/Celery images build from monorepo root so src/parrts is available
+# (see backend/Dockerfile).
 
 services:
   postgres:
@@ -47,8 +53,8 @@ services:
 
   backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: backend/Dockerfile
     container_name: dealership_backend
     profiles: ["api", "full", "default"]
     env_file:
@@ -67,6 +73,8 @@ services:
       - PGVECTOR_ENABLED=${PGVECTOR_ENABLED:-false}
       - VECTOR_BACKEND=${VECTOR_BACKEND:-auto}
       - AUTH_MODE=${AUTH_MODE:-demo}
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - DEBUG=${DEBUG:-true}
     ports:
       - "8000:8000"
     volumes:
@@ -92,8 +100,8 @@ services:
 
   celery:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: backend/Dockerfile
     container_name: dealership_celery
     profiles: ["full"]
     env_file:
@@ -111,6 +119,7 @@ services:
       - REDIS_PORT=6379
     volumes:
       - ./backend:/app
+      - ./src:/src:ro
     depends_on:
       postgres:
         condition: service_healthy
@@ -120,8 +129,8 @@ services:
 
   celery-beat:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: backend/Dockerfile
     container_name: dealership_celery_beat
     profiles: ["full"]
     env_file:
@@ -139,6 +148,7 @@ services:
       - REDIS_PORT=6379
     volumes:
       - ./backend:/app
+      - ./src:/src:ro
     depends_on:
       postgres:
         condition: service_healthy
@@ -170,8 +180,8 @@ services:
 
   flower:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: backend/Dockerfile
     container_name: dealership_flower
     profiles: ["obs", "full"]
     ports:

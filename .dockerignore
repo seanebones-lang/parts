@@ -1,0 +1,26 @@
+# Monorepo dockerignore (build context = repo root for backend image)
+
+.git
+.github
+.venv
+venv
+.env
+.env.*
+!.env.example
+.cursor
+.parrts
+.pytest_cache
+.ruff_cache
+.mypy_cache
+**/__pycache__
+**/*.pyc
+**/.DS_Store
+frontend/node_modules
+frontend/.next
+archive
+docs
+tests
+*.md
+!backend/README.md
+generated_invoices
+generated_pdfs
