@@ -6,6 +6,8 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
+from app.api.deps import require_user_if_production
+from app.models.user import User
 from app.services.parts_service import PartsService
 from app.services.vector_service import VectorService
 from app.agents.parts_lookup import PartsLookupAgent
@@ -182,9 +184,14 @@ async def get_models_by_make(
 @router.post("/bulk-import")
 async def bulk_import_parts(
     parts_data: List[dict],
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(require_user_if_production),
 ):
-    """Bulk import parts from external data."""
+    """Bulk import parts from external data.
+
+    Auth: open when AUTH_MODE=demo; JWT required when AUTH_MODE=production.
+    """
+    _ = current_user  # identity available for audit when authenticated
     try:
         service = PartsService(db)
         result = await service.bulk_import_parts(parts_data)
@@ -201,9 +208,14 @@ async def bulk_import_parts(
 @router.post("/index-part/{part_id}")
 async def index_part_for_search(
     part_id: int,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(require_user_if_production),
 ):
-    """Index a part for semantic search."""
+    """Index a part for semantic search.
+
+    Auth: open when AUTH_MODE=demo; JWT required when AUTH_MODE=production.
+    """
+    _ = current_user
     try:
         service = PartsService(db)
         part = await service.get_part(part_id)

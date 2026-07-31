@@ -109,6 +109,15 @@
 - [x] W9.4 Optional ST/BGE smoke test (`PARRTS_TEST_ST=1`, skipped by default)
 - [x] W9.5 parrts **v0.4.2**
 
+## Wave 10 — Finish remaining gaps (specialized agent loop)
+
+- [x] W10.1 `scripts/seed_pgvector.py` — skip when DB down; compose profile hint
+- [x] W10.2 `tests/test_pgvector_e2e.py` — live path skippable without Postgres
+- [x] W10.3 `backend/app/api/deps.py` — `require_user_if_production` / `get_optional_user`
+- [x] W10.4 Wire demo/prod auth on parts + orders mutating routes
+- [x] W10.5 Mocked agent unit tests (inventory/payment/shipping) — 6 offline
+- [x] W10.6 AUTH_MODE docs in `.env.example` + config
+
 ---
 
 ## Verify commands

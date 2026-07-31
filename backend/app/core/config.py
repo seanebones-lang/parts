@@ -124,7 +124,8 @@ class Settings(BaseSettings):
     RATE_LIMIT_PER_MINUTE: int = 120
     RATE_LIMIT_PER_HOUR: int = 2000
 
-    # Auth — "demo" = open public endpoints (default); "production" = JWT expected
+    # Auth — AUTH_MODE=demo|production (see app.api.deps.require_user_if_production)
+    # demo: mutating routes open without Bearer; production: JWT required
     AUTH_MODE: str = "demo"
 
     # Vector / pgvector production path

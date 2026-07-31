@@ -29,7 +29,8 @@ SECRET_KEY = settings.SECRET_KEY
 ALGORITHM = settings.ALGORITHM
 ACCESS_TOKEN_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES
 
-# Security scheme
+# Security scheme (strict — missing Bearer → 403 from HTTPBearer)
+# For demo-aware mutating routes use app.api.deps.require_user_if_production
 security = HTTPBearer()
 
 

@@ -60,6 +60,9 @@ include = ["src/parrts", "tests", "README.md", "pyproject.toml"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
+markers = [
+    "pgvector: live Postgres/pgvector e2e (skipped when DATABASE unreachable)",
+]
 
 [tool.ruff]
 line-length = 100

@@ -1,35 +1,30 @@
 # Parrts-Dist-RAG Roadmap
 
-Last updated: 2026-07-31 (Wave 9)
+Last updated: 2026-07-31 (Wave 10)
 
 ## Ship target
 
 **GitHub:** https://github.com/seanebones-lang/parts (`origin` / `main`)  
 Local: `~/Desktop/Parrts-Dist-RAG`
 
-## Shipped (max-opt loop)
+## Shipped (max-opt Waves 0–10)
 
-1. `parrts` core hybrid retrieval + traffic-light + offline tests (**v0.4.2**)  
-2. Backend boots Pydantic v2 / async LLM / honest health  
-3. **Full `/api/v1`**: 15/15 routers soft-loaded  
-4. Frontend typed client + traffic-light badge + type-check CI  
-5. CI matrix + backend-smoke + compose profiles + `/metrics`  
-6. Parent SKU expansion, lazy rerank, eval MRR/recall/latency  
-7. Opt-in pgvector path (`PGVECTOR_ENABLED`)  
-8. LangGraph full specialist graph (soft offline stubs)  
-9. Pydantic v2 schema hygiene (auth/location)
+1. `parrts` core hybrid RAG + traffic-light + offline tests (**v0.4.2**)  
+2. Backend Pydantic v2 / async LLM / honest health / 15/15 `/api/v1`  
+3. Frontend typed client + traffic-light + type-check CI  
+4. CI matrix + backend-smoke + compose profiles + `/metrics`  
+5. Parent expand, lazy rerank, eval MRR/recall/latency  
+6. LangGraph full specialist graph (soft offline)  
+7. pgvector seed script + skippable e2e (no Docker required for CI)  
+8. AUTH_MODE demo/production JWT deps on mutating routes  
+9. Mocked agent unit tests (inventory/payment/shipping)
 
-## Next
+## Optional next (keys / Docker daemon)
 
-- Seeded pgvector e2e under compose `--profile api` when Docker DB up  
-- Demo mode optional JWT on mutating `/api/v1` routes (production already expects JWT)  
-- Live ST/BGE local smoke: `PARRTS_TEST_ST=1 pytest -q tests/test_optional_st_embedder.py`  
-- Deeper agent unit tests with mocked InventoryService / Stripe  
-
-## Later
-
-- Live Stripe / EasyPost when keys present  
-- Supplier scraping only behind explicit feature flags  
+- Start Docker Desktop → `docker compose --profile pgvector up -d` → `PGVECTOR_ENABLED=true python scripts/seed_pgvector.py`  
+- Live ST/BGE: `PARRTS_TEST_ST=1 pytest tests/test_optional_st_embedder.py`  
+- Live Stripe/EasyPost when keys present  
+- Wire remaining write endpoints to `require_user_if_production`  
 - Multi-tenant auth hardening  
 
 See `docs/CTO_BACKLOG.md` for checkbox SoT.

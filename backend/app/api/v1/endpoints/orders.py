@@ -6,6 +6,8 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
+from app.api.deps import require_user_if_production
+from app.models.user import User
 from app.services.order_service import OrderService
 from app.services.pricing_service import PricingService
 from app.agents.pricing_invoice import PricingInvoiceAgent
@@ -78,9 +80,14 @@ async def get_order(
 @router.post("/")
 async def create_order(
     order_data: dict,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(require_user_if_production),
 ):
-    """Create a new order."""
+    """Create a new order.
+
+    Auth: open when AUTH_MODE=demo; JWT required when AUTH_MODE=production.
+    """
+    _ = current_user  # identity available for audit when authenticated
     try:
         service = OrderService(db)
         
