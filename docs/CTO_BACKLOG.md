@@ -1,49 +1,33 @@
-# Parts (parrts) — CTO Backlog
+# Parts — CTO Backlog
 
-**Root:** monorepo clone of `seanebones-lang/parts`  
-**Ship:** https://github.com/seanebones-lang/parts (`origin` / `main`)  
-**Package:** `parrts` **v0.5.1** (Wave 12)  
-**SoT:** this file. `[x]` only after measured verification.
+**Ship:** https://github.com/seanebones-lang/parts · **parrts v0.6.0**  
+**Honesty:** `[x]` only after measured verify. Never invent live OEM credentials.
 
-Waves 0–11 complete (CI green, prod hardening, presentable tree).
+## Strategic truth
 
----
+| Goal | Reality after W13 |
+|------|-------------------|
+| Full DMS *replacement* | Multi-quarter vs CDK/Reynolds. **W13 ships a working offline DMS core.** |
+| Live OEM feed | Needs contracts. **W13 ships pluggable adapters; HTTP goes live when URL+token set.** |
+| Counter AI search | Done (W12). |
 
-## Truth: can we present to a dealership *today*?
+## Wave 13 — complete
 
-| Claim | Reality |
-|-------|---------|
-| Multi-location NL parts search | **Yes** — hybrid RAG + traffic-light |
-| Live API `/query` without Postgres | **Yes** |
-| Parts UI with live path | **Yes** — `/parts` + demo_up |
-| Full DMS / payments / shipping GA | **No** — roadmap previews |
-| One-command dealer demo | **Yes** — `./scripts/demo_up.sh` (Wave 12) |
+- [x] W13.1–5 `src/parrts/dms/` SQLite + services + CLI
+- [x] W13.6–9 OEM synthetic/file/http + sample feed + tests
+- [x] W13.10–12 `/api/v1/dms/*` soft-load (16 routers)
+- [x] W13.13–17 FE inventory/orders/customers Live + nav
+- [x] W13.18 `docs/DMS_OEM.md`
+- [x] W13.19–20 README + pytest + build
 
-**Positioning:** Design-partner **pilot** — not “replace your DMS tomorrow.”
+### Measured
+- `tests/test_dms_oem.py` + `test_dms_api.py` green
+- verify_boot `loaded_count=16` includes `dms`
+- `parrts dms seed` → 40 parts / 7 locations
+- FE build green (`/inventory` `/orders` `/customers` live)
 
----
+## Later
+W14 Postgres/Alembic · W15 named OEM connectors 📌 · W16 RO/GL · W17 multi-tenant
 
-## Wave 12 — Dealership demo-ready
-
-### Demo ops
-- [x] W12.1 `scripts/demo_up.sh`
-- [x] W12.2 `scripts/demo_smoke.sh` (+ demo_down.sh)
-- [x] W12.3 `docs/DEALERSHIP_PITCH.md`
-- [x] W12.4 `docs/DEMO_WALKTHROUGH.md` updated
-
-### Backend demo surface
-- [x] W12.5 `GET /demo/scenarios`
-- [x] W12.6 CORS includes 127.0.0.1:3000; `/query` traffic_light
-
-### Frontend honesty + polish
-- [x] W12.7 Home: pilot banner + CTA Parts Search (no fake live revenue)
-- [x] W12.8 Nav: Parts Search first; Preview labels
-- [x] W12.9 Stub pages → `RoadmapPreview`
-- [x] W12.10 Parts: scenario chips + auto-search + location line
-
-### Verify & ship
-- [x] W12.11 Live smoke: demo_up + demo_smoke **SMOKE OK** (hits=5, traffic green)
-- [x] W12.12 pytest 67p, next build, push
-
-## Explicit non-goals Wave 12
-Live Stripe · multi-tenant SSO · real OEM catalog · 13-agent SLA claims
+## Never
+Unauthorized OEM scraping · fake Honda live API · claiming full DMS GA parity

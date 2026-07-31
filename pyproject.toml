@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "parrts"
-version = "0.5.1"
+version = "0.6.0"
 description = "Modern hybrid RAG core for multi-location auto parts inventory"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -80,3 +80,5 @@ select = ["E", "F", "I", "W"]
 "tests/**" = ["E402"]
 # Streamlit UI inserts monorepo src onto sys.path before package imports.
 "src/parrts/ui_streamlit.py" = ["E402"]
+# Dense OEM template tables — readability over line length.
+"src/parrts/dms/oem.py" = ["E501"]

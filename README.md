@@ -34,6 +34,8 @@ Returns ranked SKUs across locations with **green / yellow / red** confidence fo
 | **Enterprise API** | `backend/` | Boots without Postgres for `/`, `/health`, `/query`, `/metrics`; **15/15** `/api/v1`; prod secret guard; JWT on writes when `AUTH_MODE=production` |
 | **Agents** | `backend/app/agents/` | LangGraph specialists; soft-fail offline; parts path uses `parrts` |
 | **Frontend** | `frontend/` | Typed client, traffic-light badge, **`npm run build` green** |
+| **DMS Core** | `src/parrts/dms/` + `/api/v1/dms` | Offline SQLite ops: inventory, customers, orders + OEM feed adapters |
+| **OEM feed** | adapters synthetic/file/http | Live HTTP when `OEM_FEED_URL` set — no invented OEM credentials |
 | **Legacy demos** | `archive/legacy-pitch/` | Streamlit / pitch walkthroughs — **not** the modern SoT |
 | **Payments / shipping** | services | **Mock** unless Stripe / EasyPost keys present |
 | **Live LLM** | optional | Needs `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` |

@@ -1,18 +1,14 @@
-# Agent ownership — Parts / Parrts-Dist-RAG
+# Agent ownership — Wave 13 DMS + OEM
 
-**Root:** monorepo clone of `seanebones-lang/parts`  
-**Ship remote:** `origin` → `https://github.com/seanebones-lang/parts`  
-**Rule:** children **do not commit**. Orchestrator integrates, verifies, commits, pushes.
+**Root:** `/Users/nexteleven/Desktop/Parrts-Dist-RAG`  
+**Ship:** `origin` → `https://github.com/seanebones-lang/parts`  
+**Children do not commit.**
 
 | Agent | Owns | Forbidden |
 |-------|------|-----------|
-| **CI-OPS** | `.github/workflows/ci.yml`, `docker-compose.prod.yml`, `backend/Dockerfile`, `frontend/Dockerfile`, `pyproject.toml` (license/version only), `.env.example` | Deep FE page logic, endpoint business logic |
-| **FE-SHIP** | `frontend/**` (pages, next.config, package.json if needed) | `backend/**`, `src/**` |
-| **BE-SEC** | `backend/main.py` (prod secret guard), `backend/app/core/config.py`, `backend/app/api/deps.py`, `backend/app/api/v1/endpoints/**`, `tests/test_auth_demo_mode.py` | `frontend/**` |
-| **HYGIENE** | `archive/legacy-pitch/**`, root markdown moves, `README.md` honesty section, `docs/CTO_BACKLOG.md` checkboxes (orchestrator) | Breaking modern `src/parrts` APIs |
-| **ORCH** | Integrate, pytest, verify_boot, eval, next build, commit, push `parts` | — |
+| **DMS-CORE** | `src/parrts/dms/**`, `src/parrts/cli.py` (dms subcommands), `tests/test_dms_*.py`, `data/oem/**` | frontend deep, backend endpoints |
+| **DMS-BE** | `backend/app/api/v1/endpoints/dms*.py`, `backend/app/api/v1/api.py` include, `backend/app/services/dms_*.py` if needed | `src/parrts/dms` schema thrash |
+| **DMS-FE** | `frontend/app/inventory/**`, `orders/**`, `customers/**`, `navigation.tsx`, `lib/dms-api.ts` | backend models |
+| **ORCH** | integrate, docs, verify, commit, push | — |
 
-## Wave 11 non-overlap
-
-- CI-OPS ∥ FE-SHIP ∥ BE-SEC in parallel  
-- HYGIENE after FE/BE (path moves) or sequential by ORCH  
+Parallel: CORE ∥ BE ∥ FE after CORE lands store API shapes (FE can mock then swap).

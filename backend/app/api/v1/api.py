@@ -46,6 +46,7 @@ _include("barcode", "app.api.v1.endpoints.barcode", "/barcode", ["barcode-scanni
 _include("serialized", "app.api.v1.endpoints.serialized", "/serialized", ["serialized-tracking"])
 _include("deployment", "app.api.v1.endpoints.deployment", "/deployment", ["deployment"])
 _include("rollout", "app.api.v1.endpoints.rollout", "/rollout", ["rollout"])
+_include("dms", "app.api.v1.endpoints.dms", "/dms", ["dms"])
 
 
 def router_status() -> dict:

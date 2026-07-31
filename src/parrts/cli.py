@@ -1,4 +1,4 @@
-"""CLI: ingest, query, status."""
+"""CLI: ingest, query, status, dms.*"""
 
 from __future__ import annotations
 
@@ -62,6 +62,85 @@ def cmd_status(args: argparse.Namespace) -> int:
     return 0
 
 
+def _dms_service(args: argparse.Namespace):
+    from parrts.dms.service import DmsService
+
+    return DmsService(root=_root_from_args(args))
+
+
+def cmd_dms_status(args: argparse.Namespace) -> int:
+    svc = _dms_service(args)
+    print(json.dumps(svc.status(), indent=2))
+    return 0
+
+
+def cmd_dms_seed(args: argparse.Namespace) -> int:
+    svc = _dms_service(args)
+    stats = svc.seed_demo(
+        seed=int(getattr(args, "seed", 42)),
+        n_skus=int(getattr(args, "n_skus", 40)),
+        locations=int(getattr(args, "locations", 7)),
+    )
+    if getattr(args, "reindex", False):
+        stats["reindex"] = svc.reindex_rag()
+    print(json.dumps({"ok": True, "action": "dms.seed", **stats}, indent=2))
+    return 0
+
+
+def cmd_dms_sync_oem(args: argparse.Namespace) -> int:
+    from parrts.dms.oem import FileOemFeed, HttpOemFeed, SyntheticOemFeed
+
+    svc = _dms_service(args)
+    source = str(args.source).lower()
+    if source == "synthetic":
+        feed = SyntheticOemFeed(
+            seed=int(getattr(args, "seed", 42)),
+            n_skus=int(getattr(args, "n_skus", 40)),
+            locations=int(getattr(args, "locations", 7)),
+        )
+        label = "synthetic"
+    elif source == "file":
+        if not args.path:
+            print(json.dumps({"ok": False, "error": "--path required for --source file"}), file=sys.stderr)
+            return 2
+        feed = FileOemFeed(args.path)
+        label = f"file:{args.path}"
+    elif source == "http":
+        if not args.url:
+            print(json.dumps({"ok": False, "error": "--url required for --source http"}), file=sys.stderr)
+            return 2
+        feed = HttpOemFeed(url=args.url, token=getattr(args, "token", None))
+        label = f"http:{args.url}"
+    else:
+        print(json.dumps({"ok": False, "error": f"unknown source: {source}"}), file=sys.stderr)
+        return 2
+
+    try:
+        stats = svc.sync_oem(feed, source=label)
+    except Exception as exc:
+        print(json.dumps({"ok": False, "action": "dms.sync-oem", "error": str(exc)}, indent=2))
+        return 1
+
+    if getattr(args, "reindex", False):
+        stats["reindex"] = svc.reindex_rag()
+    print(json.dumps({"ok": True, "action": "dms.sync-oem", **stats}, indent=2))
+    return 0
+
+
+def cmd_dms_inventory(args: argparse.Namespace) -> int:
+    svc = _dms_service(args)
+    rows = svc.list_inventory(location=getattr(args, "location", None))
+    print(json.dumps({"ok": True, "count": len(rows), "inventory": rows}, indent=2))
+    return 0
+
+
+def cmd_dms_orders(args: argparse.Namespace) -> int:
+    svc = _dms_service(args)
+    rows = svc.list_orders()
+    print(json.dumps({"ok": True, "count": len(rows), "orders": rows}, indent=2))
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="parrts",
@@ -105,6 +184,51 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_status = sub.add_parser("status", help="Show index/inventory status")
     p_status.set_defaults(func=cmd_status)
+
+    # --- DMS subcommands ---
+    p_dms = sub.add_parser("dms", help="Offline DMS + OEM feed operations")
+    dms_sub = p_dms.add_subparsers(dest="dms_command", required=True)
+
+    p_dms_status = dms_sub.add_parser("status", help="DMS SQLite status counts")
+    p_dms_status.set_defaults(func=cmd_dms_status)
+
+    p_dms_seed = dms_sub.add_parser("seed", help="Seed demo catalog via SyntheticOemFeed")
+    p_dms_seed.add_argument("--seed", type=int, default=42)
+    p_dms_seed.add_argument("--n-skus", type=int, default=40)
+    p_dms_seed.add_argument("--locations", type=int, default=7)
+    p_dms_seed.add_argument(
+        "--reindex",
+        action="store_true",
+        help="Export inventory JSON and rebuild RAG index",
+    )
+    p_dms_seed.set_defaults(func=cmd_dms_seed)
+
+    p_dms_sync = dms_sub.add_parser("sync-oem", help="Sync OEM feed into DMS catalog/inventory")
+    p_dms_sync.add_argument(
+        "--source",
+        choices=["synthetic", "file", "http"],
+        default="synthetic",
+        help="Feed adapter (default: synthetic)",
+    )
+    p_dms_sync.add_argument("--path", default=None, help="JSON/CSV path for --source file")
+    p_dms_sync.add_argument("--url", default=None, help="URL for --source http")
+    p_dms_sync.add_argument("--token", default=None, help="Optional Bearer token for http")
+    p_dms_sync.add_argument("--seed", type=int, default=42)
+    p_dms_sync.add_argument("--n-skus", type=int, default=40)
+    p_dms_sync.add_argument("--locations", type=int, default=7)
+    p_dms_sync.add_argument(
+        "--reindex",
+        action="store_true",
+        help="Export inventory JSON and rebuild RAG index after sync",
+    )
+    p_dms_sync.set_defaults(func=cmd_dms_sync_oem)
+
+    p_dms_inv = dms_sub.add_parser("inventory", help="List DMS inventory levels")
+    p_dms_inv.add_argument("--location", default=None, help="Filter by location code/name/id")
+    p_dms_inv.set_defaults(func=cmd_dms_inventory)
+
+    p_dms_orders = dms_sub.add_parser("orders", help="List DMS orders")
+    p_dms_orders.set_defaults(func=cmd_dms_orders)
 
     return parser
 

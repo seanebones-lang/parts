@@ -1,0 +1,317 @@
+[
+  {
+    "sku": "OEM-SAMPLE-BP-HC19",
+    "name": "Brake Pads Front Ceramic",
+    "description": "OEM ceramic front brake pads 2019 Honda Civic",
+    "make": "Honda",
+    "model": "Civic",
+    "year": "2019",
+    "category": "brakes",
+    "oem_brand": "Honda",
+    "list_price": 48.99,
+    "msrp": 59.99,
+    "location_qty": {
+      "CHI-N": 12,
+      "OHARE": 4,
+      "LOGAN": 8,
+      "WRIG": 2,
+      "SOUTH": 15,
+      "LOOP": 1,
+      "WEST": 6
+    }
+  },
+  {
+    "sku": "OEM-SAMPLE-BR-HC",
+    "name": "Brake Rotor Front",
+    "description": "OEM ventilated front brake rotor Honda Civic",
+    "make": "Honda",
+    "model": "Civic",
+    "year": "2018-2020",
+    "category": "brakes",
+    "oem_brand": "Honda",
+    "list_price": 79.5,
+    "msrp": 95.0,
+    "location_qty": {
+      "CHI-N": 5,
+      "OHARE": 3,
+      "LOGAN": 0,
+      "WRIG": 7,
+      "SOUTH": 4,
+      "LOOP": 2,
+      "WEST": 3
+    }
+  },
+  {
+    "sku": "OEM-SAMPLE-AF-HC",
+    "name": "Engine Air Filter",
+    "description": "OEM engine air filter Honda Civic 2016-2021",
+    "make": "Honda",
+    "model": "Civic",
+    "year": "2016-2021",
+    "category": "filters",
+    "oem_brand": "Honda",
+    "list_price": 19.99,
+    "msrp": 24.99,
+    "location_qty": {
+      "CHI-N": 20,
+      "OHARE": 14,
+      "LOGAN": 18,
+      "WRIG": 10,
+      "SOUTH": 22,
+      "LOOP": 8,
+      "WEST": 16
+    }
+  },
+  {
+    "sku": "OEM-SAMPLE-OF-HC",
+    "name": "Oil Filter",
+    "description": "OEM spin-on oil filter Honda Civic",
+    "make": "Honda",
+    "model": "Civic",
+    "year": "2016-2021",
+    "category": "filters",
+    "oem_brand": "Honda",
+    "list_price": 11.5,
+    "msrp": 14.99,
+    "location_qty": {
+      "CHI-N": 30,
+      "OHARE": 25,
+      "LOGAN": 28,
+      "WRIG": 20,
+      "SOUTH": 35,
+      "LOOP": 12,
+      "WEST": 22
+    }
+  },
+  {
+    "sku": "OEM-SAMPLE-SP-HC",
+    "name": "Spark Plugs Iridium Set",
+    "description": "OEM iridium spark plug set Honda Civic",
+    "make": "Honda",
+    "model": "Civic",
+    "year": "2016-2021",
+    "category": "ignition",
+    "oem_brand": "Honda",
+    "list_price": 32.0,
+    "msrp": 39.99,
+    "location_qty": {
+      "CHI-N": 9,
+      "OHARE": 6,
+      "LOGAN": 4,
+      "WRIG": 11,
+      "SOUTH": 8,
+      "LOOP": 3,
+      "WEST": 5
+    }
+  },
+  {
+    "sku": "OEM-SAMPLE-ALT-F150",
+    "name": "Alternator Reman",
+    "description": "OEM reman alternator 2018 Ford F-150",
+    "make": "Ford",
+    "model": "F-150",
+    "year": "2018",
+    "category": "electrical",
+    "oem_brand": "Ford",
+    "list_price": 189.0,
+    "msrp": 229.0,
+    "location_qty": {
+      "CHI-N": 2,
+      "OHARE": 1,
+      "LOGAN": 0,
+      "WRIG": 3,
+      "SOUTH": 2,
+      "LOOP": 0,
+      "WEST": 1
+    }
+  },
+  {
+    "sku": "OEM-SAMPLE-BP-F150",
+    "name": "Brake Pads Heavy Duty",
+    "description": "OEM heavy-duty brake pads Ford F-150",
+    "make": "Ford",
+    "model": "F-150",
+    "year": "2015-2020",
+    "category": "brakes",
+    "oem_brand": "Ford",
+    "list_price": 68.0,
+    "msrp": 82.0,
+    "location_qty": {
+      "CHI-N": 7,
+      "OHARE": 5,
+      "LOGAN": 6,
+      "WRIG": 4,
+      "SOUTH": 9,
+      "LOOP": 2,
+      "WEST": 5
+    }
+  },
+  {
+    "sku": "OEM-SAMPLE-OF-F150",
+    "name": "Oil Filter F-150",
+    "description": "OEM oil filter Ford F-150 2015-2020",
+    "make": "Ford",
+    "model": "F-150",
+    "year": "2015-2020",
+    "category": "filters",
+    "oem_brand": "Ford",
+    "list_price": 13.25,
+    "msrp": 16.5,
+    "location_qty": {
+      "CHI-N": 18,
+      "OHARE": 15,
+      "LOGAN": 12,
+      "WRIG": 14,
+      "SOUTH": 20,
+      "LOOP": 6,
+      "WEST": 11
+    }
+  },
+  {
+    "sku": "OEM-SAMPLE-BP-TC",
+    "name": "Brake Pads Ceramic Camry",
+    "description": "OEM ceramic brake pads Toyota Camry",
+    "make": "Toyota",
+    "model": "Camry",
+    "year": "2018-2022",
+    "category": "brakes",
+    "oem_brand": "Toyota",
+    "list_price": 42.0,
+    "msrp": 52.0,
+    "location_qty": {
+      "CHI-N": 10,
+      "OHARE": 8,
+      "LOGAN": 7,
+      "WRIG": 9,
+      "SOUTH": 11,
+      "LOOP": 4,
+      "WEST": 6
+    }
+  },
+  {
+    "sku": "OEM-SAMPLE-OF-TC",
+    "name": "Oil Filter Camry",
+    "description": "OEM oil filter Toyota Camry",
+    "make": "Toyota",
+    "model": "Camry",
+    "year": "2018-2022",
+    "category": "filters",
+    "oem_brand": "Toyota",
+    "list_price": 12.0,
+    "msrp": 15.0,
+    "location_qty": {
+      "CHI-N": 24,
+      "OHARE": 19,
+      "LOGAN": 21,
+      "WRIG": 17,
+      "SOUTH": 26,
+      "LOOP": 10,
+      "WEST": 18
+    }
+  },
+  {
+    "sku": "OEM-SAMPLE-TH-TC",
+    "name": "Coolant Thermostat",
+    "description": "OEM coolant thermostat Toyota Camry",
+    "make": "Toyota",
+    "model": "Camry",
+    "year": "2018-2022",
+    "category": "cooling",
+    "oem_brand": "Toyota",
+    "list_price": 28.5,
+    "msrp": 35.0,
+    "location_qty": {
+      "CHI-N": 6,
+      "OHARE": 4,
+      "LOGAN": 5,
+      "WRIG": 3,
+      "SOUTH": 7,
+      "LOOP": 2,
+      "WEST": 4
+    }
+  },
+  {
+    "sku": "OEM-SAMPLE-ALT-TC",
+    "name": "Alternator Camry",
+    "description": "OEM alternator Toyota Camry 2018-2022",
+    "make": "Toyota",
+    "model": "Camry",
+    "year": "2018-2022",
+    "category": "electrical",
+    "oem_brand": "Toyota",
+    "list_price": 165.0,
+    "msrp": 199.0,
+    "location_qty": {
+      "CHI-N": 1,
+      "OHARE": 2,
+      "LOGAN": 0,
+      "WRIG": 1,
+      "SOUTH": 2,
+      "LOOP": 0,
+      "WEST": 1
+    }
+  },
+  {
+    "sku": "OEM-SAMPLE-BP-BMW3",
+    "name": "Brake Pads M Performance",
+    "description": "OEM M Performance brake pads BMW 3 Series",
+    "make": "BMW",
+    "model": "3 Series",
+    "year": "2019-2022",
+    "category": "brakes",
+    "oem_brand": "BMW",
+    "list_price": 125.0,
+    "msrp": 149.0,
+    "location_qty": {
+      "CHI-N": 3,
+      "OHARE": 1,
+      "LOGAN": 2,
+      "WRIG": 2,
+      "SOUTH": 1,
+      "LOOP": 8,
+      "WEST": 2
+    }
+  },
+  {
+    "sku": "OEM-SAMPLE-OF-BMW3",
+    "name": "Oil Filter BMW 3",
+    "description": "OEM oil filter BMW 3 Series",
+    "make": "BMW",
+    "model": "3 Series",
+    "year": "2019-2022",
+    "category": "filters",
+    "oem_brand": "BMW",
+    "list_price": 18.0,
+    "msrp": 22.0,
+    "location_qty": {
+      "CHI-N": 8,
+      "OHARE": 5,
+      "LOGAN": 6,
+      "WRIG": 4,
+      "SOUTH": 3,
+      "LOOP": 14,
+      "WEST": 5
+    }
+  },
+  {
+    "sku": "OEM-SAMPLE-CAF-HA",
+    "name": "Cabin Air Filter Accord",
+    "description": "OEM cabin air filter Honda Accord",
+    "make": "Honda",
+    "model": "Accord",
+    "year": "2018-2022",
+    "category": "filters",
+    "oem_brand": "Honda",
+    "list_price": 22.5,
+    "msrp": 28.0,
+    "location_qty": {
+      "CHI-N": 11,
+      "OHARE": 9,
+      "LOGAN": 10,
+      "WRIG": 8,
+      "SOUTH": 13,
+      "LOOP": 5,
+      "WEST": 7
+    }
+  }
+]
