@@ -55,7 +55,7 @@ async def test_require_user_demo_allows_missing_bearer(monkeypatch):
     from app.core.config import settings
 
     monkeypatch.setattr(settings, "AUTH_MODE", "demo")
-    result = await require_user_if_production(credentials=None, db=MagicMock())
+    result = await require_user_if_production(credentials=None)
     assert result is None
 
 
@@ -66,7 +66,7 @@ async def test_require_user_production_rejects_missing_bearer(monkeypatch):
 
     monkeypatch.setattr(settings, "AUTH_MODE", "production")
     with pytest.raises(HTTPException) as ei:
-        await require_user_if_production(credentials=None, db=MagicMock())
+        await require_user_if_production(credentials=None)
     assert ei.value.status_code == 401
     assert ei.value.headers and ei.value.headers.get("WWW-Authenticate") == "Bearer"
 
@@ -79,12 +79,16 @@ async def test_require_user_production_invalid_token_401(monkeypatch):
     monkeypatch.setattr(settings, "AUTH_MODE", "production")
     creds = HTTPAuthorizationCredentials(scheme="Bearer", credentials="bad-token")
 
-    with patch("app.api.deps.AuthService") as MockAuth:
-        inst = MockAuth.return_value
-        inst.verify_token.return_value = None
-        with pytest.raises(HTTPException) as ei:
-            await require_user_if_production(credentials=creds, db=MagicMock())
-        assert ei.value.status_code == 401
+    async def _fake_get_db():
+        yield MagicMock()
+
+    with patch("app.api.deps.get_db", _fake_get_db):
+        with patch("app.api.deps.AuthService") as MockAuth:
+            inst = MockAuth.return_value
+            inst.verify_token.return_value = None
+            with pytest.raises(HTTPException) as ei:
+                await require_user_if_production(credentials=creds)
+            assert ei.value.status_code == 401
 
 
 @pytest.mark.asyncio
@@ -94,12 +98,9 @@ async def test_require_user_demo_invalid_token_returns_none(monkeypatch):
 
     monkeypatch.setattr(settings, "AUTH_MODE", "demo")
     creds = HTTPAuthorizationCredentials(scheme="Bearer", credentials="bad-token")
-
-    with patch("app.api.deps.AuthService") as MockAuth:
-        inst = MockAuth.return_value
-        inst.verify_token.return_value = None
-        result = await require_user_if_production(credentials=creds, db=MagicMock())
-        assert result is None
+    # Demo mode ignores tokens and never opens DB
+    result = await require_user_if_production(credentials=creds)
+    assert result is None
 
 
 @pytest.mark.asyncio
@@ -112,13 +113,17 @@ async def test_require_user_production_valid_token_returns_user(monkeypatch):
     fake_user = MagicMock()
     fake_user.id = 42
 
-    with patch("app.api.deps.AuthService") as MockAuth:
-        inst = MockAuth.return_value
-        inst.verify_token.return_value = {"sub": "42"}
-        inst.get_user_by_id = AsyncMock(return_value=fake_user)
-        result = await require_user_if_production(credentials=creds, db=MagicMock())
-        assert result is fake_user
-        inst.get_user_by_id.assert_awaited_once_with(42)
+    async def _fake_get_db():
+        yield MagicMock()
+
+    with patch("app.api.deps.get_db", _fake_get_db):
+        with patch("app.api.deps.AuthService") as MockAuth:
+            inst = MockAuth.return_value
+            inst.verify_token.return_value = {"sub": "42"}
+            inst.get_user_by_id = AsyncMock(return_value=fake_user)
+            result = await require_user_if_production(credentials=creds)
+            assert result is fake_user
+            inst.get_user_by_id.assert_awaited_once_with(42)
 
 
 @pytest.mark.asyncio
