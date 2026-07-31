@@ -141,6 +141,20 @@ def cmd_dms_orders(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_dms_customers(args: argparse.Namespace) -> int:
+    svc = _dms_service(args)
+    rows = svc.list_customers()
+    print(json.dumps({"ok": True, "count": len(rows), "customers": rows}, indent=2))
+    return 0
+
+
+def cmd_dms_reindex(args: argparse.Namespace) -> int:
+    svc = _dms_service(args)
+    result = svc.reindex_rag()
+    print(json.dumps({"ok": bool(result.get("ok", True)), "action": "dms.reindex", **result}, indent=2))
+    return 0 if result.get("ok", True) else 1
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="parrts",
@@ -229,6 +243,14 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_dms_orders = dms_sub.add_parser("orders", help="List DMS orders")
     p_dms_orders.set_defaults(func=cmd_dms_orders)
+
+    p_dms_cust = dms_sub.add_parser("customers", help="List DMS customers")
+    p_dms_cust.set_defaults(func=cmd_dms_customers)
+
+    p_dms_reindex = dms_sub.add_parser(
+        "reindex", help="Export DMS inventory and rebuild RAG index"
+    )
+    p_dms_reindex.set_defaults(func=cmd_dms_reindex)
 
     return parser
 

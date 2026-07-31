@@ -37,14 +37,15 @@ jobs:
         env:
           PYTHONPATH: backend:src
         run: |
-          # Core offline suite + pure pydantic AgentResult (no sqlalchemy required).
+          # Core offline suite + pure pydantic AgentResult (no sqlalchemy/httpx2 required).
           # Exclude heavy backend modules that need backend/requirements.txt.
           pytest -q --tb=short \
             --ignore=tests/test_backend_boot.py \
             --ignore=tests/test_auth_demo_mode.py \
             --ignore=tests/test_agents_mocked.py \
             --ignore=tests/test_langgraph_workflow.py \
-            --ignore=tests/test_pgvector_e2e.py
+            --ignore=tests/test_pgvector_e2e.py \
+            --ignore=tests/test_dms_api.py
 
       - name: Retrieval eval smoke (default dataset)
         run: python scripts/eval_retrieval.py --dataset default -k 5
@@ -67,14 +68,28 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ".[dev,api]"
           pip install -r backend/requirements.txt
-      - name: Pytest including backend boot
+          pip install httpx greenlet
+      - name: Pytest including backend boot + DMS API
         env:
           PYTHONPATH: backend:src
-        run: pytest -q --tb=short tests/test_backend_boot.py
+          AUTH_MODE: demo
+          ENVIRONMENT: development
+        run: |
+          pytest -q --tb=short \
+            tests/test_backend_boot.py \
+            tests/test_dms_api.py \
+            tests/test_auth_demo_mode.py
       - name: verify_boot script
         env:
           PYTHONPATH: backend:src
         run: python scripts/verify_boot.py
+      - name: DMS seed + reindex + query smoke
+        env:
+          PYTHONPATH: backend:src
+        run: |
+          python -m parrts dms seed --reindex
+          python -m parrts dms status
+          python -m parrts query "brake pads" --no-llm | head -c 400
 
   frontend:
     name: Frontend type-check

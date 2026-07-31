@@ -23,6 +23,11 @@ fi
 echo "Building demo inventory index..."
 python -m parrts ingest --force
 
+echo "Seeding DMS + reindexing RAG from OEM/DMS catalog..."
+python -m parrts dms seed --reindex || python -m parrts dms seed
+# If seed without reindex flag path, force reindex
+python -m parrts dms reindex || true
+
 mkdir -p .parrts/logs
 export AUTH_MODE="${AUTH_MODE:-demo}"
 export ENVIRONMENT="${ENVIRONMENT:-development}"

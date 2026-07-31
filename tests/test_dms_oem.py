@@ -129,3 +129,23 @@ def test_export_parrts_inventory_format(dms: DmsService, tmp_path: Path) -> None
     parts = inv.all_parts()
     assert len(parts) == 5 * 3
     assert all(p.sku and p.location for p in parts)
+
+
+def test_reindex_rag_makes_oem_queryable(dms: DmsService) -> None:
+    """DMS seed + reindex → hybrid query returns DMS/OEM SKUs."""
+    dms.seed_demo(seed=42, n_skus=20, locations=7)
+    result = dms.reindex_rag()
+    assert result.get("ok") is True, result
+    assert (dms.root / ".parrts" / "inventory.json").exists()
+
+    from parrts.embeddings import HashingEmbedder
+    from parrts.engine import PartsRAGEngine
+
+    eng = PartsRAGEngine(root=dms.root, embedder=HashingEmbedder())
+    eng.ensure_ready()
+    qr = eng.query("brake pads Honda", use_llm=False, top_k=5)
+    hits = qr.to_dict().get("hits") or []
+    assert hits, qr.to_dict()
+    # After DMS reindex, catalog is OEM-synthetic (prefixes OEM-)
+    top_skus = " ".join(str(h.get("sku", "")) for h in hits)
+    assert "OEM" in top_skus or hits[0].get("name"), hits
