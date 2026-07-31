@@ -45,6 +45,7 @@ def cmd_query(args: argparse.Namespace) -> int:
         top_k=args.k,
         use_llm=use_llm,
         use_rerank=bool(getattr(args, "rerank", False)),
+        expand_parent=bool(getattr(args, "expand_parent", False)),
     )
     print(json.dumps(result.to_dict(), indent=2))
     return 0
@@ -74,9 +75,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--embedder",
-        choices=["hash", "st", "openai", "auto"],
+        choices=["hash", "st", "bge", "openai", "auto"],
         default=None,
-        help="Embedding backend (default: hash / PARRTS_EMBEDDER)",
+        help="Embedding backend (default: hash / PARRTS_EMBEDDER). bge=st alias for BAAI/bge-small-en-v1.5",
     )
 
     sub = parser.add_subparsers(dest="command", required=True)
@@ -95,6 +96,11 @@ def build_parser() -> argparse.ArgumentParser:
     p_query.add_argument("--no-llm", action="store_true", help="Skip LLM synthesis")
     p_query.add_argument("-k", type=int, default=5, help="Top-k hits (default 5)")
     p_query.add_argument("--rerank", action="store_true", help="Use cross-encoder if available")
+    p_query.add_argument(
+        "--expand-parent",
+        action="store_true",
+        help="Expand top hits to sibling locations (same base SKU)",
+    )
     p_query.set_defaults(func=cmd_query)
 
     p_status = sub.add_parser("status", help="Show index/inventory status")

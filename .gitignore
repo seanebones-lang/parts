@@ -72,6 +72,7 @@ yarn-error.log*
 .next/
 out/
 build/
+*.tsbuildinfo
 
 # Environment variables
 .env.local

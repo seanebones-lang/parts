@@ -52,6 +52,11 @@ export type PartsQueryResponse = {
   source: "api" | "parrts" | "mock";
   count?: number;
   raw?: unknown;
+  trafficLight?: {
+    color?: string;
+    confidence?: number;
+    reason?: string;
+  } | null;
 };
 
 export class ApiError extends Error {
@@ -233,12 +238,26 @@ export async function queryParts(
     try {
       const raw = await attempt.run();
       const results = extractResults(raw);
+      let trafficLight: PartsQueryResponse["trafficLight"] = null;
+      if (raw && typeof raw === "object") {
+        const tl = (raw as Record<string, unknown>).traffic_light;
+        if (tl && typeof tl === "object") {
+          const t = tl as Record<string, unknown>;
+          trafficLight = {
+            color: typeof t.color === "string" ? t.color : undefined,
+            confidence:
+              typeof t.confidence === "number" ? t.confidence : undefined,
+            reason: typeof t.reason === "string" ? t.reason : undefined,
+          };
+        }
+      }
       return {
         results,
         query: q,
         source: attempt.source,
         count: results.length,
         raw,
+        trafficLight,
       };
     } catch (err) {
       lastError = err;

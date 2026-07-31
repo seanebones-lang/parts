@@ -93,8 +93,15 @@ class RateLimiter:
         }
 
 
-# Global rate limiter instance
-rate_limiter = RateLimiter(requests_per_minute=60, requests_per_hour=1000)
+# Global rate limiter instance — defaults; main may rebuild from settings
+rate_limiter = RateLimiter(requests_per_minute=120, requests_per_hour=2000)
+
+
+def configure_rate_limiter(per_minute: int = 120, per_hour: int = 2000) -> RateLimiter:
+    """Rebuild global limiter from app settings."""
+    global rate_limiter
+    rate_limiter = RateLimiter(requests_per_minute=per_minute, requests_per_hour=per_hour)
+    return rate_limiter
 
 
 async def rate_limit_middleware(request: Request, call_next):

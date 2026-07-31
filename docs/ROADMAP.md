@@ -1,20 +1,22 @@
 # Parrts-Dist-RAG Roadmap
 
-Last updated: 2026-07-31
+Last updated: 2026-07-31 (Wave 7)
 
-## Now (max-opt loop)
+## Shipped (max-opt loop)
 
-1. Ship `parrts` core hybrid retrieval + traffic-light policy + tests  
+1. `parrts` core hybrid retrieval + traffic-light policy + offline tests  
 2. Backend boots on modern Pydantic v2 / async LLM clients / honest health  
-3. Frontend deps valid + typed API client  
-4. CI + compose healthchecks  
+3. Frontend deps valid + typed API client + traffic-light badge  
+4. CI matrix + compose profiles + `/metrics` stub  
+5. Parent SKU expansion, lazy rerank, eval MRR/recall/latency  
+6. Opt-in pgvector production path (`PGVECTOR_ENABLED`)
 
 ## Next
 
-- Wire full LangGraph specialist graph to core retrieval  
-- Retrieval eval harness (precision@k on fixed dealership queries)  
-- pgvector path as production profile alongside local FAISS  
-- Optional cross-encoder rerank when torch present  
+- Live ST/BGE smoke when embeddings extra installed (optional download)  
+- Wire remaining LangGraph specialists beyond parts_lookup  
+- Full `/api/v1` clean install from backend/requirements in CI  
+- End-to-end Docker demo profile with seeded pgvector embeddings  
 
 ## Later
 

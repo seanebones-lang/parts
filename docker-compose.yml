@@ -1,10 +1,15 @@
-version: '3.8'
+# Dealership parts stack — compose profiles:
+#   docker compose --profile core up          # postgres + redis only
+#   docker compose --profile api up           # + backend
+#   docker compose --profile full up          # + frontend + workers
+#   docker compose --profile pgvector up      # alias for core (already pgvector image)
+#   docker compose --profile obs up           # + flower
 
 services:
-  # PostgreSQL Database
   postgres:
     image: pgvector/pgvector:pg16
     container_name: dealership_postgres
+    profiles: ["core", "api", "full", "pgvector", "default"]
     env_file:
       - path: .env
         required: false
@@ -25,10 +30,10 @@ services:
       timeout: 5s
       retries: 5
 
-  # Redis Cache and Queue
   redis:
     image: redis:7-alpine
     container_name: dealership_redis
+    profiles: ["core", "api", "full", "pgvector", "default"]
     ports:
       - "6379:6379"
     volumes:
@@ -40,12 +45,12 @@ services:
       timeout: 3s
       retries: 5
 
-  # Backend API
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: dealership_backend
+    profiles: ["api", "full", "default"]
     env_file:
       - path: .env
         required: false
@@ -59,10 +64,15 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-password}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - PGVECTOR_ENABLED=${PGVECTOR_ENABLED:-false}
+      - VECTOR_BACKEND=${VECTOR_BACKEND:-auto}
+      - AUTH_MODE=${AUTH_MODE:-demo}
     ports:
       - "8000:8000"
     volumes:
       - ./backend:/app
+      - ./src:/src:ro
+      - ./.parrts:/.parrts
     depends_on:
       postgres:
         condition: service_healthy
@@ -80,12 +90,12 @@ services:
       retries: 5
       start_period: 30s
 
-  # Celery Worker
   celery:
     build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: dealership_celery
+    profiles: ["full"]
     env_file:
       - path: .env
         required: false
@@ -108,12 +118,12 @@ services:
         condition: service_healthy
     command: celery -A app.celery worker --loglevel=info
 
-  # Celery Beat (Scheduler)
   celery-beat:
     build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: dealership_celery_beat
+    profiles: ["full"]
     env_file:
       - path: .env
         required: false
@@ -136,12 +146,12 @@ services:
         condition: service_healthy
     command: celery -A app.celery beat --loglevel=info
 
-  # Frontend
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: dealership_frontend
+    profiles: ["full", "default"]
     ports:
       - "3000:3000"
     volumes:
@@ -158,12 +168,12 @@ services:
       - backend
     command: npm run dev
 
-  # Flower (Celery Monitoring)
   flower:
     build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: dealership_flower
+    profiles: ["obs", "full"]
     ports:
       - "5555:5555"
     environment:

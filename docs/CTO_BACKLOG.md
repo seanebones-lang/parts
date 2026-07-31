@@ -39,7 +39,7 @@
 - [x] W1.5 Optional cross-encoder rerank when available (engine flag)
 - [x] W1.6 Traffic-light policy green/yellow/red + confidence + actions
 - [x] W1.7 Optional LLM synthesis; graceful offline
-- [x] W1.8 Unit tests — **23 passed** offline
+- [x] W1.8 Unit tests — offline suite green
 
 ## Wave 2 — Backend boot & honesty
 
@@ -56,31 +56,40 @@
 
 - [x] W3.1 CLI: `python -m parrts query "…"`
 - [x] W3.2 FastAPI thin app `src/parrts/api.py`
-- [ ] W3.3 Wire root `start_demo.sh` fully to new core (legacy demos still present)
-- [ ] W3.4 Streamlit dashboard thin client
+- [x] W3.3 Wire root `start_demo.sh` to parrts core (`api|ui|both|backend` modes)
+- [x] W3.4 Streamlit dashboard thin client — `src/parrts/ui_streamlit.py`
 
 ## Wave 4 — Frontend & DX
 
 - [x] W4.1 Invalid radix packages removed; Next 15.1 / React 18.3
 - [x] W4.2 `frontend/lib/api.ts` typed client
-- [x] W4.3 Parts page live query + mock fallback
-- [ ] W4.4 `npm install` + type-check green (not run in this loop)
+- [x] W4.3 Parts page live query + mock fallback + traffic-light badge
+- [~] W4.4 `npm install` local; CI runs type-check + build job
 
 ## Wave 5 — Agents, eval, ops
 
 - [x] W5.1 LangGraph expanded: parts_lookup node + real edges + parrts fallback
-- [ ] W5.2 Structured tool outputs polish across all agents
-- [x] W5.3 Eval script — **12/12 hit@5** on parrts mode after catalog expand
-- [x] W5.4 docker-compose healthcheck + env_file
-- [x] W5.5 GitHub Actions CI skeleton
-- [ ] W5.6 Observability / LangSmith hooks
+- [x] W5.2 Structured `AgentResult.to_public_dict()` (+ traffic_light / requires_human / correlation_id)
+- [x] W5.3 Eval script — hit@k + MRR + recall + latency; default 12/12; extended dataset
+- [x] W5.4 docker-compose healthcheck + env_file + profiles (core/api/full/pgvector/obs)
+- [x] W5.5 GitHub Actions CI matrix (py 3.11/3.12) + frontend job + compose config
+- [x] W5.6 Structured JSON logging (`parrts.logging_utils`) + query span + X-Request-ID middleware
 
-## Wave 6 — Hardening (later)
+## Wave 6 — Hardening
 
-- [ ] W6.1 Auth real path or clearly demo-only gate
-- [ ] W6.2 Rate limiting middleware wired
-- [ ] W6.3 pgvector production path integration test
-- [ ] W6.4 Payment/shipping remain mock unless keys present
+- [x] W6.1 Auth mode explicit: `AUTH_MODE=demo|production` on settings + root payload
+- [x] W6.2 Rate limiting middleware wired (`RATE_LIMIT_ENABLED`, configure from settings)
+- [x] W6.3 pgvector production path: `PGVECTOR_ENABLED`, `VECTOR_BACKEND`, backend_status + health/metrics; opt-in SQL path; offline tests
+- [x] W6.4 Payment/shipping remain mock unless keys present (pinned non-goal without keys)
+
+## Wave 7 — Max-opt retrieval & ops (2026-07-31 cont)
+
+- [x] W7.1 Parent-document / multi-location SKU expansion (`parent_expand.py`, CLI `--expand-parent`)
+- [x] W7.2 Lazy cross-encoder rerank (no download on import)
+- [x] W7.3 BGE/st embedder CLI aliases + status features map
+- [x] W7.4 Eval harness metrics: hit@k, MRR, recall@k, latency p50/p95; `--dataset` `--k`
+- [x] W7.5 `/metrics` Prometheus stub; health reports vector backend
+- [x] W7.6 parrts **v0.4.0**
 
 ---
 
@@ -93,7 +102,9 @@ pip install -e ".[dev,api]"
 pytest -q
 python -m parrts ingest --force
 python -m parrts query "brake pads for 2019 Honda Civic" --no-llm
-python scripts/eval_retrieval.py
+python -m parrts query "brake pads for 2019 Honda Civic" --no-llm --expand-parent
+python scripts/eval_retrieval.py --dataset default -k 5
+docker compose --profile core config -q
 ```
 
 ## Explicit non-goals this loop

@@ -120,6 +120,20 @@ class Settings(BaseSettings):
     # Rate Limiting
     EMAIL_PROCESSING_INTERVAL: int = 30  # seconds
     MAX_EMAILS_PER_BATCH: int = 10
+    RATE_LIMIT_ENABLED: bool = True
+    RATE_LIMIT_PER_MINUTE: int = 120
+    RATE_LIMIT_PER_HOUR: int = 2000
+
+    # Auth — "demo" = open public endpoints (default); "production" = JWT expected
+    AUTH_MODE: str = "demo"
+
+    # Vector / pgvector production path
+    # When True and Postgres reachable with vector extension, prefer pgvector search.
+    # Offline demos keep parrts core (FAISS/numpy) regardless.
+    PGVECTOR_ENABLED: bool = False
+    VECTOR_BACKEND: str = "auto"  # auto | parrts | pgvector
+    PGVECTOR_HNSW: bool = True
+    EMBEDDING_DIM: int = 1536
 
 
 # Global settings instance

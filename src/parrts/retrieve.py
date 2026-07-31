@@ -56,9 +56,13 @@ class HybridRetriever:
         self.rrf_k = rrf_k
         self.candidate_k = candidate_k
         self._cross_encoder: Any = None
-        self._try_load_reranker()
+        self._reranker_checked = False
 
-    def _try_load_reranker(self) -> None:
+    def _ensure_reranker(self) -> None:
+        """Lazy-load cross-encoder only when rerank is requested (no download on import)."""
+        if self._reranker_checked:
+            return
+        self._reranker_checked = True
         try:
             from sentence_transformers import CrossEncoder
 
@@ -68,6 +72,7 @@ class HybridRetriever:
 
     @property
     def reranker_available(self) -> bool:
+        self._ensure_reranker()
         return self._cross_encoder is not None
 
     def retrieve(
@@ -117,8 +122,12 @@ class HybridRetriever:
                 )
             )
 
-        if use_rerank and self._cross_encoder is not None and hits:
-            hits = self._rerank(query, hits, top_k=top_k)
+        if use_rerank and hits:
+            self._ensure_reranker()
+            if self._cross_encoder is not None:
+                hits = self._rerank(query, hits, top_k=top_k)
+            else:
+                hits = hits[:top_k]
         else:
             hits = hits[:top_k]
 

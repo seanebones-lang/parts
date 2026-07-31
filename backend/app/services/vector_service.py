@@ -28,11 +28,57 @@ def _normalize_filter_value(value: Any) -> Any:
 
 
 class VectorService:
-    """Service for vector operations and semantic search."""
+    """Service for vector operations and semantic search (pgvector when enabled)."""
 
     def __init__(self) -> None:
         self.llm_service = LLMService()
         self.embedding_model = "text-embedding-3-small"
+        try:
+            from app.core.config import settings
+
+            self.pgvector_enabled = bool(getattr(settings, "PGVECTOR_ENABLED", False))
+            self.vector_backend_pref = str(
+                getattr(settings, "VECTOR_BACKEND", "auto")
+            ).lower()
+            self.hnsw = bool(getattr(settings, "PGVECTOR_HNSW", True))
+        except Exception:
+            self.pgvector_enabled = False
+            self.vector_backend_pref = "auto"
+            self.hnsw = True
+
+    def backend_status(self) -> dict[str, Any]:
+        """Report configured vector backend (no billed network call)."""
+        return {
+            "pgvector_enabled": self.pgvector_enabled,
+            "vector_backend": self.vector_backend_pref,
+            "hnsw": self.hnsw,
+            "embedding_model": self.embedding_model,
+            "active_path": (
+                "pgvector"
+                if self.pgvector_enabled and self.vector_backend_pref in {"auto", "pgvector"}
+                else "parrts_or_disabled"
+            ),
+        }
+
+    async def pgvector_status(self) -> dict[str, Any]:
+        """Probe whether pgvector extension is available (best-effort)."""
+        status = self.backend_status()
+        if not self.pgvector_enabled:
+            status["probe"] = "skipped"
+            status["available"] = False
+            return status
+        try:
+            async with AsyncSessionLocal() as db:
+                result = await db.execute(
+                    text("SELECT extname FROM pg_extension WHERE extname = 'vector'")
+                )
+                row = result.fetchone()
+                status["available"] = bool(row)
+                status["probe"] = "ok" if row else "missing_extension"
+        except Exception as exc:
+            status["available"] = False
+            status["probe"] = f"error:{type(exc).__name__}"
+        return status
 
     async def create_embedding(self, text_value: str) -> List[float]:
         """Create embedding for text using OpenAI async client."""
@@ -96,7 +142,14 @@ class VectorService:
         filters: Optional[Dict[str, Any]] = None,
         similarity_threshold: float = 0.7,
     ) -> List[Dict[str, Any]]:
-        """Perform semantic search on parts catalog."""
+        """Perform semantic search on parts catalog via pgvector (when enabled)."""
+        if not self.pgvector_enabled and self.vector_backend_pref == "pgvector":
+            # Explicit pgvector-only but disabled → empty rather than silent SQL
+            print("pgvector path requested but PGVECTOR_ENABLED=false")
+            return []
+        if not self.pgvector_enabled and self.vector_backend_pref != "pgvector":
+            # Prefer caller to use parrts core; keep SQL path opt-in
+            return []
         try:
             query_embedding = await self.create_embedding(query)
             if not query_embedding:

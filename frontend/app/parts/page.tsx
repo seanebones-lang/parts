@@ -128,6 +128,23 @@ export default function PartsPage() {
           {response?.source && (
             <Badge variant="outline">Source: {response.source}</Badge>
           )}
+          {response?.trafficLight?.color && (
+            <Badge
+              variant="outline"
+              className={
+                response.trafficLight.color === "green"
+                  ? "border-green-600 text-green-700 bg-green-50"
+                  : response.trafficLight.color === "yellow"
+                    ? "border-amber-500 text-amber-800 bg-amber-50"
+                    : "border-red-600 text-red-700 bg-red-50"
+              }
+            >
+              Traffic: {response.trafficLight.color}
+              {typeof response.trafficLight.confidence === "number"
+                ? ` (${(response.trafficLight.confidence * 100).toFixed(0)}%)`
+                : ""}
+            </Badge>
+          )}
         </div>
       </div>
 

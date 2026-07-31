@@ -3,11 +3,14 @@ Main FastAPI application entry point for the Dealership AI Parts System.
 """
 
 from contextlib import asynccontextmanager
+import time
+import uuid
 
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.core.config import settings
 from app.core.database import Base, engine
@@ -20,6 +23,11 @@ try:
 except Exception as _api_import_error:  # pragma: no cover
     api_router = None
     print(f"Warning: API router not loaded: {_api_import_error}")
+
+try:
+    from app.middleware.rate_limiting import rate_limit_middleware
+except Exception:  # pragma: no cover
+    rate_limit_middleware = None
 
 # Always-available hybrid RAG surface (no Postgres required)
 _parrts_engine = None
@@ -45,18 +53,30 @@ def _get_parrts_engine():
         return None
 
 
+class CorrelationMiddleware(BaseHTTPMiddleware):
+    """Attach X-Request-ID / correlation id to every request."""
+
+    async def dispatch(self, request: Request, call_next):
+        cid = request.headers.get("X-Request-ID") or uuid.uuid4().hex[:12]
+        request.state.correlation_id = cid
+        t0 = time.perf_counter()
+        response = await call_next(request)
+        response.headers["X-Request-ID"] = cid
+        response.headers["X-Response-Time-Ms"] = f"{(time.perf_counter() - t0) * 1000:.1f}"
+        return response
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan manager."""
-    # Startup
     print("Starting Dealership AI Parts System...")
+    print(f"Auth mode: {settings.AUTH_MODE} (demo = open endpoints; production requires JWT)")
 
     try:
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
         print("Database tables created successfully")
     except Exception as exc:
-        # Boot even if DB is unavailable; health endpoint will report degraded.
         print(f"Database init skipped/failed: {exc}")
 
     if _get_parrts_engine() is not None:
@@ -66,7 +86,6 @@ async def lifespan(app: FastAPI):
 
     yield
 
-    # Shutdown
     print("Shutting down Dealership AI Parts System...")
     try:
         await engine.dispose()
@@ -74,17 +93,18 @@ async def lifespan(app: FastAPI):
         pass
 
 
-# Create FastAPI application
 app = FastAPI(
     title="Dealership AI Parts System",
-    description="AI-powered multi-location dealership parts management system",
-    version="1.1.0",
+    description=(
+        "AI-powered multi-location dealership parts management system. "
+        f"Auth mode: {settings.AUTH_MODE}."
+    ),
+    version="1.2.0",
     docs_url="/docs",
     redoc_url="/redoc",
     lifespan=lifespan,
 )
 
-# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
@@ -93,13 +113,25 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Add trusted host middleware
 app.add_middleware(
     TrustedHostMiddleware,
     allowed_hosts=["*"] if settings.DEBUG else ["localhost", "127.0.0.1"],
 )
 
-# Include API routes when available
+app.add_middleware(CorrelationMiddleware)
+
+if settings.RATE_LIMIT_ENABLED and rate_limit_middleware is not None:
+    try:
+        from app.middleware.rate_limiting import configure_rate_limiter
+
+        configure_rate_limiter(
+            settings.RATE_LIMIT_PER_MINUTE, settings.RATE_LIMIT_PER_HOUR
+        )
+    except Exception:
+        pass
+    app.middleware("http")(rate_limit_middleware)
+    print("Rate limiting middleware enabled")
+
 if api_router is not None:
     app.include_router(api_router, prefix="/api/v1")
 else:
@@ -112,10 +144,17 @@ async def root():
     parrts = _get_parrts_engine() is not None
     return {
         "message": "Dealership AI Parts System API",
-        "version": "1.1.0",
+        "version": "1.2.0",
         "status": "operational",
         "parrts_core": "ready" if parrts else "unavailable",
         "api_v1": "loaded" if api_router is not None else "degraded",
+        "auth_mode": settings.AUTH_MODE,
+        "auth_note": (
+            "Demo mode: JWT endpoints optional; /query and /health are open."
+            if settings.AUTH_MODE == "demo"
+            else "Production mode: protect mutating routes with JWT."
+        ),
+        "rate_limit": settings.RATE_LIMIT_ENABLED,
         "docs": "/docs",
     }
 
@@ -127,7 +166,39 @@ async def health_check():
     result = await health_service.check_all_services()
     parrts = _get_parrts_engine()
     result["parrts_core"] = "ready" if parrts is not None else "unavailable"
+    result["auth_mode"] = settings.AUTH_MODE
+    result["rate_limit"] = settings.RATE_LIMIT_ENABLED
+    result["pgvector_enabled"] = bool(getattr(settings, "PGVECTOR_ENABLED", False))
+    result["vector_backend"] = getattr(settings, "VECTOR_BACKEND", "auto")
+    try:
+        from app.services.vector_service import VectorService
+
+        result["vector"] = VectorService().backend_status()
+    except Exception as exc:
+        result["vector"] = {"error": str(exc)}
     return result
+
+
+@app.get("/metrics")
+async def metrics_stub():
+    """Lightweight Prometheus-style metrics stub (no external deps)."""
+    lines = [
+        "# HELP parrts_info Static build info",
+        "# TYPE parrts_info gauge",
+        f'parrts_info{{version="1.2.0",auth_mode="{settings.AUTH_MODE}"}} 1',
+        "# HELP parrts_pgvector_enabled 1 if PGVECTOR_ENABLED",
+        "# TYPE parrts_pgvector_enabled gauge",
+        f"parrts_pgvector_enabled {1 if getattr(settings, 'PGVECTOR_ENABLED', False) else 0}",
+        "# HELP parrts_rate_limit_enabled 1 if rate limiting on",
+        "# TYPE parrts_rate_limit_enabled gauge",
+        f"parrts_rate_limit_enabled {1 if settings.RATE_LIMIT_ENABLED else 0}",
+        "# HELP parrts_core_ready 1 if hybrid RAG core loaded",
+        "# TYPE parrts_core_ready gauge",
+        f"parrts_core_ready {1 if _get_parrts_engine() is not None else 0}",
+    ]
+    from fastapi.responses import PlainTextResponse
+
+    return PlainTextResponse("\n".join(lines) + "\n", media_type="text/plain; version=0.0.4")
 
 
 @app.get("/query")
@@ -136,12 +207,21 @@ async def parrts_query(
     location: str | None = None,
     top_k: int = 5,
     use_llm: bool = False,
+    expand_parent: bool = False,
+    use_rerank: bool = False,
 ):
     """Hybrid parts query via parrts core (no DB required)."""
     eng = _get_parrts_engine()
     if eng is None:
         return {"error": "parrts core unavailable", "success": False}
-    result = eng.query(text=text, location=location, top_k=top_k, use_llm=use_llm)
+    result = eng.query(
+        text=text,
+        location=location,
+        top_k=top_k,
+        use_llm=use_llm,
+        expand_parent=expand_parent,
+        use_rerank=use_rerank,
+    )
     return result.to_dict()
 
 
@@ -159,6 +239,8 @@ async def parrts_query_post(payload: dict):
         location=payload.get("location"),
         top_k=int(payload.get("top_k") or 5),
         use_llm=bool(payload.get("use_llm", False)),
+        expand_parent=bool(payload.get("expand_parent", False)),
+        use_rerank=bool(payload.get("use_rerank", False)),
     )
     return result.to_dict()
 

@@ -129,35 +129,51 @@ class PartsRAGEngine:
         top_k: int = 5,
         use_llm: bool = False,
         use_rerank: bool = False,
+        expand_parent: bool = False,
     ) -> QueryResult:
-        self.ensure_ready()
-        assert self.retriever is not None
-        hits = self.retriever.retrieve(
-            text, top_k=top_k, location=location, use_rerank=use_rerank
-        )
-        tl = policy_for_hits(hits, location_filter=location)
-        result = QueryResult(
-            query=text,
-            hits=hits,
-            traffic_light=tl,
-            location_filter=location,
-            meta={
-                "top_k": top_k,
-                "dense_backend": self.store.backend,
-                "sparse_backend": self.bm25.backend,
-                "embedder": type(self.embedder).__name__,
-                "rerank": bool(use_rerank and self.retriever.reranker_available),
-                "llm": status_info(),
-            },
-        )
-        if use_llm:
-            answer = synthesize_answer(text, result)
-            if answer is None:
-                answer = offline_answer(text, result)
-            result.answer = answer
-        else:
-            result.answer = offline_answer(text, result)
-        return result
+        from parrts.logging_utils import get_correlation_id, get_logger, log_span
+        from parrts.parent_expand import expand_parent_hits
+
+        log = get_logger("parrts.engine")
+        with log_span(log, "parrts.query", q=text[:80], top_k=top_k):
+            self.ensure_ready()
+            assert self.retriever is not None
+            hits = self.retriever.retrieve(
+                text, top_k=top_k, location=location, use_rerank=use_rerank
+            )
+            # Parent expansion: show sibling locations for top base SKUs (no location filter)
+            if expand_parent and location is None and hits:
+                hits = expand_parent_hits(
+                    hits,
+                    self.store.parts,
+                    max_siblings=7,
+                    top_parents=min(3, len(hits)),
+                )
+            tl = policy_for_hits(hits[:top_k], location_filter=location)
+            result = QueryResult(
+                query=text,
+                hits=hits,
+                traffic_light=tl,
+                location_filter=location,
+                meta={
+                    "top_k": top_k,
+                    "dense_backend": self.store.backend,
+                    "sparse_backend": self.bm25.backend,
+                    "embedder": type(self.embedder).__name__,
+                    "rerank": bool(use_rerank and self.retriever.reranker_available),
+                    "parent_expand": bool(expand_parent and location is None),
+                    "llm": status_info(),
+                    "correlation_id": get_correlation_id(),
+                },
+            )
+            if use_llm:
+                answer = synthesize_answer(text, result)
+                if answer is None:
+                    answer = offline_answer(text, result)
+                result.answer = answer
+            else:
+                result.answer = offline_answer(text, result)
+            return result
 
     def status(self) -> dict[str, Any]:
         inv = self.inventory
@@ -171,7 +187,7 @@ class PartsRAGEngine:
         summary = inv.summary() if inv else {}
         index_exists = (self.root / ".parrts" / "index" / "meta.json").exists()
         return {
-            "version": "0.2.0",
+            "version": "0.4.0",
             "root": str(self.root.resolve()),
             "built": self._built,
             "index_exists": index_exists,
@@ -181,4 +197,10 @@ class PartsRAGEngine:
             "embedder": type(self.embedder).__name__,
             "llm": status_info(),
             "parts_indexed": len(self.store) if self._built else 0,
+            "features": {
+                "hybrid_rrf": True,
+                "parent_expand": True,
+                "lazy_rerank": True,
+                "embedders": ["hash", "st", "bge", "openai", "auto"],
+            },
         }
