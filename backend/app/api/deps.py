@@ -103,29 +103,31 @@ async def get_optional_user(
 
 async def require_user_if_production(
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(optional_bearer),
-    db: AsyncSession = Depends(get_db),
 ) -> Optional[User]:
     """
     Demo-aware gate for mutating routes.
 
-    - AUTH_MODE=demo: no Bearer required (returns None). If Bearer is sent,
-      resolve user when valid; ignore invalid tokens (still open).
-    - AUTH_MODE=production: valid JWT required; 401 when missing/invalid.
+    - AUTH_MODE=demo: no Bearer required (returns None). Does **not** open
+      Postgres/get_db — critical for offline DMS + pilot demos.
+    - AUTH_MODE=production: valid JWT required via get_db + AuthService.
     """
     if _is_demo_mode():
-        if credentials is None:
-            return None
-        return await _resolve_user_from_credentials(
-            credentials, db, raise_on_invalid=False
-        )
+        # Offline-friendly: never touch Postgres in demo mode.
+        return None
 
-    # production
     if credentials is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Not authenticated",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    return await _resolve_user_from_credentials(
-        credentials, db, raise_on_invalid=True
+
+    # Production only: open DB session for JWT → user resolve
+    async for db in get_db():
+        return await _resolve_user_from_credentials(
+            credentials, db, raise_on_invalid=True
+        )
+    raise HTTPException(
+        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        detail="Database unavailable for auth",
     )
