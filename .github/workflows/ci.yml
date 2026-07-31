@@ -33,10 +33,18 @@ jobs:
       - name: Ruff
         run: ruff check src tests
 
-      - name: Pytest (core; full backend suite stays in backend-smoke)
+      - name: Pytest (core + light backend unit; full boot in backend-smoke)
         env:
           PYTHONPATH: backend:src
-        run: pytest -q --tb=short -k "not backend_boot"
+        run: |
+          # Core offline suite + pure pydantic AgentResult (no sqlalchemy required).
+          # Exclude heavy backend modules that need backend/requirements.txt.
+          pytest -q --tb=short \
+            --ignore=tests/test_backend_boot.py \
+            --ignore=tests/test_auth_demo_mode.py \
+            --ignore=tests/test_agents_mocked.py \
+            --ignore=tests/test_langgraph_workflow.py \
+            --ignore=tests/test_pgvector_e2e.py
 
       - name: Retrieval eval smoke (default dataset)
         run: python scripts/eval_retrieval.py --dataset default -k 5

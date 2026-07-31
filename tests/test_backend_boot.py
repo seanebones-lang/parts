@@ -92,8 +92,8 @@ def test_api_v1_all_routers_load():
     from app.api.v1.api import api_router, router_status
 
     st = router_status()
-    assert st["loaded_count"] >= 13
-    assert st["failed_count"] == 0
+    assert st["loaded_count"] >= 13, st
+    assert st["failed_count"] == 0, f"router load failures: {st.get('failed')}"
     assert len(api_router.routes) >= 13
 
 

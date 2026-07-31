@@ -1,4 +1,4 @@
-"""AgentResult structured public shape (backend, pure pydantic)."""
+"""AgentResult structured public shape (pure pydantic — no DB deps)."""
 
 from __future__ import annotations
 
@@ -8,7 +8,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "backend"))
 
-from app.agents.base_agent import AgentResult  # noqa: E402
+# Prefer lightweight module so core CI needs only pydantic (via .[api])
+from app.agents.result import AgentResult  # noqa: E402
 
 
 def test_agent_result_to_public_dict():
