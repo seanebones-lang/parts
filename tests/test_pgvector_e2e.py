@@ -133,8 +133,9 @@ def test_seed_and_vector_search_smoke(db_ready: str):
     assert status.get("embedding_column_ensured") is True
 
     async def _search() -> list:
-        import asyncpg
         import importlib.util
+
+        import asyncpg
 
         spec = importlib.util.spec_from_file_location("seed_pgvector", SEED_SCRIPT)
         assert spec and spec.loader

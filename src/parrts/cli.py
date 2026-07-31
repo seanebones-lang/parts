@@ -8,8 +8,8 @@ import sys
 from pathlib import Path
 
 from parrts import __version__
-from parrts.engine import PartsRAGEngine
 from parrts.embeddings import HashingEmbedder, resolve_embedder
+from parrts.engine import PartsRAGEngine
 
 
 def _root_from_args(args: argparse.Namespace) -> Path:

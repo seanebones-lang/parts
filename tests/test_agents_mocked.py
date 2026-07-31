@@ -10,8 +10,6 @@ import sys
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
-
 ROOT = Path(__file__).resolve().parents[1]
 for p in (ROOT, ROOT / "src", ROOT / "backend"):
     s = str(p)

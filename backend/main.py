@@ -16,6 +16,36 @@ from app.core.config import settings
 from app.core.database import Base, engine
 from app.services.health_service import HealthService
 
+
+def enforce_production_secrets() -> None:
+    """Fail fast when production would run with insecure defaults.
+
+    Triggers when ENVIRONMENT=production OR AUTH_MODE=production.
+    - Insecure SECRET_KEY → RuntimeError (hard fail)
+    - DEBUG=True in production → RuntimeError (hard fail)
+    """
+    if not settings.is_production_runtime():
+        return
+
+    problems: list[str] = []
+    if settings.secret_key_is_insecure():
+        problems.append(
+            "SECRET_KEY is missing or uses an insecure default "
+            "(set a strong unique SECRET_KEY for production)"
+        )
+    if settings.DEBUG:
+        problems.append(
+            "DEBUG=True is not allowed when ENVIRONMENT or AUTH_MODE is production"
+        )
+    if problems:
+        raise RuntimeError(
+            "Production secret guard failed:\n- " + "\n- ".join(problems)
+        )
+
+
+# Boot-time guard (import/module load). Demo/dev defaults still boot.
+enforce_production_secrets()
+
 # API router depends on models/services that may still be mid-fix elsewhere.
 # Keep core app bootable (/, /health) even if the full v1 surface fails to import.
 try:
@@ -69,7 +99,10 @@ class CorrelationMiddleware(BaseHTTPMiddleware):
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan manager."""
+    # Re-check in case env was mutated after import (e.g. tests / late .env).
+    enforce_production_secrets()
     print("Starting Dealership AI Parts System...")
+    print(f"Environment: {settings.ENVIRONMENT}")
     print(f"Auth mode: {settings.AUTH_MODE} (demo = open endpoints; production requires JWT)")
 
     try:

@@ -7,6 +7,22 @@ from typing import List, Optional
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+# Well-known insecure defaults — production boot must reject these
+_INSECURE_SECRET_KEYS = frozenset(
+    {
+        "",
+        "secret",
+        "changeme",
+        "change-me",
+        "password",
+        "default",
+        "your-secret-key-change-in-production",
+        "changeme-in-production",
+        "dev-secret",
+        "test-secret",
+    }
+)
+
 
 class Settings(BaseSettings):
     """Application settings."""
@@ -29,6 +45,19 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 30
+
+    def secret_key_is_insecure(self) -> bool:
+        """True when SECRET_KEY is empty or a known placeholder default."""
+        key = (self.SECRET_KEY or "").strip()
+        if not key:
+            return True
+        return key.lower() in _INSECURE_SECRET_KEYS
+
+    def is_production_runtime(self) -> bool:
+        """True when ENVIRONMENT or AUTH_MODE indicates production."""
+        env = (self.ENVIRONMENT or "").strip().lower()
+        auth = (getattr(self, "AUTH_MODE", None) or "").strip().lower()
+        return env == "production" or auth == "production"
 
     # MFA Settings
     MFA_ISSUER_NAME: str = "Dealership Parts System"

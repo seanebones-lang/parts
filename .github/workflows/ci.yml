@@ -24,23 +24,26 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: pip
 
-      - name: Install package (editable + dev)
+      # [dev,api] so backend-importing unit tests (e.g. AgentResult/pydantic) collect
+      - name: Install package (editable + dev + api)
         run: |
           python -m pip install --upgrade pip
-          pip install -e ".[dev]"
+          pip install -e ".[dev,api]"
 
-      - name: Ruff (optional)
-        continue-on-error: true
-        run: ruff check src tests || true
+      - name: Ruff
+        run: ruff check src tests
 
-      - name: Pytest (core; backend tests skip without extras)
+      - name: Pytest (core; full backend suite stays in backend-smoke)
+        env:
+          PYTHONPATH: backend:src
         run: pytest -q --tb=short -k "not backend_boot"
 
-      - name: Retrieval eval smoke
+      - name: Retrieval eval smoke (default dataset)
+        run: python scripts/eval_retrieval.py --dataset default -k 5
+
+      - name: Retrieval eval extended (optional extra dataset)
         continue-on-error: true
-        run: |
-          python scripts/eval_retrieval.py --dataset default -k 5
-          python scripts/eval_retrieval.py --dataset extended -k 5 || true
+        run: python scripts/eval_retrieval.py --dataset extended -k 5
 
   backend-smoke:
     name: Backend /api/v1 boot
@@ -91,7 +94,6 @@ jobs:
 
       - name: Build
         run: npm run build
-        continue-on-error: true
 
   compose:
     name: Compose config
@@ -99,7 +101,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Validate compose files
+        env:
+          # Prod file requires these (no weak defaults); CI only validates config.
+          SECRET_KEY: ci-compose-config-only-not-a-real-secret
+          POSTGRES_PASSWORD: ci-compose-config-only-not-a-real-password
         run: |
-          docker compose -f docker-compose.yml config -q || docker-compose -f docker-compose.yml config -q || true
-          docker compose --profile core config -q || true
-          docker compose --profile api config -q || true
+          docker compose -f docker-compose.yml config -q
+          docker compose -f docker-compose.prod.yml config -q
+          docker compose --profile core -f docker-compose.yml config -q
+          docker compose --profile api -f docker-compose.yml config -q

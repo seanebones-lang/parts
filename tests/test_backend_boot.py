@@ -30,6 +30,62 @@ def test_settings_import():
     assert settings.VERSION
     assert settings.AUTH_MODE in {"demo", "production"}
     assert hasattr(settings, "PGVECTOR_ENABLED")
+    assert callable(settings.secret_key_is_insecure)
+    assert callable(settings.is_production_runtime)
+
+
+def test_production_secret_guard_rejects_insecure_key(monkeypatch):
+    import main as main_mod
+    from app.core import config as config_mod
+
+    monkeypatch.setattr(config_mod.settings, "ENVIRONMENT", "production")
+    monkeypatch.setattr(config_mod.settings, "AUTH_MODE", "production")
+    monkeypatch.setattr(config_mod.settings, "DEBUG", False)
+    monkeypatch.setattr(
+        config_mod.settings, "SECRET_KEY", "your-secret-key-change-in-production"
+    )
+    with pytest.raises(RuntimeError, match="SECRET_KEY"):
+        main_mod.enforce_production_secrets()
+
+
+def test_production_secret_guard_rejects_debug(monkeypatch):
+    import main as main_mod
+    from app.core import config as config_mod
+
+    monkeypatch.setattr(config_mod.settings, "ENVIRONMENT", "production")
+    monkeypatch.setattr(config_mod.settings, "AUTH_MODE", "demo")
+    monkeypatch.setattr(config_mod.settings, "DEBUG", True)
+    monkeypatch.setattr(
+        config_mod.settings, "SECRET_KEY", "a-long-enough-unique-production-secret-key-99"
+    )
+    with pytest.raises(RuntimeError, match="DEBUG"):
+        main_mod.enforce_production_secrets()
+
+
+def test_production_secret_guard_ok_with_strong_key(monkeypatch):
+    import main as main_mod
+    from app.core import config as config_mod
+
+    monkeypatch.setattr(config_mod.settings, "ENVIRONMENT", "production")
+    monkeypatch.setattr(config_mod.settings, "AUTH_MODE", "production")
+    monkeypatch.setattr(config_mod.settings, "DEBUG", False)
+    monkeypatch.setattr(
+        config_mod.settings, "SECRET_KEY", "a-long-enough-unique-production-secret-key-99"
+    )
+    main_mod.enforce_production_secrets()  # no raise
+
+
+def test_demo_mode_allows_default_secret(monkeypatch):
+    import main as main_mod
+    from app.core import config as config_mod
+
+    monkeypatch.setattr(config_mod.settings, "ENVIRONMENT", "development")
+    monkeypatch.setattr(config_mod.settings, "AUTH_MODE", "demo")
+    monkeypatch.setattr(config_mod.settings, "DEBUG", True)
+    monkeypatch.setattr(
+        config_mod.settings, "SECRET_KEY", "your-secret-key-change-in-production"
+    )
+    main_mod.enforce_production_secrets()  # no raise
 
 
 def test_api_v1_all_routers_load():

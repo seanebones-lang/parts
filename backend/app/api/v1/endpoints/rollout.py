@@ -3,9 +3,13 @@ Rollout endpoints for multi-location deployment management.
 """
 
 from typing import Optional
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.api.deps import require_user_if_production
 from app.core.database import get_db
+from app.models.user import User
 from app.services.rollout_service import RolloutService
 
 router = APIRouter()
@@ -51,9 +55,11 @@ async def get_deployment_progress(
 @router.post("/start/{location_id}")
 async def start_location_deployment(
     location_id: int,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(require_user_if_production),
 ):
     """Start deployment process for a specific location."""
+    _ = current_user
     try:
         service = RolloutService(db)
         result = await service.start_location_deployment(location_id)

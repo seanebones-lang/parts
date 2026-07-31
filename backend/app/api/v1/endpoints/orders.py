@@ -121,9 +121,11 @@ async def create_order(
 async def update_order_status(
     order_id: int,
     status_data: dict,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(require_user_if_production),
 ):
     """Update order status."""
+    _ = current_user
     try:
         service = OrderService(db)
         
@@ -160,9 +162,11 @@ async def update_order_status(
 @router.post("/{order_id}/reserve")
 async def reserve_inventory(
     order_id: int,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(require_user_if_production),
 ):
     """Reserve inventory for an order."""
+    _ = current_user
     try:
         service = OrderService(db)
         result = await service.reserve_inventory_for_order(order_id)
@@ -184,9 +188,11 @@ async def reserve_inventory(
 async def cancel_order(
     order_id: int,
     cancel_data: dict,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(require_user_if_production),
 ):
     """Cancel an order."""
+    _ = current_user
     try:
         service = OrderService(db)
         
@@ -245,9 +251,11 @@ async def get_order_analytics(
 @router.post("/quote")
 async def generate_quote(
     quote_data: dict,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(require_user_if_production),
 ):
     """Generate a quote for parts and services."""
+    _ = current_user
     try:
         agent = PricingInvoiceAgent(db)
         
@@ -277,9 +285,11 @@ async def generate_quote(
 @router.post("/invoice")
 async def create_invoice(
     invoice_data: dict,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(require_user_if_production),
 ):
     """Create invoice from quote or order."""
+    _ = current_user
     try:
         agent = PricingInvoiceAgent(db)
         
@@ -307,9 +317,11 @@ async def create_invoice(
 @router.post("/pricing/calculate")
 async def calculate_pricing(
     pricing_data: dict,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(require_user_if_production),
 ):
     """Calculate pricing for parts."""
+    _ = current_user
     try:
         agent = PricingInvoiceAgent(db)
         
@@ -339,9 +351,11 @@ async def calculate_pricing(
 @router.post("/discount/apply")
 async def apply_discount(
     discount_data: dict,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(require_user_if_production),
 ):
     """Apply discount code to order."""
+    _ = current_user
     try:
         agent = PricingInvoiceAgent(db)
         

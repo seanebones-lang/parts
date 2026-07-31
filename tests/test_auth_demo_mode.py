@@ -36,8 +36,8 @@ def test_deps_module_exports():
 
 
 def test_is_demo_mode_respects_settings(monkeypatch):
-    from app.core.config import settings
     from app.api import deps
+    from app.core.config import settings
 
     monkeypatch.setattr(settings, "AUTH_MODE", "demo")
     assert deps._is_demo_mode() is True
@@ -51,8 +51,8 @@ def test_is_demo_mode_respects_settings(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_require_user_demo_allows_missing_bearer(monkeypatch):
-    from app.core.config import settings
     from app.api.deps import require_user_if_production
+    from app.core.config import settings
 
     monkeypatch.setattr(settings, "AUTH_MODE", "demo")
     result = await require_user_if_production(credentials=None, db=MagicMock())
@@ -61,8 +61,8 @@ async def test_require_user_demo_allows_missing_bearer(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_require_user_production_rejects_missing_bearer(monkeypatch):
-    from app.core.config import settings
     from app.api.deps import require_user_if_production
+    from app.core.config import settings
 
     monkeypatch.setattr(settings, "AUTH_MODE", "production")
     with pytest.raises(HTTPException) as ei:
@@ -73,8 +73,8 @@ async def test_require_user_production_rejects_missing_bearer(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_require_user_production_invalid_token_401(monkeypatch):
-    from app.core.config import settings
     from app.api.deps import require_user_if_production
+    from app.core.config import settings
 
     monkeypatch.setattr(settings, "AUTH_MODE", "production")
     creds = HTTPAuthorizationCredentials(scheme="Bearer", credentials="bad-token")
@@ -89,8 +89,8 @@ async def test_require_user_production_invalid_token_401(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_require_user_demo_invalid_token_returns_none(monkeypatch):
-    from app.core.config import settings
     from app.api.deps import require_user_if_production
+    from app.core.config import settings
 
     monkeypatch.setattr(settings, "AUTH_MODE", "demo")
     creds = HTTPAuthorizationCredentials(scheme="Bearer", credentials="bad-token")
@@ -104,8 +104,8 @@ async def test_require_user_demo_invalid_token_returns_none(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_require_user_production_valid_token_returns_user(monkeypatch):
-    from app.core.config import settings
     from app.api.deps import require_user_if_production
+    from app.core.config import settings
 
     monkeypatch.setattr(settings, "AUTH_MODE", "production")
     creds = HTTPAuthorizationCredentials(scheme="Bearer", credentials="good-token")
@@ -146,19 +146,134 @@ def test_write_endpoints_wire_require_user_if_production():
     """Pattern check: parts + orders mutating routes depend on demo-aware helper."""
     import inspect
 
-    from app.api.v1.endpoints import parts, orders
+    from app.api.v1.endpoints import orders, parts
 
     for fn in (
         parts.bulk_import_parts,
         parts.index_part_for_search,
         orders.create_order,
+        orders.update_order_status,
+        orders.cancel_order,
+        orders.create_invoice,
     ):
         src = inspect.getsource(fn)
         assert "require_user_if_production" in src
         assert "current_user" in src
 
 
+def test_inventory_payments_customers_mutating_wire_require_user():
+    """Pattern check: inventory/payments/customers mutating handlers use gate."""
+    import inspect
+    import re
+
+    from app.api.v1.endpoints import customers, inventory, payments
+
+    modules = {
+        "inventory": inventory,
+        "payments": payments,
+        "customers": customers,
+    }
+    # Provider webhooks stay signature-auth only (no JWT gate)
+    skip_fns = {"handle_stripe_webhook"}
+
+    checked = 0
+    for mod_name, mod in modules.items():
+        for fn_name, fn in inspect.getmembers(mod, inspect.iscoroutinefunction):
+            if fn_name in skip_fns:
+                continue
+            if getattr(fn, "__module__", None) != mod.__name__:
+                continue
+            try:
+                src = inspect.getsource(fn)
+            except OSError:
+                continue
+            # inspect.getsource includes the decorator line(s)
+            if not re.search(r"@router\.(post|put|delete|patch)\b", src):
+                continue
+            assert "require_user_if_production" in src, (
+                f"{mod_name}.{fn_name} missing require_user_if_production"
+            )
+            assert "current_user" in src, f"{mod_name}.{fn_name} missing current_user"
+            checked += 1
+
+    assert checked >= 10, f"expected many mutating handlers wired, got {checked}"
+
+
+def test_stripe_webhook_not_jwt_gated():
+    import inspect
+
+    from app.api.v1.endpoints import payments
+
+    src = inspect.getsource(payments.handle_stripe_webhook)
+    # Docstring may mention the helper name; the Depends() wire must be absent.
+    assert "Depends(require_user_if_production)" not in src
+    assert "current_user" not in src.split('"""')[-1]  # body after docstring
+    assert "signature" in src.lower() or "stripe-signature" in src.lower()
+
+
 def test_settings_auth_mode_default():
     from app.core.config import settings
 
     assert settings.AUTH_MODE in {"demo", "production"}
+
+
+def test_secret_key_is_insecure_helper():
+    from app.core.config import Settings
+
+    s = Settings(
+        SECRET_KEY="your-secret-key-change-in-production",
+        ENVIRONMENT="development",
+        AUTH_MODE="demo",
+        DEBUG=True,
+    )
+    assert s.secret_key_is_insecure() is True
+
+    s2 = Settings(
+        SECRET_KEY="secret",
+        ENVIRONMENT="development",
+        AUTH_MODE="demo",
+        DEBUG=True,
+    )
+    assert s2.secret_key_is_insecure() is True
+
+    s3 = Settings(
+        SECRET_KEY="",
+        ENVIRONMENT="development",
+        AUTH_MODE="demo",
+        DEBUG=True,
+    )
+    assert s3.secret_key_is_insecure() is True
+
+    s4 = Settings(
+        SECRET_KEY="a-long-enough-unique-production-secret-key-99",
+        ENVIRONMENT="development",
+        AUTH_MODE="demo",
+        DEBUG=True,
+    )
+    assert s4.secret_key_is_insecure() is False
+
+
+def test_is_production_runtime():
+    from app.core.config import Settings
+
+    assert (
+        Settings(
+            ENVIRONMENT="production", AUTH_MODE="demo", DEBUG=False, SECRET_KEY="x" * 40
+        ).is_production_runtime()
+        is True
+    )
+    assert (
+        Settings(
+            ENVIRONMENT="development",
+            AUTH_MODE="production",
+            DEBUG=False,
+            SECRET_KEY="x" * 40,
+        ).is_production_runtime()
+        is True
+    )
+    assert (
+        Settings(
+            ENVIRONMENT="development", AUTH_MODE="demo", DEBUG=True, SECRET_KEY="x" * 40
+        ).is_production_runtime()
+        is False
+    )

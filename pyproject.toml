@@ -4,12 +4,14 @@ build-backend = "hatchling.build"
 
 [project]
 name = "parrts"
-version = "0.4.2"
+version = "0.5.0"
 description = "Modern hybrid RAG core for multi-location auto parts inventory"
 readme = "README.md"
 requires-python = ">=3.11"
-license = { text = "MIT" }
-authors = [{ name = "Parrts" }]
+license = { text = "Proprietary - NextEleven LLC" }
+authors = [
+    { name = "NextEleven LLC" },
+]
 dependencies = [
     "numpy>=1.26",
 ]
@@ -57,17 +59,24 @@ packages = ["src/parrts"]
 
 [tool.hatch.build.targets.sdist]
 include = ["src/parrts", "tests", "README.md", "pyproject.toml"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["src"]
+pythonpath = ["src", "backend"]
 markers = [
     "pgvector: live Postgres/pgvector e2e (skipped when DATABASE unreachable)",
 ]
 
 [tool.ruff]
-line-length = 100
+line-length = 120
 target-version = "py311"
 src = ["src", "tests"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "W"]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests often adjust sys.path before local imports.
+"tests/**" = ["E402"]
+# Streamlit UI inserts monorepo src onto sys.path before package imports.
+"src/parrts/ui_streamlit.py" = ["E402"]

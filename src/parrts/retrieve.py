@@ -29,16 +29,6 @@ def reciprocal_rank_fusion(
     return sorted(scores.items(), key=lambda x: x[1], reverse=True)
 
 
-def _normalize_scores(pairs: list[tuple[int, float]]) -> dict[int, float]:
-    if not pairs:
-        return {}
-    vals = [s for _, s in pairs]
-    lo, hi = min(vals), max(vals)
-    if hi - lo < 1e-12:
-        return {i: 1.0 for i, _ in pairs}
-    return {i: (s - lo) / (hi - lo) for i, s in pairs}
-
-
 class HybridRetriever:
     """Dense (vector) + sparse (BM25) with RRF; optional cross-encoder rerank stub."""
 
@@ -92,8 +82,6 @@ class HybridRetriever:
         sparse = self.bm25.search(query, top_k=cand, location=location)
 
         fused = reciprocal_rank_fusion([dense, sparse], k=self.rrf_k)
-        dense_norm = _normalize_scores(dense)
-        sparse_norm = _normalize_scores(sparse)
         dense_raw = dict(dense)
         sparse_raw = dict(sparse)
 
@@ -104,8 +92,6 @@ class HybridRetriever:
             if doc_id < 0 or doc_id >= len(self.store.parts):
                 continue
             part = self.store.parts[doc_id]
-            d = dense_norm.get(doc_id, 0.0)
-            s = sparse_norm.get(doc_id, 0.0)
             # Combined display score: blend RRF with dense cosine if available
             cosine = dense_raw.get(doc_id, 0.0)
             score = 0.6 * max(cosine, 0.0) + 0.4 * rrf * 10  # scale rrf ~ into [0,1]

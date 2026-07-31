@@ -3,9 +3,13 @@ Deployment endpoints for pilot deployment management and monitoring.
 """
 
 from typing import Optional
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.api.deps import require_user_if_production
 from app.core.database import get_db
+from app.models.user import User
 from app.services.deployment_service import DeploymentService
 
 router = APIRouter()
@@ -111,9 +115,11 @@ async def update_deployment_status(
     location_id: int,
     status: str,
     notes: Optional[str] = None,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(require_user_if_production),
 ):
     """Update deployment status for a location."""
+    _ = current_user
     try:
         service = DeploymentService(db)
         result = await service.update_deployment_status(location_id, status, notes)
