@@ -187,7 +187,7 @@ class PartsRAGEngine:
         summary = inv.summary() if inv else {}
         index_exists = (self.root / ".parrts" / "index" / "meta.json").exists()
         return {
-            "version": "0.4.0",
+            "version": "0.4.1",
             "root": str(self.root.resolve()),
             "built": self._built,
             "index_exists": index_exists,

@@ -142,12 +142,21 @@ else:
 async def root():
     """Root endpoint with system status."""
     parrts = _get_parrts_engine() is not None
+    api_detail = None
+    if api_router is not None:
+        try:
+            from app.api.v1.api import router_status
+
+            api_detail = router_status()
+        except Exception as exc:
+            api_detail = {"error": str(exc)}
     return {
         "message": "Dealership AI Parts System API",
-        "version": "1.2.0",
+        "version": "1.3.0",
         "status": "operational",
         "parrts_core": "ready" if parrts else "unavailable",
         "api_v1": "loaded" if api_router is not None else "degraded",
+        "api_v1_detail": api_detail,
         "auth_mode": settings.AUTH_MODE,
         "auth_note": (
             "Demo mode: JWT endpoints optional; /query and /health are open."
@@ -170,6 +179,13 @@ async def health_check():
     result["rate_limit"] = settings.RATE_LIMIT_ENABLED
     result["pgvector_enabled"] = bool(getattr(settings, "PGVECTOR_ENABLED", False))
     result["vector_backend"] = getattr(settings, "VECTOR_BACKEND", "auto")
+    result["api_v1"] = "loaded" if api_router is not None else "degraded"
+    try:
+        from app.api.v1.api import router_status
+
+        result["api_v1_detail"] = router_status()
+    except Exception as exc:
+        result["api_v1_detail"] = {"error": str(exc)}
     try:
         from app.services.vector_service import VectorService
 

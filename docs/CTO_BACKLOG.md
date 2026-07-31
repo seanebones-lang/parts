@@ -64,7 +64,7 @@
 - [x] W4.1 Invalid radix packages removed; Next 15.1 / React 18.3
 - [x] W4.2 `frontend/lib/api.ts` typed client
 - [x] W4.3 Parts page live query + mock fallback + traffic-light badge
-- [~] W4.4 `npm install` local; CI runs type-check + build job
+- [x] W4.4 `npm install` + `tsc --noEmit` green; CI type-check + build job
 
 ## Wave 5 — Agents, eval, ops
 
@@ -82,7 +82,7 @@
 - [x] W6.3 pgvector production path: `PGVECTOR_ENABLED`, `VECTOR_BACKEND`, backend_status + health/metrics; opt-in SQL path; offline tests
 - [x] W6.4 Payment/shipping remain mock unless keys present (pinned non-goal without keys)
 
-## Wave 7 — Max-opt retrieval & ops (2026-07-31 cont)
+## Wave 7 — Max-opt retrieval & ops
 
 - [x] W7.1 Parent-document / multi-location SKU expansion (`parent_expand.py`, CLI `--expand-parent`)
 - [x] W7.2 Lazy cross-encoder rerank (no download on import)
@@ -90,6 +90,16 @@
 - [x] W7.4 Eval harness metrics: hit@k, MRR, recall@k, latency p50/p95; `--dataset` `--k`
 - [x] W7.5 `/metrics` Prometheus stub; health reports vector backend
 - [x] W7.6 parrts **v0.4.0**
+
+## Wave 8 — Full `/api/v1` boot chain (2026-07-31 cont)
+
+- [x] W8.1 Fix `auth_service.get_db` NameError
+- [x] W8.2 Soft-load each v1 endpoint module (one failure ≠ total blackout)
+- [x] W8.3 Rename SQLAlchemy-reserved `metadata` → `extra_data` (barcode + serialized models)
+- [x] W8.4 **15/15** v1 routers load; main mounts `/api/v1`
+- [x] W8.5 `scripts/verify_boot.py` + `tests/test_backend_boot.py`
+- [x] W8.6 CI `backend-smoke` job (`pip install -r backend/requirements.txt`)
+- [x] W8.7 parrts **v0.4.1** / API surface 1.3.0
 
 ---
 
@@ -99,12 +109,11 @@
 cd /Users/nexteleven/Desktop/Parrts-Dist-RAG
 python3 -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev,api]"
+pip install -r backend/requirements.txt   # for full /api/v1
 pytest -q
-python -m parrts ingest --force
-python -m parrts query "brake pads for 2019 Honda Civic" --no-llm
+PYTHONPATH=backend:src python scripts/verify_boot.py
 python -m parrts query "brake pads for 2019 Honda Civic" --no-llm --expand-parent
 python scripts/eval_retrieval.py --dataset default -k 5
-docker compose --profile core config -q
 ```
 
 ## Explicit non-goals this loop
@@ -112,3 +121,4 @@ docker compose --profile core config -q
 - Live Stripe/EasyPost without keys  
 - Scraping production supplier sites  
 - Full 13-agent production SLA  
+- Live BGE model download in CI (optional local extra)  

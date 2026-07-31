@@ -14,6 +14,7 @@ from fastapi import HTTPException, status, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from app.core.config import settings
+from app.core.database import get_db
 from app.models.user import User
 from app.schemas.auth import (
     UserCreate, UserUpdate, LoginRequest, MFASetupRequest, 

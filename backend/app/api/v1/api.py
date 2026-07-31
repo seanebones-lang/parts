@@ -1,25 +1,59 @@
 """
 Main API router for v1 endpoints.
+
+Each endpoint module is soft-imported so a single broken module does not
+take down the entire /api/v1 surface.
 """
 
+from __future__ import annotations
+
 from fastapi import APIRouter
-from .endpoints import health, locations, customers, parts, orders, emails, ai_agents, inventory, payments, analytics, deployment, rollout, auth, barcode, serialized
 
 api_router = APIRouter()
+_loaded: list[str] = []
+_failed: dict[str, str] = {}
 
-# Include all endpoint routers
-api_router.include_router(auth.router, prefix="/auth", tags=["authentication"])
-api_router.include_router(barcode.router, prefix="/barcode", tags=["barcode-scanning"])
-api_router.include_router(serialized.router, prefix="/serialized", tags=["serialized-tracking"])
-api_router.include_router(health.router, prefix="/health", tags=["health"])
-api_router.include_router(locations.router, prefix="/locations", tags=["locations"])
-api_router.include_router(customers.router, prefix="/customers", tags=["customers"])
-api_router.include_router(parts.router, prefix="/parts", tags=["parts"])
-api_router.include_router(inventory.router, prefix="/inventory", tags=["inventory"])
-api_router.include_router(orders.router, prefix="/orders", tags=["orders"])
-api_router.include_router(payments.router, prefix="/payments", tags=["payments"])
-api_router.include_router(analytics.router, prefix="/analytics", tags=["analytics"])
-api_router.include_router(deployment.router, prefix="/deployment", tags=["deployment"])
-api_router.include_router(rollout.router, prefix="/rollout", tags=["rollout"])
-api_router.include_router(emails.router, prefix="/emails", tags=["emails"])
-api_router.include_router(ai_agents.router, prefix="/ai-agents", tags=["ai-agents"])
+
+def _include(name: str, module_path: str, prefix: str, tags: list[str]) -> None:
+    """Import module_path and include its `router` if present."""
+    import importlib
+
+    try:
+        mod = importlib.import_module(module_path)
+        router = getattr(mod, "router", None)
+        if router is None:
+            raise AttributeError(f"{module_path} has no `router`")
+        api_router.include_router(router, prefix=prefix, tags=tags)
+        _loaded.append(name)
+    except Exception as exc:  # pragma: no cover - exercised at import time
+        _failed[name] = f"{type(exc).__name__}: {exc}"
+        print(f"Warning: /api/v1{prefix} not loaded ({name}): {exc}")
+
+
+# Core identity / inventory
+_include("auth", "app.api.v1.endpoints.auth", "/auth", ["authentication"])
+_include("health", "app.api.v1.endpoints.health", "/health", ["health"])
+_include("locations", "app.api.v1.endpoints.locations", "/locations", ["locations"])
+_include("customers", "app.api.v1.endpoints.customers", "/customers", ["customers"])
+_include("parts", "app.api.v1.endpoints.parts", "/parts", ["parts"])
+_include("inventory", "app.api.v1.endpoints.inventory", "/inventory", ["inventory"])
+_include("orders", "app.api.v1.endpoints.orders", "/orders", ["orders"])
+_include("payments", "app.api.v1.endpoints.payments", "/payments", ["payments"])
+_include("analytics", "app.api.v1.endpoints.analytics", "/analytics", ["analytics"])
+_include("emails", "app.api.v1.endpoints.emails", "/emails", ["emails"])
+_include("ai_agents", "app.api.v1.endpoints.ai_agents", "/ai-agents", ["ai-agents"])
+_include("barcode", "app.api.v1.endpoints.barcode", "/barcode", ["barcode-scanning"])
+_include("serialized", "app.api.v1.endpoints.serialized", "/serialized", ["serialized-tracking"])
+_include("deployment", "app.api.v1.endpoints.deployment", "/deployment", ["deployment"])
+_include("rollout", "app.api.v1.endpoints.rollout", "/rollout", ["rollout"])
+
+
+def router_status() -> dict:
+    """Report which v1 sub-routers loaded."""
+    return {
+        "loaded": list(_loaded),
+        "failed": dict(_failed),
+        "loaded_count": len(_loaded),
+        "failed_count": len(_failed),
+        "ok": len(_failed) == 0 and len(_loaded) > 0,
+    }

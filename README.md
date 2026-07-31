@@ -4,10 +4,12 @@
 
 | Layer | Path | Maturity |
 |-------|------|----------|
-| **Modern core (SoT for retrieval)** | `src/parrts/` | Hybrid RAG package — install with `pip install -e ".[dev]"` |
-| **Enterprise API + agents** | `backend/` | FastAPI + LangGraph scaffold; boot fixes in progress |
-| **Legacy pitch demos** | root `*.py`, `demo/` | Streamlit / FAISS / mocks — still useful for client walkthroughs |
-| **Frontend** | `frontend/` | Next.js 15 App Router UI |
+| **Modern core (SoT for retrieval)** | `src/parrts/` | Hybrid RAG **v0.4.1** — `pip install -e ".[dev]"` |
+| **Enterprise API + agents** | `backend/` | FastAPI boots; **15/15** `/api/v1` routers soft-loaded; Postgres optional for `/` `/health` `/query` |
+| **Legacy pitch demos** | root `*.py`, `demo/` | Streamlit / FAISS / mocks — client walkthroughs |
+| **Frontend** | `frontend/` | Next.js 15 App Router + typed client + traffic-light badge |
+
+**Ship remote:** https://github.com/seanebones-lang/parts  
 
 Execution backlog: [`docs/CTO_BACKLOG.md`](docs/CTO_BACKLOG.md) · Agent ownership: [`docs/AGENTS.md`](docs/AGENTS.md)
 
@@ -18,6 +20,10 @@ pip install -e ".[dev]"
 python -m parrts ingest
 python -m parrts query "brake pads for 2019 Honda Civic" --no-llm
 pytest -q
+
+# Full backend /api/v1 boot smoke
+pip install -e ".[dev,api]" && pip install -r backend/requirements.txt
+PYTHONPATH=backend:src python scripts/verify_boot.py
 ```
 
 ## Executive Summary

@@ -13,6 +13,20 @@ import json
 import re
 
 
+
+
+class MetaJSONMixin:
+    """JSON blob helpers for models that store extra_data (DB column metadata)."""
+
+    def set_metadata(self, data: Dict[str, Any]):
+        self.extra_data = json.dumps(data)
+
+    def get_metadata(self) -> Dict[str, Any]:
+        if getattr(self, "extra_data", None):
+            return json.loads(self.extra_data)
+        return {}
+
+
 class SerializedItemType(str, PyEnum):
     """Types of serialized items."""
     VEHICLE = "vehicle"
@@ -33,7 +47,7 @@ class SerializedItemStatus(str, PyEnum):
     SCRAPPED = "scrapped"
 
 
-class SerializedItem(Base, TimestampMixin):
+class SerializedItem(Base, TimestampMixin, MetaJSONMixin):
     """Model for tracking serialized items (VIN, serial numbers, etc.)."""
     
     __tablename__ = "serialized_items"
@@ -79,20 +93,11 @@ class SerializedItem(Base, TimestampMixin):
     last_movement_type = Column(String(50), nullable=True)  # received, sold, transferred, etc.
     
     # Additional data
-    metadata = Column(Text, nullable=True)  # JSON string for additional data
+    extra_data = Column("metadata", Text, nullable=True)  # JSON blob (attr != SQLAlchemy reserved)
     
-    def set_metadata(self, data: Dict[str, Any]):
-        """Set metadata as JSON string."""
-        self.metadata = json.dumps(data)
-    
-    def get_metadata(self) -> Dict[str, Any]:
-        """Get metadata as dictionary."""
-        if self.metadata:
-            return json.loads(self.metadata)
-        return {}
 
 
-class SerializedItemHistory(Base, TimestampMixin):
+class SerializedItemHistory(Base, TimestampMixin, MetaJSONMixin):
     """Model for tracking serialized item history."""
     
     __tablename__ = "serialized_item_history"
@@ -117,10 +122,10 @@ class SerializedItemHistory(Base, TimestampMixin):
     user = relationship("User")
     
     # Additional data
-    metadata = Column(Text, nullable=True)  # JSON string for additional data
+    extra_data = Column("metadata", Text, nullable=True)  # JSON blob (attr != SQLAlchemy reserved)
 
 
-class VINLookup(Base, TimestampMixin):
+class VINLookup(Base, TimestampMixin, MetaJSONMixin):
     """Model for VIN lookup and vehicle information."""
     
     __tablename__ = "vin_lookups"
@@ -158,10 +163,10 @@ class VINLookup(Base, TimestampMixin):
     depreciation_rate = Column(Float, nullable=True)
     
     # Additional data
-    metadata = Column(Text, nullable=True)  # JSON string for additional data
+    extra_data = Column("metadata", Text, nullable=True)  # JSON blob (attr != SQLAlchemy reserved)
 
 
-class SerializedItemTransfer(Base, TimestampMixin):
+class SerializedItemTransfer(Base, TimestampMixin, MetaJSONMixin):
     """Model for tracking serialized item transfers between locations."""
     
     __tablename__ = "serialized_item_transfers"
@@ -196,10 +201,10 @@ class SerializedItemTransfer(Base, TimestampMixin):
     actual_arrival = Column(DateTime(timezone=True), nullable=True)
     
     # Additional data
-    metadata = Column(Text, nullable=True)  # JSON string for additional data
+    extra_data = Column("metadata", Text, nullable=True)  # JSON blob (attr != SQLAlchemy reserved)
 
 
-class SerializedItemReservation(Base, TimestampMixin):
+class SerializedItemReservation(Base, TimestampMixin, MetaJSONMixin):
     """Model for tracking serialized item reservations."""
     
     __tablename__ = "serialized_item_reservations"
@@ -231,10 +236,10 @@ class SerializedItemReservation(Base, TimestampMixin):
     status = Column(String(20), default="active")  # active, expired, cancelled, fulfilled
     
     # Additional data
-    metadata = Column(Text, nullable=True)  # JSON string for additional data
+    extra_data = Column("metadata", Text, nullable=True)  # JSON blob (attr != SQLAlchemy reserved)
 
 
-class SerializedItemInspection(Base, TimestampMixin):
+class SerializedItemInspection(Base, TimestampMixin, MetaJSONMixin):
     """Model for tracking serialized item inspections."""
     
     __tablename__ = "serialized_item_inspections"
@@ -263,10 +268,10 @@ class SerializedItemInspection(Base, TimestampMixin):
     checklist_items = Column(Text, nullable=True)  # JSON string of checklist items
     
     # Additional data
-    metadata = Column(Text, nullable=True)  # JSON string for additional data
+    extra_data = Column("metadata", Text, nullable=True)  # JSON blob (attr != SQLAlchemy reserved)
 
 
-class SerializedItemRecall(Base, TimestampMixin):
+class SerializedItemRecall(Base, TimestampMixin, MetaJSONMixin):
     """Model for tracking serialized item recalls."""
     
     __tablename__ = "serialized_item_recalls"
@@ -290,9 +295,9 @@ class SerializedItemRecall(Base, TimestampMixin):
     
     # User information
     initiated_by = Column(Integer, ForeignKey("users.id"), nullable=True)
-    initiated_by_user = relationship("User")
+    initiated_by_user = relationship("User", foreign_keys=[initiated_by])
     resolved_by = Column(Integer, ForeignKey("users.id"), nullable=True)
-    resolved_by_user = relationship("User")
+    resolved_by_user = relationship("User", foreign_keys=[resolved_by])
     
     # Additional data
-    metadata = Column(Text, nullable=True)  # JSON string for additional data
+    extra_data = Column("metadata", Text, nullable=True)  # JSON blob (attr != SQLAlchemy reserved)

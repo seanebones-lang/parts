@@ -12,6 +12,20 @@ from typing import Optional, List, Dict, Any
 import json
 
 
+
+
+class MetaJSONMixin:
+    """JSON blob helpers for models that store extra_data (DB column metadata)."""
+
+    def set_metadata(self, data: Dict[str, Any]):
+        self.extra_data = json.dumps(data)
+
+    def get_metadata(self) -> Dict[str, Any]:
+        if getattr(self, "extra_data", None):
+            return json.loads(self.extra_data)
+        return {}
+
+
 class ScanType(str, Enum):
     """Types of scanning operations."""
     BARCODE = "barcode"
@@ -28,7 +42,7 @@ class ScanStatus(str, Enum):
     DUPLICATE = "duplicate"
 
 
-class BarcodeScan(Base, TimestampMixin):
+class BarcodeScan(Base, TimestampMixin, MetaJSONMixin):
     """Model for tracking barcode/RFID scans."""
     
     __tablename__ = "barcode_scans"
@@ -59,20 +73,11 @@ class BarcodeScan(Base, TimestampMixin):
     error_message = Column(Text, nullable=True)
     
     # Additional data
-    metadata = Column(Text, nullable=True)  # JSON string for additional data
+    extra_data = Column("metadata", Text, nullable=True)  # JSON blob (attr != SQLAlchemy reserved)
     
-    def set_metadata(self, data: Dict[str, Any]):
-        """Set metadata as JSON string."""
-        self.metadata = json.dumps(data)
-    
-    def get_metadata(self) -> Dict[str, Any]:
-        """Get metadata as dictionary."""
-        if self.metadata:
-            return json.loads(self.metadata)
-        return {}
 
 
-class RFIDTag(Base, TimestampMixin):
+class RFIDTag(Base, TimestampMixin, MetaJSONMixin):
     """Model for RFID tag management."""
     
     __tablename__ = "rfid_tags"
@@ -100,10 +105,10 @@ class RFIDTag(Base, TimestampMixin):
     waterproof_rating = Column(String(20), nullable=True)  # IP rating
     
     # Additional data
-    metadata = Column(Text, nullable=True)  # JSON string for additional data
+    extra_data = Column("metadata", Text, nullable=True)  # JSON blob (attr != SQLAlchemy reserved)
 
 
-class ScanSession(Base, TimestampMixin):
+class ScanSession(Base, TimestampMixin, MetaJSONMixin):
     """Model for tracking scanning sessions."""
     
     __tablename__ = "scan_sessions"
@@ -132,10 +137,10 @@ class ScanSession(Base, TimestampMixin):
     app_version = Column(String(20), nullable=True)
     
     # Additional data
-    metadata = Column(Text, nullable=True)  # JSON string for additional data
+    extra_data = Column("metadata", Text, nullable=True)  # JSON blob (attr != SQLAlchemy reserved)
 
 
-class InventoryAudit(Base, TimestampMixin):
+class InventoryAudit(Base, TimestampMixin, MetaJSONMixin):
     """Model for inventory audit trails."""
     
     __tablename__ = "inventory_audits"
@@ -164,4 +169,4 @@ class InventoryAudit(Base, TimestampMixin):
     status = Column(String(20), default="in_progress")  # in_progress, completed, cancelled
     
     # Additional data
-    metadata = Column(Text, nullable=True)  # JSON string for additional data
+    extra_data = Column("metadata", Text, nullable=True)  # JSON blob (attr != SQLAlchemy reserved)
