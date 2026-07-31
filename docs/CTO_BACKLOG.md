@@ -28,3 +28,5 @@
 
 ## Never
 Unauthorized OEM scraping · calling integrations “fake” when they are key-gated production modules
+
+**Full roadmap:** [`ROADMAP_TO_COMPLETION.md`](ROADMAP_TO_COMPLETION.md)

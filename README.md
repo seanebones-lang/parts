@@ -119,7 +119,7 @@ docker compose -f docker-compose.prod.yml up -d --build
 | Analytics / agents UI | **In product** — deepens with telemetry wiring |
 | Multi-tenant SaaS billing | Roadmap |
 
-Details: [`docs/DMS_OEM.md`](docs/DMS_OEM.md) · [`docs/SYSTEM.md`](docs/SYSTEM.md)
+Details: [`docs/SYSTEM.md`](docs/SYSTEM.md) · [`docs/DMS_OEM.md`](docs/DMS_OEM.md) · [`docs/ROADMAP_TO_COMPLETION.md`](docs/ROADMAP_TO_COMPLETION.md)
 
 ---
 
