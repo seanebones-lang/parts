@@ -8,6 +8,7 @@ interface NavigationProps {
 /** Primary nav — core system modules first. */
 export function Navigation({ className }: NavigationProps) {
   const navItems: Array<{ href: string; label: string; core?: boolean }> = [
+    { href: '/emails', label: 'Email Desk', core: true },
     { href: '/parts', label: 'Parts Search', core: true },
     { href: '/inventory', label: 'Inventory', core: true },
     { href: '/orders', label: 'Orders', core: true },

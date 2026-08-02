@@ -2,7 +2,7 @@
 
 **Repository:** https://github.com/seanebones-lang/parts  
 **Owner:** NextEleven LLC  
-**Package:** `parrts` v0.6.1  
+**Package:** `parrts` v0.8.0  
 **License:** Proprietary — NextEleven LLC (see `LICENSE`)
 
 ---
@@ -11,19 +11,21 @@
 
 **Parts** is NextEleven’s **dealership parts operating system**:
 
-1. **AI parts lookup** — hybrid dense + BM25 + RRF retrieval with green/yellow/red confidence  
-2. **DMS core** — multi-location catalog, inventory, customers, orders (embedded SQLite; Postgres for multi-node)  
-3. **OEM / distributor feeds** — pluggable ingest (`file` · `http` · synthetic for tests)  
-4. **Enterprise API** — FastAPI `/api/v1` + LangGraph specialists  
-5. **Operator UI** — Next.js App Router (search, inventory, orders, customers)  
-6. **Ops** — Docker Compose (dev + prod), CI, eval harness  
-
-Natural language counter lookup:
+1. **Email desk (selling point)** — inbound parts questions auto-answered by section specialists, graded green/yellow/red, full-text searchable for staff  
+2. **AI parts lookup** — hybrid dense + BM25 + RRF retrieval with green/yellow/red confidence  
+3. **DMS core** — multi-location catalog, inventory, customers, orders (embedded SQLite; Postgres for multi-node)  
+4. **OEM / distributor feeds** — pluggable ingest (`file` · `http` · synthetic for tests)  
+5. **Enterprise API** — FastAPI `/api/v1` + specialist agents  
+6. **Operator UI** — Next.js (email desk, search, inventory, orders, customers)  
+7. **Ops** — Docker Compose (dev + prod), CI, eval harness  
 
 ```bash
+python -m parrts email seed --clear
+python -m parrts email status
 python -m parrts query "brake pads for 2019 Honda Civic" --no-llm
 ```
 
+See `docs/EMAIL_DESK.md`.
 ---
 
 ## System modes (all first-class)

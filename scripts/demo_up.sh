@@ -28,6 +28,9 @@ python -m parrts dms seed --reindex || python -m parrts dms seed
 # If seed without reindex flag path, force reindex
 python -m parrts dms reindex || true
 
+echo "Seeding email desk (auto-answer + G/Y/R)..."
+python -m parrts email seed --clear || true
+
 mkdir -p .parrts/logs
 export AUTH_MODE="${AUTH_MODE:-demo}"
 export ENVIRONMENT="${ENVIRONMENT:-development}"

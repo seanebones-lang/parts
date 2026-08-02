@@ -1,4 +1,4 @@
-"""CLI: ingest, query, status, dms.*"""
+"""CLI: ingest, query, status, dms.*, email.*"""
 
 from __future__ import annotations
 
@@ -155,6 +155,79 @@ def cmd_dms_reindex(args: argparse.Namespace) -> int:
     return 0 if result.get("ok", True) else 1
 
 
+def _email_service(args: argparse.Namespace):
+    from parrts.email import EmailService
+
+    return EmailService(root=_root_from_args(args))
+
+
+def cmd_email_status(args: argparse.Namespace) -> int:
+    svc = _email_service(args)
+    print(json.dumps(svc.status(), indent=2))
+    return 0
+
+
+def cmd_email_seed(args: argparse.Namespace) -> int:
+    svc = _email_service(args)
+    result = svc.seed_demo(process=not bool(args.no_process), clear=bool(args.clear))
+    print(json.dumps({"ok": True, "action": "email.seed", **result}, indent=2))
+    return 0
+
+
+def cmd_email_process(args: argparse.Namespace) -> int:
+    svc = _email_service(args)
+    eid = getattr(args, "id", None)
+    result = svc.process(email_id=int(eid) if eid is not None else None, limit=int(args.limit))
+    print(json.dumps({"ok": True, "action": "email.process", **result}, indent=2))
+    return 0
+
+
+def cmd_email_list(args: argparse.Namespace) -> int:
+    svc = _email_service(args)
+    rh = None
+    if getattr(args, "requires_human", False):
+        rh = True
+    rows = svc.list(
+        status=args.status,
+        traffic_light=args.color,
+        email_type=args.type,
+        requires_human=rh,
+        limit=int(args.limit),
+    )
+    print(json.dumps({"ok": True, "count": len(rows), "emails": rows}, indent=2))
+    return 0
+
+
+def cmd_email_search(args: argparse.Namespace) -> int:
+    svc = _email_service(args)
+    rows = svc.search(args.query, limit=int(args.limit))
+    print(json.dumps({"ok": True, "count": len(rows), "emails": rows}, indent=2))
+    return 0
+
+
+def cmd_email_get(args: argparse.Namespace) -> int:
+    svc = _email_service(args)
+    row = svc.get(int(args.id))
+    if not row:
+        print(json.dumps({"ok": False, "error": "not_found", "id": args.id}, indent=2))
+        return 1
+    print(json.dumps({"ok": True, "email": row}, indent=2))
+    return 0
+
+
+def cmd_email_ingest(args: argparse.Namespace) -> int:
+    svc = _email_service(args)
+    row = svc.ingest(
+        subject=args.subject,
+        body_text=args.body,
+        sender_email=args.from_email,
+        sender_name=args.from_name or "",
+        process=not bool(args.no_process),
+    )
+    print(json.dumps({"ok": True, "action": "email.ingest", "email": row}, indent=2))
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="parrts",
@@ -251,6 +324,48 @@ def build_parser() -> argparse.ArgumentParser:
         "reindex", help="Export DMS inventory and rebuild RAG index"
     )
     p_dms_reindex.set_defaults(func=cmd_dms_reindex)
+
+    # --- Email desk (selling point) ---
+    p_email = sub.add_parser("email", help="Inbound email auto-answer desk (G/Y/R)")
+    email_sub = p_email.add_subparsers(dest="email_command", required=True)
+
+    p_email_status = email_sub.add_parser("status", help="Email desk SQLite stats")
+    p_email_status.set_defaults(func=cmd_email_status)
+
+    p_email_seed = email_sub.add_parser("seed", help="Seed demo inbound emails + process")
+    p_email_seed.add_argument("--clear", action="store_true", help="Wipe desk DB first")
+    p_email_seed.add_argument("--no-process", action="store_true", help="Ingest only")
+    p_email_seed.set_defaults(func=cmd_email_seed)
+
+    p_email_process = email_sub.add_parser("process", help="Run specialist pipeline")
+    p_email_process.add_argument("--id", type=int, default=None, help="Single email id")
+    p_email_process.add_argument("--limit", type=int, default=50)
+    p_email_process.set_defaults(func=cmd_email_process)
+
+    p_email_list = email_sub.add_parser("list", help="List desk emails (priority sort)")
+    p_email_list.add_argument("--status", default=None)
+    p_email_list.add_argument("--color", default=None, help="green|yellow|red")
+    p_email_list.add_argument("--type", default=None, help="email_type filter")
+    p_email_list.add_argument("--requires-human", action="store_true")
+    p_email_list.add_argument("--limit", type=int, default=100)
+    p_email_list.set_defaults(func=cmd_email_list)
+
+    p_email_search = email_sub.add_parser("search", help="Full-text search email desk")
+    p_email_search.add_argument("query", help="Search query")
+    p_email_search.add_argument("--limit", type=int, default=50)
+    p_email_search.set_defaults(func=cmd_email_search)
+
+    p_email_get = email_sub.add_parser("get", help="Get email by id")
+    p_email_get.add_argument("id", type=int)
+    p_email_get.set_defaults(func=cmd_email_get)
+
+    p_email_ingest = email_sub.add_parser("ingest", help="Ingest one inbound email")
+    p_email_ingest.add_argument("--subject", required=True)
+    p_email_ingest.add_argument("--body", required=True)
+    p_email_ingest.add_argument("--from-email", required=True)
+    p_email_ingest.add_argument("--from-name", default="")
+    p_email_ingest.add_argument("--no-process", action="store_true")
+    p_email_ingest.set_defaults(func=cmd_email_ingest)
 
     return parser
 

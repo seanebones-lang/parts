@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-__version__ = "0.7.0"
+__version__ = "0.8.0"
 
 from parrts.engine import PartsRAGEngine
 from parrts.models import LocationInventory, PartRecord, QueryResult, TrafficLight

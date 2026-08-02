@@ -6,6 +6,7 @@
 
 | Surface | Role |
 |---------|------|
+| **Email desk** | Inbound parts email → specialists → green/yellow/red → searchable archive |
 | Counter search | Natural language → ranked SKUs + traffic light |
 | DMS | Catalog, multi-location stock, customers, orders |
 | OEM feeds | File / HTTP ingest into DMS, then RAG reindex |
@@ -42,10 +43,18 @@ parrts dms sync-oem --source file --path dealer_export.json --reindex
 
 UI:
 
+- `/emails` — inbound email desk (selling point: auto-answer + G/Y/R + search)  
 - `/parts` — counter search  
 - `/inventory` — stock by location  
 - `/orders` — order capture + reserve  
 - `/customers` — customer master  
+
+```bash
+parrts email seed --clear
+parrts email status
+```
+
+See `docs/EMAIL_DESK.md`.
 
 ## Security
 

@@ -24,16 +24,47 @@ async def process_email(
     db: AsyncSession = Depends(get_db),
     current_user: Optional[User] = Depends(require_user_if_production),
 ):
-    """Process an email through the AI agent workflow."""
+    """Process an email via offline EmailService specialists (fallback: LangGraph)."""
     _ = current_user
+    _ = db
+    # Prefer product SoT: parrts.email desk (no Postgres)
+    try:
+        import os
+        from pathlib import Path
+
+        from parrts.email import EmailService
+
+        root = Path(os.environ.get("PARRTS_ROOT") or Path.cwd()).resolve()
+        for p in [root, *Path(__file__).resolve().parents]:
+            if (p / "src" / "parrts").is_dir() or (p / ".parrts").exists():
+                root = p
+                break
+        svc = EmailService(root=root)
+        row = svc.ingest(
+            subject=str(email_data.get("subject") or ""),
+            body_text=str(email_data.get("body") or email_data.get("body_text") or ""),
+            sender_email=str(email_data.get("sender_email") or email_data.get("from") or "unknown@local"),
+            sender_name=str(email_data.get("sender_name") or ""),
+            message_id=email_data.get("message_id"),
+            process=True,
+        )
+        return {
+            "success": True,
+            "result": row,
+            "message": "Email processed via specialist desk",
+            "engine": "parrts.email",
+        }
+    except Exception:
+        pass
+
     try:
         workflow = LangGraphWorkflow()
         result = await workflow.process(email_data)
-
         return {
             "success": True,
             "result": result,
             "message": "Email processed successfully",
+            "engine": "langgraph",
         }
     except Exception as e:
         raise HTTPException(

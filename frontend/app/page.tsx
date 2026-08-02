@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { MapPin, Search, Shield, Database, Truck } from 'lucide-react'
+import { MapPin, Search, Shield, Database, Truck, Mail } from 'lucide-react'
 
 export default function HomePage() {
   return (
@@ -22,11 +22,17 @@ export default function HomePage() {
             Parts operating system for multi-location dealers
           </h1>
           <p className="mb-6 text-lg text-muted-foreground">
-            Counter lookup, inventory, customers, and orders — with hybrid AI ranking and
-            traffic-light confidence so staff stay in control.
+            Inbound email auto-answer with green/yellow/red desk grades, counter lookup,
+            inventory, customers, and orders — hybrid AI ranking so staff stay in control.
           </p>
           <div className="flex flex-wrap gap-3">
             <Button asChild size="lg">
+              <Link href="/emails">
+                <Mail className="mr-2 h-4 w-4" />
+                Email Desk
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="lg">
               <Link href="/parts">
                 <Search className="mr-2 h-4 w-4" />
                 Parts Search

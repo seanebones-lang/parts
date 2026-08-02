@@ -45,7 +45,8 @@ jobs:
             --ignore=tests/test_agents_mocked.py \
             --ignore=tests/test_langgraph_workflow.py \
             --ignore=tests/test_pgvector_e2e.py \
-            --ignore=tests/test_dms_api.py
+            --ignore=tests/test_dms_api.py \
+            --ignore=tests/test_email_api.py
 
       - name: Retrieval eval smoke (default dataset)
         run: python scripts/eval_retrieval.py --dataset default -k 5
@@ -78,17 +79,20 @@ jobs:
           pytest -q --tb=short \
             tests/test_backend_boot.py \
             tests/test_dms_api.py \
+            tests/test_email_api.py \
             tests/test_auth_demo_mode.py
       - name: verify_boot script
         env:
           PYTHONPATH: backend:src
         run: python scripts/verify_boot.py
-      - name: DMS seed + reindex + query smoke
+      - name: DMS + email desk smoke
         env:
           PYTHONPATH: backend:src
         run: |
           python -m parrts dms seed --reindex
           python -m parrts dms status
+          python -m parrts email seed --clear
+          python -m parrts email status
           python -m parrts query "brake pads" --no-llm | head -c 400
 
   frontend:
