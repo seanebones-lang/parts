@@ -1,8 +1,7 @@
 """
-Inbound email desk API — backed by ``parrts.email.EmailService`` (SQLite).
+Inbound email desk API — ``parrts.email.EmailService`` (SQLite + optional IMAP/SMTP).
 
 No Postgres required. Soft-loaded via ``app.api.v1.api``.
-Selling point: auto-answer parts emails + green/yellow/red + searchable archive.
 """
 
 from __future__ import annotations
@@ -68,13 +67,44 @@ class SeedBody(BaseModel):
     process: bool = True
 
 
+class FetchImapBody(BaseModel):
+    limit: int = Field(20, ge=1, le=200)
+    process: bool = True
+    unseen_only: bool = True
+
+
+class SendBody(BaseModel):
+    body: Optional[str] = None
+    force: bool = False
+    dry_run: bool = False
+
+
+class OverrideBody(BaseModel):
+    color: str = Field(..., description="green|yellow|red")
+    requires_human: Optional[bool] = None
+    notes: Optional[str] = None
+
+
+class DraftBody(BaseModel):
+    suggested_response: str
+
+
 @router.get("/status")
 async def email_status(
     current_user: Optional[User] = Depends(require_user_if_production),
 ):
     _ = current_user
-    svc = get_email_service()
-    return svc.status()
+    return get_email_service().status()
+
+
+@router.get("/mailbox")
+async def mailbox_info(
+    current_user: Optional[User] = Depends(require_user_if_production),
+):
+    _ = current_user
+    from parrts.email.mail_io import mailbox_status
+
+    return mailbox_status()
 
 
 @router.get("/")
@@ -88,7 +118,6 @@ async def list_emails(
     q: Optional[str] = Query(None, description="Full-text search"),
     current_user: Optional[User] = Depends(require_user_if_production),
 ):
-    """List / search desk emails (employee searchable database)."""
     _ = current_user
     svc = get_email_service()
     if q and q.strip():
@@ -102,12 +131,7 @@ async def list_emails(
             limit=limit,
             offset=skip,
         )
-    return {
-        "ok": True,
-        "count": len(rows),
-        "emails": rows,
-        "status": svc.status(),
-    }
+    return {"ok": True, "count": len(rows), "emails": rows, "status": svc.status()}
 
 
 @router.get("/search")
@@ -128,8 +152,7 @@ async def get_email(
     current_user: Optional[User] = Depends(require_user_if_production),
 ):
     _ = current_user
-    svc = get_email_service()
-    row = svc.get(email_id)
+    row = get_email_service().get(email_id)
     if not row:
         raise HTTPException(status_code=404, detail=f"email {email_id} not found")
     return {"ok": True, "email": row}
@@ -160,7 +183,6 @@ async def process_emails(
     body: Optional[ProcessBody] = None,
     current_user: Optional[User] = Depends(require_user_if_production),
 ):
-    """Run classifier + section specialists + traffic-light grading."""
     _ = current_user
     svc = get_email_service()
     payload = body or ProcessBody()
@@ -174,7 +196,98 @@ async def seed_emails(
     current_user: Optional[User] = Depends(require_user_if_production),
 ):
     _ = current_user
-    svc = get_email_service()
     payload = body or SeedBody()
-    result = svc.seed_demo(clear=payload.clear, process=payload.process)
-    return result
+    return get_email_service().seed_demo(clear=payload.clear, process=payload.process)
+
+
+@router.post("/fetch-imap")
+async def fetch_imap(
+    body: Optional[FetchImapBody] = None,
+    current_user: Optional[User] = Depends(require_user_if_production),
+):
+    """Pull unseen mail when IMAP_* credentials are set."""
+    _ = current_user
+    svc = get_email_service()
+    payload = body or FetchImapBody()
+    try:
+        return svc.fetch_imap(
+            limit=payload.limit,
+            process=payload.process,
+            unseen_only=payload.unseen_only,
+        )
+    except RuntimeError as exc:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc)) from exc
+
+
+@router.post("/{email_id}/send")
+async def send_email(
+    email_id: int,
+    body: Optional[SendBody] = None,
+    current_user: Optional[User] = Depends(require_user_if_production),
+):
+    """Approve + SMTP send (or dry_run / mark-only without SMTP)."""
+    _ = current_user
+    svc = get_email_service()
+    payload = body or SendBody()
+    try:
+        row = svc.approve_and_send(
+            email_id,
+            body=payload.body,
+            force=payload.force,
+            dry_run=payload.dry_run,
+        )
+        return {"ok": True, "email": row}
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+
+@router.post("/{email_id}/override")
+async def override_email(
+    email_id: int,
+    body: OverrideBody,
+    current_user: Optional[User] = Depends(require_user_if_production),
+):
+    _ = current_user
+    try:
+        row = get_email_service().override(
+            email_id,
+            color=body.color,
+            requires_human=body.requires_human,
+            notes=body.notes,
+        )
+        return {"ok": True, "email": row}
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.patch("/{email_id}/draft")
+async def patch_draft(
+    email_id: int,
+    body: DraftBody,
+    current_user: Optional[User] = Depends(require_user_if_production),
+):
+    _ = current_user
+    try:
+        row = get_email_service().update_draft(email_id, body.suggested_response)
+        return {"ok": True, "email": row}
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@router.post("/{email_id}/polish")
+async def polish_email(
+    email_id: int,
+    current_user: Optional[User] = Depends(require_user_if_production),
+):
+    _ = current_user
+    try:
+        row = get_email_service().polish(email_id)
+        return {"ok": True, "email": row}
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc

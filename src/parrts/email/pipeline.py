@@ -140,11 +140,33 @@ class EmailPipeline:
                 parts_stock=spec.parts_stock,
                 error=None if spec.ok else (spec.message or "specialist failed"),
             )
+            draft = spec.suggested_response or ""
+            polished_flag = 0
+            # Optional LLM polish (no-op without keys)
+            try:
+                from parrts.email.polish import polish_response
+
+                polished = polish_response(
+                    subject=d.get("subject") or "",
+                    inbound_body=d.get("body_text") or "",
+                    draft=draft,
+                    classification=clf.classification,
+                    traffic_light=tl.color,
+                )
+                if polished and polished.strip() and polished.strip() != draft.strip():
+                    draft = polished
+                    polished_flag = 1
+                    agents.append("llm_polish")
+            except Exception:
+                pass
+
             status = "processed"
             if tl.color == "green" and tl.auto_send_allowed:
-                status = "responded"  # auto-handled desk state
+                status = "ready"  # auto-handled draft; SMTP may still be pending
             elif tl.color == "red":
                 status = "escalated"
+            elif tl.requires_human:
+                status = "review"
 
             self.store.execute(
                 """
@@ -165,7 +187,7 @@ class EmailPipeline:
                     actions_json = ?,
                     agents_invoked_json = ?,
                     ai_processed = 1,
-                    response_sent = ?,
+                    polished = ?,
                     error_message = NULL,
                     updated_at = ?
                 WHERE id = ?
@@ -181,17 +203,64 @@ class EmailPipeline:
                     tl.reason,
                     1 if tl.requires_human else 0,
                     spec.specialist,
-                    spec.suggested_response or "",
+                    draft,
                     json.dumps(clf.extracted_info or {}),
                     json.dumps(spec.hits or []),
                     json.dumps(tl.actions or []),
                     json.dumps(agents),
-                    1 if (tl.color == "green" and tl.auto_send_allowed) else 0,
+                    polished_flag,
                     now,
                     email_id,
                 ),
             )
             self.store.commit()
+
+            # Optional auto-send greens when SMTP + EMAIL_AUTO_SEND
+            try:
+                from parrts.email.mail_io import MailboxConfig, send_smtp_reply
+
+                mcfg = MailboxConfig.from_env()
+                if (
+                    mcfg.auto_send
+                    and mcfg.smtp_configured()
+                    and tl.color == "green"
+                    and tl.auto_send_allowed
+                    and draft
+                ):
+                    send_smtp_reply(
+                        to_address=str(d.get("sender_email") or ""),
+                        subject=str(d.get("subject") or ""),
+                        body=draft,
+                        cfg=mcfg,
+                        in_reply_to=d.get("message_id"),
+                    )
+                    self.store.execute(
+                        """
+                        UPDATE emails SET
+                            response_sent = 1,
+                            response_sent_at = ?,
+                            status = 'responded',
+                            last_send_error = NULL,
+                            updated_at = ?
+                        WHERE id = ?
+                        """,
+                        (now, now, email_id),
+                    )
+                    self.store.commit()
+                    agents.append("smtp_auto_send")
+                    self.store.execute(
+                        "UPDATE emails SET agents_invoked_json = ?, updated_at = ? WHERE id = ?",
+                        (json.dumps(agents), now, email_id),
+                    )
+                    self.store.commit()
+            except Exception as send_exc:
+                self.store.execute(
+                    """
+                    UPDATE emails SET last_send_error = ?, updated_at = ? WHERE id = ?
+                    """,
+                    (str(send_exc), now, email_id),
+                )
+                self.store.commit()
         except Exception as exc:  # noqa: BLE001 — desk must never lose the message
             err = str(exc)
             tl = grade_email(
@@ -230,6 +299,127 @@ class EmailPipeline:
         out = self.get(email_id) or {}
         out["pipeline_error"] = err
         return out
+
+    def update_draft(self, email_id: int, suggested_response: str) -> dict[str, Any]:
+        now = _utcnow()
+        self.store.execute(
+            """
+            UPDATE emails SET suggested_response = ?, updated_at = ? WHERE id = ?
+            """,
+            (suggested_response, now, email_id),
+        )
+        self.store.commit()
+        row = self.get(email_id)
+        if not row:
+            raise KeyError(f"email {email_id} not found")
+        return row
+
+    def override_grade(
+        self,
+        email_id: int,
+        *,
+        color: str,
+        requires_human: bool | None = None,
+        notes: str | None = None,
+    ) -> dict[str, Any]:
+        color = (color or "").lower().strip()
+        if color not in ("green", "yellow", "red"):
+            raise ValueError("color must be green|yellow|red")
+        now = _utcnow()
+        rh = requires_human
+        if rh is None:
+            rh = color != "green"
+        status = "ready" if color == "green" and not rh else ("escalated" if color == "red" else "review")
+        self.store.execute(
+            """
+            UPDATE emails SET
+                traffic_light = ?,
+                traffic_reason = COALESCE(?, traffic_reason),
+                requires_human = ?,
+                status = ?,
+                human_notes = COALESCE(?, human_notes),
+                updated_at = ?
+            WHERE id = ?
+            """,
+            (
+                color,
+                f"Human override → {color}",
+                1 if rh else 0,
+                status,
+                notes,
+                now,
+                email_id,
+            ),
+        )
+        self.store.commit()
+        row = self.get(email_id)
+        if not row:
+            raise KeyError(f"email {email_id} not found")
+        return row
+
+    def mark_sent(self, email_id: int, *, via: str = "manual") -> dict[str, Any]:
+        now = _utcnow()
+        self.store.execute(
+            """
+            UPDATE emails SET
+                response_sent = 1,
+                response_sent_at = ?,
+                status = 'responded',
+                last_send_error = NULL,
+                updated_at = ?
+            WHERE id = ?
+            """,
+            (now, now, email_id),
+        )
+        self.store.commit()
+        row = self.get(email_id)
+        if not row:
+            raise KeyError(f"email {email_id} not found")
+        row["sent_via"] = via
+        return row
+
+    def send_reply(
+        self,
+        email_id: int,
+        *,
+        body: str | None = None,
+        force: bool = False,
+    ) -> dict[str, Any]:
+        """SMTP send (requires credentials). Blocks red unless force=True."""
+        from parrts.email.mail_io import MailboxConfig, send_smtp_reply
+
+        row = self.get(email_id)
+        if not row:
+            raise KeyError(f"email {email_id} not found")
+        tl = row.get("traffic_light")
+        color = tl.get("color") if isinstance(tl, dict) else tl
+        if color == "red" and not force:
+            raise ValueError("refusing to send red/urgent without force=true")
+        draft = body if body is not None else (row.get("suggested_response") or "")
+        if not draft.strip():
+            raise ValueError("empty suggested_response")
+        cfg = MailboxConfig.from_env()
+        try:
+            result = send_smtp_reply(
+                to_address=str(row.get("sender_email") or ""),
+                subject=str(row.get("subject") or ""),
+                body=draft,
+                cfg=cfg,
+                in_reply_to=row.get("message_id"),
+            )
+            if body is not None:
+                self.update_draft(email_id, draft)
+            sent = self.mark_sent(email_id, via="smtp")
+            sent["smtp"] = result
+            return sent
+        except Exception as exc:
+            now = _utcnow()
+            self.store.execute(
+                "UPDATE emails SET last_send_error = ?, updated_at = ? WHERE id = ?",
+                (str(exc), now, email_id),
+            )
+            self.store.commit()
+            raise
 
     def process_pending(self, limit: int = 50) -> dict[str, Any]:
         rows = self.store.fetchall(

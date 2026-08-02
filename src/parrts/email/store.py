@@ -130,6 +130,17 @@ class EmailStore:
         conn.executescript(SCHEMA_SQL)
         for trig in _TRIGGERS:
             conn.executescript(trig)
+        # Production desk columns (idempotent)
+        for col_sql in (
+            "ALTER TABLE emails ADD COLUMN human_notes TEXT DEFAULT ''",
+            "ALTER TABLE emails ADD COLUMN response_sent_at TEXT",
+            "ALTER TABLE emails ADD COLUMN last_send_error TEXT",
+            "ALTER TABLE emails ADD COLUMN polished INTEGER NOT NULL DEFAULT 0",
+        ):
+            try:
+                conn.execute(col_sql)
+            except sqlite3.OperationalError:
+                pass
         conn.commit()
 
     def execute(self, sql: str, params: tuple[Any, ...] | list[Any] = ()) -> sqlite3.Cursor:

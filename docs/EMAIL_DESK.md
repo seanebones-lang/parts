@@ -1,60 +1,64 @@
-# Email Desk — selling point
+# Email Desk — selling point (production)
 
-Inbound customer parts email is classified, answered by **section specialists**, graded **green / yellow / red**, and stored in a **searchable** employee archive.
+Inbound customer parts email is classified, answered by **section specialists**, graded **green / yellow / red**, stored in a **searchable** employee archive, and optionally synced via **IMAP/SMTP** when credentials are set.
 
 ## Grades
 
 | Color | Meaning |
 |-------|---------|
-| **Green** | Handled — auto-answer OK, no further action |
-| **Yellow** | Human review before send / action |
-| **Red** | Urgent human (complaint, failure, critical stock/match) |
+| **Green** | Handled — auto-answer OK |
+| **Yellow** | Human review before send |
+| **Red** | Urgent human (complaint / failure / critical stock) |
 
 ## Specialists
 
-| Agent | Owns |
-|-------|------|
-| `parts_quote` | Quotes / availability via hybrid RAG + parts traffic-light |
-| `parts_order` | Order intent + confirm SKU/qty |
-| `inventory` | Stock-focused desk replies |
-| `shipping` | Tracking / ETA playbook |
-| `payment` | Invoice / billing playbook |
-| `complaint` | Always escalate (red) |
-| `customer_service` | Hours, warranty, general CS |
-| `general` | Fallback + light RAG attempt |
+parts_quote · parts_order · inventory · shipping · payment · complaint · customer_service · general
 
-Pipeline: **classify → specialist → grade → persist** (SQLite `.parrts/emails.db` + FTS5).
+Pipeline: **classify → specialist → (optional LLM polish) → grade → persist → (optional SMTP auto-send)**
+
+## Production mailbox
+
+| Env | Role |
+|-----|------|
+| `IMAP_USER` / `IMAP_PASSWORD` (+ host) | Live ingest |
+| `EMAIL_USER` / `EMAIL_PASSWORD` (+ host) | SMTP send |
+| `EMAIL_AUTO_SEND=true` | Auto-SMTP **green** only when SMTP configured |
+| `EMAIL_FROM` | From address |
+
+Without credentials the desk is fully usable offline (seed/API/UI). Fetch/send fail closed with clear errors — never fake delivery.
+
+## Human desk actions
+
+| Action | CLI / API |
+|--------|-----------|
+| Override grade | `parrts email override ID --color green` · `POST /{id}/override` |
+| Approve mark-sent | `parrts email send ID --dry-run` · `POST /{id}/send` `{"dry_run":true}` |
+| SMTP send | `parrts email send ID` · `POST /{id}/send` |
+| Edit draft | `PATCH /{id}/draft` |
+| Polish (LLM keys) | `POST /{id}/polish` |
+| IMAP pull | `parrts email fetch-imap` · `POST /fetch-imap` |
+
+Red sends require `force=true`.
 
 ## CLI
 
 ```bash
 python -m parrts email seed --clear
 python -m parrts email status
+python -m parrts email mailbox
 python -m parrts email list --color red
-python -m parrts email search "brake pads"
-python -m parrts email ingest --subject "..." --body "..." --from-email a@b.com
-python -m parrts email process --id 1
+python -m parrts email send 1 --dry-run
+python -m parrts email fetch-imap   # needs IMAP_* 
 ```
 
 ## API (`/api/v1/emails`)
 
-| Method | Path | Role |
-|--------|------|------|
-| GET | `/status` | Counts by color/status |
-| GET | `/` | List + filters + `?q=` search |
-| GET | `/search?q=` | FTS search |
-| GET | `/{id}` | Detail |
-| POST | `/ingest` | Inbound message |
-| POST | `/process` | Run specialists on pending / one id |
-| POST | `/seed` | Demo mailbox |
-
-Offline — **no Postgres**. Demo auth open when `AUTH_MODE=demo`.
+status · mailbox · list/search · get · ingest · process · seed · fetch-imap · `/{id}/send|override|draft|polish`
 
 ## UI
 
-- `/emails` — queue, filters, suggested reply, seed/process
-- Nav: **Email Desk** (core)
+`/emails` — queue, G/Y/R, suggested reply, approve/send, override, mailbox badge
 
-## IMAP / SMTP
+## Celery
 
-Not required for desk value. Live mailbox connectors are a later wave; product SoT is the offline desk + API/UI.
+`process_new_emails` → IMAP fetch (if configured) + process pending desk queue.

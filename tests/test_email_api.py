@@ -83,3 +83,18 @@ def test_email_seed_list_search_process(email_client: TestClient):
     )
     assert ing.status_code == 200
     assert ing.json()["email"].get("ai_processed") in (True, 1)
+
+    # override + dry-run send
+    eid = data["emails"][0]["id"]
+    ov = email_client.post(
+        f"/api/v1/emails/{eid}/override",
+        json={"color": "green", "notes": "ok"},
+    )
+    assert ov.status_code == 200, ov.text
+    sd = email_client.post(f"/api/v1/emails/{eid}/send", json={"dry_run": True})
+    assert sd.status_code == 200, sd.text
+    assert sd.json()["email"].get("response_sent") in (True, 1)
+
+    mb = email_client.get("/api/v1/emails/mailbox")
+    assert mb.status_code == 200
+    assert "imap_configured" in mb.json()

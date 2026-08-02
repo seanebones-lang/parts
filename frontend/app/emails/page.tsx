@@ -24,8 +24,10 @@ import {
   getEmailStatus,
   isEmailApiUnreachable,
   listEmails,
+  overrideEmail,
   processEmails,
   seedEmails,
+  sendEmail,
   trafficColor,
 } from "@/lib/email-api";
 
@@ -117,6 +119,36 @@ export default function EmailsPage() {
     setErr(null);
     try {
       await processEmails({ limit: 100 });
+      await load();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : String(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onApprove = async (dryRun: boolean) => {
+    if (!selected?.id) return;
+    setLoading(true);
+    setErr(null);
+    try {
+      const res = await sendEmail(Number(selected.id), { dry_run: dryRun });
+      setSelected(res.email);
+      await load();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : String(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onOverride = async (color: "green" | "yellow" | "red") => {
+    if (!selected?.id) return;
+    setLoading(true);
+    setErr(null);
+    try {
+      const res = await overrideEmail(Number(selected.id), color);
+      setSelected(res.email);
       await load();
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e));
@@ -342,6 +374,42 @@ export default function EmailsPage() {
                       ))}
                     </ul>
                   </div>
+                )}
+                <div className="flex flex-wrap gap-2 border-t pt-3">
+                  <Button size="sm" onClick={() => void onApprove(true)} disabled={loading}>
+                    Approve (mark sent)
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => void onApprove(false)}
+                    disabled={loading}
+                  >
+                    Send via SMTP
+                  </Button>
+                  <Button size="sm" variant="secondary" onClick={() => void onOverride("green")} disabled={loading}>
+                    Override green
+                  </Button>
+                  <Button size="sm" variant="secondary" onClick={() => void onOverride("yellow")} disabled={loading}>
+                    Override yellow
+                  </Button>
+                  <Button size="sm" variant="destructive" onClick={() => void onOverride("red")} disabled={loading}>
+                    Override red
+                  </Button>
+                </div>
+                {status?.mailbox && (
+                  <p className="text-xs text-muted-foreground">
+                    Mailbox: IMAP{" "}
+                    {(status.mailbox as { imap_configured?: boolean }).imap_configured
+                      ? "configured"
+                      : "off"}{" "}
+                    · SMTP{" "}
+                    {(status.mailbox as { smtp_configured?: boolean }).smtp_configured
+                      ? "configured"
+                      : "off"}{" "}
+                    · auto_send{" "}
+                    {String((status.mailbox as { auto_send?: boolean }).auto_send ?? false)}
+                  </p>
                 )}
               </>
             )}

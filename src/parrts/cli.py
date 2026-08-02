@@ -228,6 +228,50 @@ def cmd_email_ingest(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_email_mailbox(args: argparse.Namespace) -> int:
+    from parrts.email.mail_io import mailbox_status
+
+    print(json.dumps(mailbox_status(), indent=2))
+    return 0
+
+
+def cmd_email_fetch(args: argparse.Namespace) -> int:
+    svc = _email_service(args)
+    try:
+        result = svc.fetch_imap(limit=int(args.limit), process=not bool(args.no_process))
+    except RuntimeError as exc:
+        print(json.dumps({"ok": False, "error": str(exc)}, indent=2))
+        return 1
+    print(json.dumps({"ok": True, "action": "email.fetch-imap", **result}, indent=2))
+    return 0
+
+
+def cmd_email_send(args: argparse.Namespace) -> int:
+    svc = _email_service(args)
+    try:
+        row = svc.approve_and_send(
+            int(args.id),
+            force=bool(args.force),
+            dry_run=bool(args.dry_run),
+        )
+    except (KeyError, ValueError, RuntimeError) as exc:
+        print(json.dumps({"ok": False, "error": str(exc)}, indent=2))
+        return 1
+    print(json.dumps({"ok": True, "action": "email.send", "email": row}, indent=2))
+    return 0
+
+
+def cmd_email_override(args: argparse.Namespace) -> int:
+    svc = _email_service(args)
+    try:
+        row = svc.override(int(args.id), color=args.color, notes=args.notes)
+    except (KeyError, ValueError) as exc:
+        print(json.dumps({"ok": False, "error": str(exc)}, indent=2))
+        return 1
+    print(json.dumps({"ok": True, "action": "email.override", "email": row}, indent=2))
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="parrts",
@@ -366,6 +410,30 @@ def build_parser() -> argparse.ArgumentParser:
     p_email_ingest.add_argument("--from-name", default="")
     p_email_ingest.add_argument("--no-process", action="store_true")
     p_email_ingest.set_defaults(func=cmd_email_ingest)
+
+    p_email_mb = email_sub.add_parser("mailbox", help="IMAP/SMTP config status (no secrets)")
+    p_email_mb.set_defaults(func=cmd_email_mailbox)
+
+    p_email_fetch = email_sub.add_parser("fetch-imap", help="Fetch IMAP when credentials set")
+    p_email_fetch.add_argument("--limit", type=int, default=20)
+    p_email_fetch.add_argument("--no-process", action="store_true")
+    p_email_fetch.set_defaults(func=cmd_email_fetch)
+
+    p_email_send = email_sub.add_parser("send", help="Approve/send reply (SMTP or dry-run)")
+    p_email_send.add_argument("id", type=int)
+    p_email_send.add_argument("--force", action="store_true", help="Allow send on red")
+    p_email_send.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Mark responded without SMTP",
+    )
+    p_email_send.set_defaults(func=cmd_email_send)
+
+    p_email_ov = email_sub.add_parser("override", help="Human override traffic-light color")
+    p_email_ov.add_argument("id", type=int)
+    p_email_ov.add_argument("--color", required=True, choices=["green", "yellow", "red"])
+    p_email_ov.add_argument("--notes", default=None)
+    p_email_ov.set_defaults(func=cmd_email_override)
 
     return parser
 

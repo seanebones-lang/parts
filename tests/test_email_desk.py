@@ -124,3 +124,51 @@ def test_ingest_idempotent_message_id(email_root: Path):
     )
     assert a["id"] == b["id"]
     assert svc.status()["total"] >= 1
+
+
+def traffic_ok(r: dict) -> bool:
+    tl = r.get("traffic_light")
+    if isinstance(tl, dict):
+        return tl.get("color") in ("green", "yellow", "red")
+    return True
+
+
+def test_override_and_dry_run_send(email_root: Path):
+    svc = EmailService(root=email_root)
+    svc.seed_demo(process=True, clear=True)
+    rows = svc.list(limit=50)
+    target = next(r for r in rows if traffic_ok(r))
+    eid = int(target["id"])
+    ov = svc.override(eid, color="green", notes="manager ok")
+    tl = ov.get("traffic_light")
+    color = tl.get("color") if isinstance(tl, dict) else tl
+    assert color == "green"
+    sent = svc.approve_and_send(eid, dry_run=True)
+    assert sent.get("response_sent") in (True, 1)
+    assert sent.get("status") == "responded"
+
+
+def test_mailbox_status_no_creds():
+    from parrts.email.mail_io import MailboxConfig, mailbox_status
+
+    st = mailbox_status()
+    assert st["ok"] is True
+    assert isinstance(st["imap_configured"], bool)
+    cfg = MailboxConfig.from_env()
+    assert isinstance(cfg.auto_send, bool)
+
+
+def test_red_send_blocked_without_force(email_root: Path):
+    svc = EmailService(root=email_root)
+    svc.seed_demo(process=True, clear=True)
+    rows = svc.list(traffic_light="red", limit=5)
+    if not rows:
+        row = svc.list(limit=1)[0]
+        svc.override(int(row["id"]), color="red")
+        rows = [svc.get(int(row["id"]))]
+    eid = int(rows[0]["id"])
+    try:
+        svc.pipeline.send_reply(eid, force=False)
+        raise AssertionError("expected ValueError for red send")
+    except ValueError as e:
+        assert "force" in str(e).lower() or "red" in str(e).lower()

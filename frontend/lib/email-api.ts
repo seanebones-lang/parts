@@ -89,6 +89,8 @@ export type EmailStatus = {
   by_status?: Record<string, number>;
   specialists?: string[];
   selling_point?: string;
+  mailbox?: { imap_configured?: boolean; smtp_configured?: boolean; auto_send?: boolean };
+  production_ready?: boolean;
   db_path?: string;
   [key: string]: unknown;
 };
@@ -156,4 +158,27 @@ export async function ingestEmail(body: {
   process?: boolean;
 }): Promise<{ ok?: boolean; email: DeskEmail }> {
   return emailPost("/ingest", body);
+}
+
+export async function sendEmail(
+  id: number,
+  opts?: { body?: string; force?: boolean; dry_run?: boolean }
+): Promise<{ ok?: boolean; email: DeskEmail }> {
+  return emailPost(`/${id}/send`, {
+    body: opts?.body,
+    force: opts?.force ?? false,
+    dry_run: opts?.dry_run ?? false,
+  });
+}
+
+export async function overrideEmail(
+  id: number,
+  color: "green" | "yellow" | "red",
+  notes?: string
+): Promise<{ ok?: boolean; email: DeskEmail }> {
+  return emailPost(`/${id}/override`, { color, notes });
+}
+
+export async function getMailboxStatus(): Promise<Record<string, unknown>> {
+  return emailGet("/mailbox");
 }

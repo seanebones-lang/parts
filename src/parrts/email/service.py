@@ -1,17 +1,19 @@
-"""High-level email desk service (offline SQLite + specialist pipeline)."""
+"""High-level email desk service (offline SQLite + specialist pipeline + mailbox)."""
 
 from __future__ import annotations
 
 from pathlib import Path
 from typing import Any
 
+from parrts.email.mail_io import MailboxConfig, fetch_imap_messages, mailbox_status
 from parrts.email.pipeline import EmailPipeline
+from parrts.email.polish import llm_polish_available
 from parrts.email.seed_data import DEMO_EMAILS
 from parrts.email.store import EmailStore
 
 
 class EmailService:
-    """Product email desk: ingest, auto-answer, traffic-light, searchable store."""
+    """Product email desk: ingest, auto-answer, traffic-light, searchable store, IMAP/SMTP."""
 
     def __init__(self, root: Path | str, engine: Any | None = None) -> None:
         self.root = Path(root).resolve()
@@ -55,17 +57,16 @@ class EmailService:
             FROM emails GROUP BY COALESCE(traffic_light, 'none')
             """
         )
-        by_status = self.store.fetchall(
-            "SELECT status, COUNT(*) AS c FROM emails GROUP BY status"
-        )
-        human = self.store.fetchone(
-            "SELECT COUNT(*) AS c FROM emails WHERE requires_human = 1"
-        )
+        by_status = self.store.fetchall("SELECT status, COUNT(*) AS c FROM emails GROUP BY status")
+        human = self.store.fetchone("SELECT COUNT(*) AS c FROM emails WHERE requires_human = 1")
+        sent = self.store.fetchone("SELECT COUNT(*) AS c FROM emails WHERE response_sent = 1")
+        mb = mailbox_status()
         return {
             "ok": True,
             "db_path": str(self.store.db_path),
             "total": int(total["c"]) if total else 0,
             "requires_human": int(human["c"]) if human else 0,
+            "response_sent": int(sent["c"]) if sent else 0,
             "by_traffic_light": {r["color"]: int(r["c"]) for r in by_color},
             "by_status": {r["status"]: int(r["c"]) for r in by_status},
             "specialists": [
@@ -78,6 +79,15 @@ class EmailService:
                 "customer_service",
                 "general",
             ],
+            "mailbox": {
+                "imap_configured": mb.get("imap_configured"),
+                "smtp_configured": mb.get("smtp_configured"),
+                "auto_send": mb.get("auto_send"),
+                "imap_host": mb.get("imap_host"),
+                "smtp_host": mb.get("smtp_host"),
+            },
+            "llm_polish_available": llm_polish_available(),
+            "production_ready": True,
             "selling_point": "inbound parts email auto-answer + green/yellow/red desk",
         }
 
@@ -149,3 +159,91 @@ class EmailService:
 
     def get(self, email_id: int) -> dict[str, Any] | None:
         return self.pipeline.get(email_id)
+
+    def fetch_imap(self, *, limit: int = 20, process: bool = True, unseen_only: bool = True) -> dict[str, Any]:
+        """Pull from IMAP when credentials set; ingest + process each message."""
+        msgs = fetch_imap_messages(limit=limit, unseen_only=unseen_only)
+        ingested = []
+        for m in msgs:
+            row = self.ingest(
+                subject=m.get("subject") or "",
+                body_text=m.get("body_text") or "",
+                sender_email=m.get("sender_email") or "unknown@local",
+                sender_name=m.get("sender_name") or "",
+                message_id=m.get("message_id"),
+                thread_id=m.get("thread_id"),
+                received_at=m.get("received_at"),
+                process=process,
+            )
+            ingested.append(
+                {
+                    "id": row.get("id"),
+                    "message_id": row.get("message_id"),
+                    "subject": row.get("subject"),
+                    "traffic_light": (row.get("traffic_light") or {}).get("color")
+                    if isinstance(row.get("traffic_light"), dict)
+                    else row.get("traffic_light"),
+                }
+            )
+        return {
+            "ok": True,
+            "fetched": len(msgs),
+            "ingested": len(ingested),
+            "emails": ingested,
+            "mailbox": MailboxConfig.from_env().status(),
+            "status": self.status(),
+        }
+
+    def approve_and_send(
+        self,
+        email_id: int,
+        *,
+        body: str | None = None,
+        force: bool = False,
+        dry_run: bool = False,
+    ) -> dict[str, Any]:
+        if dry_run:
+            if body is not None:
+                self.pipeline.update_draft(email_id, body)
+            row = self.pipeline.mark_sent(email_id, via="dry_run")
+            row["smtp_skipped"] = True
+            row["reason"] = "dry_run"
+            return row
+        if not MailboxConfig.from_env().smtp_configured():
+            raise RuntimeError(
+                "SMTP not configured — set EMAIL_USER + EMAIL_PASSWORD, or use dry_run=true"
+            )
+        return self.pipeline.send_reply(email_id, body=body, force=force)
+
+    def override(
+        self,
+        email_id: int,
+        *,
+        color: str,
+        requires_human: bool | None = None,
+        notes: str | None = None,
+    ) -> dict[str, Any]:
+        return self.pipeline.override_grade(
+            email_id, color=color, requires_human=requires_human, notes=notes
+        )
+
+    def update_draft(self, email_id: int, suggested_response: str) -> dict[str, Any]:
+        return self.pipeline.update_draft(email_id, suggested_response)
+
+    def polish(self, email_id: int) -> dict[str, Any]:
+        from parrts.email.polish import maybe_polish
+
+        row = self.get(email_id)
+        if not row:
+            raise KeyError(f"email {email_id} not found")
+        new_draft = maybe_polish(row)
+        if new_draft != (row.get("suggested_response") or ""):
+            row = self.pipeline.update_draft(email_id, new_draft)
+            self.store.execute("UPDATE emails SET polished = 1 WHERE id = ?", (email_id,))
+            self.store.commit()
+            row = self.get(email_id) or row
+            row["polished_now"] = True
+        else:
+            row["polished_now"] = False
+            row["llm_polish_available"] = llm_polish_available()
+        return row
