@@ -74,6 +74,11 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OEM_FEED_URL: ${OEM_FEED_URL:-}
+      OEM_FEED_TOKEN: ${OEM_FEED_TOKEN:-}
+      OEM_SYNC_REINDEX: ${OEM_SYNC_REINDEX:-false}
+      OEM_SYNC_CRON_HOUR: ${OEM_SYNC_CRON_HOUR:-6}
+      OEM_SYNC_CRON_MINUTE: ${OEM_SYNC_CRON_MINUTE:-0}
     ports:
       - "${BACKEND_PORT:-8000}:8000"
     depends_on:
@@ -103,6 +108,73 @@ services:
       timeout: 5s
       retries: 5
       start_period: 45s
+    networks:
+      - parts_internal
+
+  # Celery worker + beat (Wave 24 OEM nightly oem.scheduled_sync)
+  celery:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    image: parts-backend:prod
+    container_name: parts_celery_prod
+    restart: unless-stopped
+    environment:
+      ENVIRONMENT: production
+      DEBUG: "false"
+      AUTH_MODE: production
+      SECRET_KEY: ${SECRET_KEY:?SECRET_KEY is required}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:-dealership_parts}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      OEM_FEED_URL: ${OEM_FEED_URL:-}
+      OEM_FEED_TOKEN: ${OEM_FEED_TOKEN:-}
+      OEM_SYNC_REINDEX: ${OEM_SYNC_REINDEX:-false}
+      OEM_SYNC_CRON_HOUR: ${OEM_SYNC_CRON_HOUR:-6}
+      OEM_SYNC_CRON_MINUTE: ${OEM_SYNC_CRON_MINUTE:-0}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: ["celery", "-A", "app.celery", "worker", "--loglevel=info"]
+    networks:
+      - parts_internal
+
+  celery-beat:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    image: parts-backend:prod
+    container_name: parts_celery_beat_prod
+    restart: unless-stopped
+    environment:
+      ENVIRONMENT: production
+      DEBUG: "false"
+      AUTH_MODE: production
+      SECRET_KEY: ${SECRET_KEY:?SECRET_KEY is required}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:-dealership_parts}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      OEM_FEED_URL: ${OEM_FEED_URL:-}
+      OEM_FEED_TOKEN: ${OEM_FEED_TOKEN:-}
+      OEM_SYNC_REINDEX: ${OEM_SYNC_REINDEX:-false}
+      OEM_SYNC_CRON_HOUR: ${OEM_SYNC_CRON_HOUR:-6}
+      OEM_SYNC_CRON_MINUTE: ${OEM_SYNC_CRON_MINUTE:-0}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: ["celery", "-A", "app.celery", "beat", "--loglevel=info"]
     networks:
       - parts_internal
 

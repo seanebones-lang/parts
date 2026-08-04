@@ -226,6 +226,22 @@ async def dms_status():
         ) from exc
 
 
+@router.get("/oem/runs")
+async def dms_oem_runs(limit: int = Query(20, ge=1, le=200)):
+    """List recent oem_sync_runs (newest first)."""
+    try:
+        svc = get_dms_service()
+        runs = svc.list_oem_sync_runs(limit=limit)
+        return {"success": True, "runs": runs, "count": len(runs)}
+    except HTTPException:
+        raise
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"OEM runs list failed: {exc}",
+        ) from exc
+
+
 @router.post("/seed")
 async def dms_seed(
     body: Optional[SeedBody] = None,

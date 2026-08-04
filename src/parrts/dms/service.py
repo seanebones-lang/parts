@@ -90,6 +90,10 @@ class DmsService:
             "SELECT id, source, started_at, finished_at, parts_upserted, status, message "
             "FROM oem_sync_runs ORDER BY id DESC LIMIT 1"
         )
+        runs = self.list_oem_sync_runs(limit=10)
+        import os
+
+        feed_url_set = bool((os.environ.get("OEM_FEED_URL") or "").strip())
         return {
             "ok": True,
             "backend": self.backend,
@@ -101,7 +105,24 @@ class DmsService:
             "customers": int(customers["c"]) if customers else 0,
             "orders": int(orders["c"]) if orders else 0,
             "last_oem_sync": dict(last_sync) if last_sync else None,
+            "oem_sync_runs": runs,
+            "oem_feed_url_set": feed_url_set,
+            "oem_configured": feed_url_set,
+            "oem_sync_reindex": (os.environ.get("OEM_SYNC_REINDEX") or "").strip().lower()
+            in {"1", "true", "yes"},
         }
+
+    def list_oem_sync_runs(self, *, limit: int = 20) -> list[dict[str, Any]]:
+        """Recent OEM sync run log rows (newest first)."""
+        self.ensure_schema()
+        lim = max(1, min(int(limit or 20), 200))
+        rows = self.store.fetchall(
+            "SELECT id, source, started_at, finished_at, parts_upserted, status, message "
+            "FROM oem_sync_runs ORDER BY id DESC LIMIT ?",
+            (lim,),
+        )
+        return [dict(r) for r in rows]
+
     def sync_oem(self, feed: OemFeed, source: str | None = None) -> dict[str, Any]:
         """Upsert catalog + inventory from an OEM feed; log oem_sync_runs."""
         self.ensure_schema()

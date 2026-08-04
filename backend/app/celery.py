@@ -3,6 +3,8 @@ Celery configuration for background tasks.
 """
 
 from celery import Celery
+from celery.schedules import crontab
+
 from app.core.config import settings
 
 # Create Celery instance
@@ -12,11 +14,12 @@ celery_app = Celery(
     backend=settings.REDIS_URL,
     include=[
         "app.tasks.email_tasks",
-        "app.tasks.ai_tasks", 
+        "app.tasks.ai_tasks",
         "app.tasks.inventory_tasks",
         "app.tasks.shipping_tasks",
-        "app.tasks.followup_tasks"
-    ]
+        "app.tasks.followup_tasks",
+        "app.tasks.oem_tasks",
+    ],
 )
 
 # Celery configuration
@@ -34,6 +37,12 @@ celery_app.conf.update(
 )
 
 # Beat schedule for periodic tasks
+# OEM nightly: default 06:00 UTC. Override minute/hour via OEM_SYNC_CRON_MINUTE / OEM_SYNC_CRON_HOUR.
+import os
+
+_oem_minute = (os.environ.get("OEM_SYNC_CRON_MINUTE") or "0").strip() or "0"
+_oem_hour = (os.environ.get("OEM_SYNC_CRON_HOUR") or "6").strip() or "6"
+
 celery_app.conf.beat_schedule = {
     "process-emails": {
         "task": "app.tasks.email_tasks.process_new_emails",
@@ -50,5 +59,11 @@ celery_app.conf.beat_schedule = {
     "send-follow-up-emails": {
         "task": "app.tasks.followup_tasks.send_scheduled_followups",
         "schedule": 3600.0,  # Every hour
+    },
+    # Wave 24: OEM HTTP feed — task skips cleanly when OEM_FEED_URL unset
+    "oem-scheduled-sync-nightly": {
+        "task": "oem.scheduled_sync",
+        "schedule": crontab(minute=_oem_minute, hour=_oem_hour),
+        "options": {"expires": 3600},
     },
 }

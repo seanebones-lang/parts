@@ -119,6 +119,27 @@ Empty ACL = unrestricted. Non-empty = filter inventory to those codes.
 
 Celery task `oem.scheduled_sync` / `run_scheduled_oem_sync()` — **skips** unless `OEM_FEED_URL` set; optional `OEM_SYNC_REINDEX=true`.
 
+| Env | Role |
+|-----|------|
+| `OEM_FEED_URL` | Partner HTTP catalog feed (required for live sync) |
+| `OEM_FEED_TOKEN` | Optional Bearer / token header |
+| `OEM_SYNC_REINDEX` | `true` → rebuild RAG after successful HTTP sync |
+| `OEM_SYNC_CRON_HOUR` / `OEM_SYNC_CRON_MINUTE` | Beat cron in UTC (default **06:00**) |
+
+Compose:
+- Dev: `docker compose --profile full up -d` → `celery` + `celery-beat` with OEM env passthrough
+- Prod: `docker-compose.prod.yml` includes `celery` + `celery-beat` services
+
+```bash
+# Inspect runs
+parrts dms oem-runs --limit 10
+curl http://127.0.0.1:8000/api/v1/dms/oem/runs
+curl http://127.0.0.1:8000/api/v1/dms/status   # includes oem_sync_runs + last_oem_sync
+
+# Manual schedule tick (skips without URL)
+PYTHONPATH=backend:src python -c 'from app.tasks.oem_tasks import run_scheduled_oem_sync; print(run_scheduled_oem_sync())'
+```
+
 ## 5. Backup / restore
 
 ```bash

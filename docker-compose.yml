@@ -117,9 +117,18 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-password}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      # OEM scheduled sync (Wave 24) — task skips when OEM_FEED_URL empty
+      - OEM_FEED_URL=${OEM_FEED_URL:-}
+      - OEM_FEED_TOKEN=${OEM_FEED_TOKEN:-}
+      - OEM_SYNC_REINDEX=${OEM_SYNC_REINDEX:-false}
+      - OEM_SYNC_CRON_HOUR=${OEM_SYNC_CRON_HOUR:-6}
+      - OEM_SYNC_CRON_MINUTE=${OEM_SYNC_CRON_MINUTE:-0}
+      - PARRTS_ROOT=/parrts_root
     volumes:
       - ./backend:/app
       - ./src:/src:ro
+      - ./.parrts:/.parrts
+      - .:/parrts_root:ro
     depends_on:
       postgres:
         condition: service_healthy
@@ -146,9 +155,17 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-password}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - OEM_FEED_URL=${OEM_FEED_URL:-}
+      - OEM_FEED_TOKEN=${OEM_FEED_TOKEN:-}
+      - OEM_SYNC_REINDEX=${OEM_SYNC_REINDEX:-false}
+      - OEM_SYNC_CRON_HOUR=${OEM_SYNC_CRON_HOUR:-6}
+      - OEM_SYNC_CRON_MINUTE=${OEM_SYNC_CRON_MINUTE:-0}
+      - PARRTS_ROOT=/parrts_root
     volumes:
       - ./backend:/app
       - ./src:/src:ro
+      - ./.parrts:/.parrts
+      - .:/parrts_root:ro
     depends_on:
       postgres:
         condition: service_healthy

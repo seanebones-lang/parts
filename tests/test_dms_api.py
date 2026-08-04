@@ -172,6 +172,32 @@ def test_dms_orgs_locations_acl_and_inventory_filter(dms_client: TestClient):
     assert all(r["location_code"] == code for r in filt["inventory"])
 
 
+def test_dms_oem_runs_and_status_include_sync_log(dms_client: TestClient):
+    """Wave 24: oem_sync_runs via status + GET /oem/runs after file sync."""
+    sample = ROOT / "data" / "oem" / "sample_oem_catalog.json"
+    if not sample.is_file():
+        pytest.skip("sample OEM feed missing")
+    assert (
+        dms_client.post(
+            "/api/v1/dms/oem/sync",
+            json={"source": "file", "path": str(sample)},
+        ).status_code
+        == 200
+    )
+    st = dms_client.get("/api/v1/dms/status").json()
+    assert st.get("success") is True
+    assert st.get("last_oem_sync") is not None
+    assert isinstance(st.get("oem_sync_runs"), list)
+    assert len(st["oem_sync_runs"]) >= 1
+
+    runs = dms_client.get("/api/v1/dms/oem/runs", params={"limit": 5}).json()
+    assert runs["success"] is True
+    assert runs["count"] >= 1
+    assert runs["runs"][0].get("status") in {"ok", "error", "running", "success"} or runs[
+        "runs"
+    ][0].get("parts_upserted") is not None
+
+
 def test_dms_oem_sync_file(dms_client: TestClient):
     sample = ROOT / "data" / "oem" / "sample_oem_catalog.json"
     if not sample.is_file():

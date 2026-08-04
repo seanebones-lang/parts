@@ -182,3 +182,17 @@ def test_oem_schedule_skips_without_url(monkeypatch: pytest.MonkeyPatch, tmp_pat
     out = run_scheduled_oem_sync(root=str(tmp_path))
     assert out["skipped"] is True
     assert out["ok"] is True
+
+
+def test_celery_beat_includes_oem_scheduled_sync() -> None:
+    """Wave 24: beat_schedule registers oem.scheduled_sync nightly."""
+    pytest.importorskip("celery")
+    pytest.importorskip("sqlalchemy")
+    from app.celery import celery_app
+
+    sched = celery_app.conf.beat_schedule or {}
+    assert "oem-scheduled-sync-nightly" in sched
+    entry = sched["oem-scheduled-sync-nightly"]
+    assert entry["task"] == "oem.scheduled_sync"
+    includes = celery_app.conf.include or []
+    assert "app.tasks.oem_tasks" in includes

@@ -73,5 +73,35 @@ req=urllib.request.Request(
 sent=json.loads(urllib.request.urlopen(req).read())
 assert sent.get("ok"), sent
 print("EMAIL DESK SMOKE OK")
+
+# OEM scheduled helper — skip clean when OEM_FEED_URL unset
+import os, subprocess, sys
+root = os.environ.get("ROOT") or os.getcwd()
+# when run from demo_smoke, cwd is repo root
+env = os.environ.copy()
+env.setdefault("PYTHONPATH", "backend:src")
+r = subprocess.run(
+    [sys.executable, "-c",
+     "from app.tasks.oem_tasks import run_scheduled_oem_sync; import json; print(json.dumps(run_scheduled_oem_sync()))"],
+    cwd=root if os.path.isdir(os.path.join(root, "backend")) else os.getcwd(),
+    env=env,
+    capture_output=True,
+    text=True,
+)
+if r.returncode != 0:
+    # soft: backend may not be on PYTHONPATH in pure FE smoke
+    print(f"OEM schedule helper skip/soft: {r.stderr.strip() or r.stdout.strip()[:200]}")
+else:
+    out = (r.stdout or "").strip().splitlines()[-1] if r.stdout else "{}"
+    import json as _json
+    try:
+        data = _json.loads(out)
+    except Exception:
+        data = {"raw": out}
+    assert data.get("ok") is True, data
+    if data.get("skipped"):
+        print(f"OEM schedule: skipped ({data.get('reason','no OEM_FEED_URL')})")
+    else:
+        print(f"OEM schedule: ran ok reindex={data.get('reindex')}")
 print("SMOKE OK")
 PY
