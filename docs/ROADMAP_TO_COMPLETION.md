@@ -192,10 +192,10 @@ Do **not** block A on full OEM partner deals — file/HTTP adapters already carr
 ### M1 — Single-site production GA
 - [x] Postgres DMS dual-mode  
 - [x] Migrations (Alembic `001_dms_core`)  
-- [ ] Catalog admin  
-- [ ] Full order lifecycle + invoice PDF  
-- [ ] RBAC  
-- [ ] Prod install + backup runbooks  
+- [x] Catalog admin  
+- [x] Full order lifecycle + invoice PDF  
+- [x] RBAC (light roles matrix)  
+- [x] Prod install + backup runbooks  
 - [x] CI required green  
 
 ### M2 — Multi-rooftop enterprise
@@ -272,15 +272,15 @@ CI: `gh run list -R seanebones-lang/parts -L 1` must be **success** before calli
 
 ---
 
-## 9. Immediate next sprint (start here)
+## Immediate next sprint (start here)
 
-1. **A1/A2** — Postgres backend for `DmsService` + Alembic  
-2. **A3** — Catalog admin + CSV upload UI  
-3. **A6** — Order status machine  
-4. **A8** — Roles  
-5. **A10/A11** — Install guide + prod hardening  
+M1 residual closed in v0.12.0 (catalog, lifecycle, invoice PDF, RBAC matrix, install/backup).
 
-Ship target after that sprint: **M1 candidate** (single-site production GA).
+Next focus (M2 / enterprise):
+1. JWT role claim → `parrts.rbac` enforcement on mutating routes  
+2. Multi-rooftop org + location ACL  
+3. Scheduled OEM feeds + partner connector pack  
+4. Pay→ship→email happy path with test keys in staging  
 
 ---
 

@@ -175,6 +175,39 @@ def cmd_dms_reindex(args: argparse.Namespace) -> int:
     return 0 if result.get("ok", True) else 1
 
 
+def cmd_dms_import_csv(args: argparse.Namespace) -> int:
+    path = Path(args.path)
+    text = path.read_text(encoding="utf-8")
+    svc = _dms_service(args)
+    result = svc.import_catalog_csv(text, source=getattr(args, "source", "csv") or "csv")
+    if getattr(args, "reindex", False):
+        result["reindex"] = svc.reindex_rag()
+    print(json.dumps({"ok": bool(result.get("ok")), "action": "dms.import-csv", **result}, indent=2))
+    return 0 if result.get("ok") else 1
+
+
+def cmd_dms_set_status(args: argparse.Namespace) -> int:
+    svc = _dms_service(args)
+    try:
+        result = svc.set_order_status(int(args.order_id), args.status)
+    except ValueError as exc:
+        print(json.dumps({"ok": False, "error": str(exc)}, indent=2))
+        return 1
+    print(json.dumps({"ok": True, "action": "dms.set-status", **result}, indent=2, default=str))
+    return 0
+
+
+def cmd_dms_invoice(args: argparse.Namespace) -> int:
+    svc = _dms_service(args)
+    try:
+        result = svc.write_invoice_pdf(int(args.order_id), path=getattr(args, "out", None))
+    except ValueError as exc:
+        print(json.dumps({"ok": False, "error": str(exc)}, indent=2))
+        return 1
+    print(json.dumps({"ok": True, "action": "dms.invoice", **result}, indent=2))
+    return 0
+
+
 def _email_service(args: argparse.Namespace):
     from parrts.email import EmailService
 
@@ -414,6 +447,25 @@ def build_parser() -> argparse.ArgumentParser:
         "reindex", help="Export DMS inventory and rebuild RAG index"
     )
     p_dms_reindex.set_defaults(func=cmd_dms_reindex)
+
+    p_dms_csv = dms_sub.add_parser("import-csv", help="Import catalog CSV (sku,name required)")
+    p_dms_csv.add_argument("--path", required=True, help="CSV file path")
+    p_dms_csv.add_argument("--source", default="csv")
+    p_dms_csv.add_argument("--reindex", action="store_true")
+    p_dms_csv.set_defaults(func=cmd_dms_import_csv)
+
+    p_dms_st = dms_sub.add_parser("set-status", help="Set order lifecycle status")
+    p_dms_st.add_argument("order_id", type=int)
+    p_dms_st.add_argument(
+        "status",
+        choices=["open", "picking", "invoiced", "completed", "cancelled"],
+    )
+    p_dms_st.set_defaults(func=cmd_dms_set_status)
+
+    p_dms_inv = dms_sub.add_parser("invoice", help="Write invoice PDF for order")
+    p_dms_inv.add_argument("order_id", type=int)
+    p_dms_inv.add_argument("--out", default=None, help="Output PDF path")
+    p_dms_inv.set_defaults(func=cmd_dms_invoice)
 
     # --- Email desk (selling point) ---
     p_email = sub.add_parser("email", help="Inbound email auto-answer desk (G/Y/R)")

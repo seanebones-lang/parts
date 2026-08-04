@@ -1,7 +1,7 @@
 # Parts — CTO Backlog
 
 **Product identity:** Parts is the **dealership parts system**.  
-**Ship:** https://github.com/seanebones-lang/parts · **parrts v0.11.0**
+**Ship:** https://github.com/seanebones-lang/parts · **parrts v0.12.0**
 
 ## Completeness (honest)
 
@@ -10,50 +10,48 @@
 | **Inbound email auto-answer + G/Y/R desk** | **Production-ready** (selling point) |
 | IMAP/SMTP mailbox | **In system** (activates with credentials) |
 | AI counter search | **In system** |
-| DMS inventory/customers/orders | **In system** (SQLite default **+ Postgres dual-mode**) |
+| DMS inventory/customers/orders | **In system** (SQLite + Postgres dual-mode) |
+| Catalog admin + CSV | **In system** (`/catalog` + import-csv) |
+| Order lifecycle + invoice PDF | **In system** (open→picking→invoiced→completed) |
+| Light RBAC roles | **In system** (`parrts.rbac` + `/dms/rbac`) |
+| Install + backup runbooks | **In system** (`docs/INSTALL.md`, backup/restore scripts) |
 | OEM file + HTTP feeds | **In system** (live when URL/token set) |
-| Operator UI (core modules) | **In system** |
-| Payments / shipping | **In system** — UI + API bound; live when Stripe/EasyPost keys set |
-| Postgres multi-node HA | **Next** (dual-mode + Alembic landed; HA/replication later) |
+| Payments / shipping | **In system** — live when Stripe/EasyPost keys set |
+| Postgres multi-node HA | **Next** |
 | Named OEM partner connectors | **Next** (contracts) |
-| Full RO/GL accounting suite | **Next** |
+| Full RO/GL + JWT role claim wire | **Next** |
 
-## Wave 18 — Pay/ship UI bound to services (this ship)
+## Wave 19 — M1 residual close (this ship)
 
-- [x] `parrts.commerce` key-gated Stripe + EasyPost helpers (fail closed)
-- [x] `GET /api/v1/payments/config` + `POST /order-intent` (no PG invoice required)
-- [x] `GET/POST /api/v1/shipping/config|rates|label` soft-loaded router
-- [x] FE `/payments` + `/shipping` forms + Orders Pay/Ship deep links
-- [x] Tests: unit fail-closed + offline API 503 without keys
-- [x] system integrations reports payments/shipping status + dms_mode
+- [x] Catalog upsert + CSV import (core/API/CLI/FE `/catalog`)
+- [x] Order lifecycle status machine + cancel restores stock
+- [x] Invoice PDF (stdlib writer) + download route
+- [x] Light RBAC matrix (`counter|manager|admin`)
+- [x] `docs/INSTALL.md` + `scripts/backup_dms.sh` + `restore_dms.sh`
+- [x] Tests
+
+## Wave 18 — Pay/ship UI bound
+
+- [x] Stripe/EasyPost key-gated commerce + FE
 
 ## Wave 17 — Postgres DMS dual-mode + Alembic
 
-- [x] `DMS_BACKEND=sqlite|postgres` + Alembic `001_dms_core` + migrate CLI
+- [x] `DMS_BACKEND` + `001_dms_core`
 
-## Wave 16 — Email desk production
+## Wave 15–16 — Email desk
 
-- [x] IMAP/SMTP + human workflow + Celery + FE desk
+- [x] Production desk selling point
 
-## Wave 15 — Email desk revival
+## M1 single-site GA
 
-- [x] Offline core + CLI + API + FE + demo seed + tests
-
-## Wave 14 — Product identity + system hardening
-
-- [x] Kill pilot framing · SYSTEM.md · system_up aliases · product nav
-- [x] Postgres dual-mode for DMS (same API) — v0.10.0
-- [x] Alembic migrations for server profile — `001_dms_core`
-- [x] Payments/shipping UI bound to services when keys present — v0.11.0
-
-## M1 residual (next)
-
-- [ ] Catalog admin + CSV UI
-- [ ] Full order lifecycle + invoice PDF
-- [ ] RBAC
-- [ ] Prod install + backup runbooks
+- [x] Postgres dual-mode + Alembic
+- [x] Catalog admin + CSV
+- [x] Order lifecycle + invoice PDF
+- [x] RBAC (light matrix; JWT claim wire still optional harden)
+- [x] Prod install + backup runbooks
+- [x] CI green
 
 ## Never
-Unauthorized OEM scraping · fake mailbox delivery without SMTP · fake Stripe charges / EasyPost labels without keys · claiming live IMAP without credentials
+Unauthorized OEM scraping · fake mailbox/Stripe/EasyPost without keys
 
-**Email desk:** [`EMAIL_DESK.md`](EMAIL_DESK.md) · **Roadmap:** [`ROADMAP_TO_COMPLETION.md`](ROADMAP_TO_COMPLETION.md) · **DMS:** [`DMS_OEM.md`](DMS_OEM.md)
+**Install:** [`INSTALL.md`](INSTALL.md) · **Email:** [`EMAIL_DESK.md`](EMAIL_DESK.md) · **DMS:** [`DMS_OEM.md`](DMS_OEM.md)

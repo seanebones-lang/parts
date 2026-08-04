@@ -331,11 +331,12 @@ export async function listDmsInventory(): Promise<{
   return { rows, raw };
 }
 
-export async function listDmsCatalog(): Promise<{
+export async function listDmsCatalog(q?: string): Promise<{
   parts: DmsCatalogPart[];
   raw: unknown;
 }> {
-  const raw = await dmsGet<unknown>("/catalog");
+  const qs = q && q.trim() ? `?q=${encodeURIComponent(q.trim())}` : "";
+  const raw = await dmsGet<unknown>(`/catalog${qs}`);
   const parts = extractArray(raw, [
     "catalog",
     "parts",
@@ -355,6 +356,48 @@ export async function listDmsCatalog(): Promise<{
     } as DmsCatalogPart;
   });
   return { parts, raw };
+}
+
+export type UpsertCatalogInput = {
+  sku: string;
+  name: string;
+  description?: string;
+  make?: string;
+  model?: string;
+  year?: string;
+  category?: string;
+  oem_brand?: string;
+  list_price?: number;
+  msrp?: number;
+  source?: string;
+  location_qty?: Record<string, number>;
+};
+
+export async function upsertDmsCatalog(input: UpsertCatalogInput): Promise<unknown> {
+  return dmsPost("/catalog", input);
+}
+
+export async function importDmsCatalogCsv(csv_text: string): Promise<unknown> {
+  return dmsPost("/catalog/import-csv", { csv_text, source: "csv" });
+}
+
+export async function setDmsOrderStatus(
+  orderId: string | number,
+  status: string
+): Promise<unknown> {
+  return getJson(`/api/v1/dms/orders/${orderId}/status`, {
+    baseUrl: API_BASE_URL,
+    method: "PATCH",
+    body: JSON.stringify({ status }),
+  });
+}
+
+export async function createDmsInvoice(orderId: string | number): Promise<unknown> {
+  return dmsPost(`/orders/${orderId}/invoice`, {});
+}
+
+export function dmsInvoicePdfUrl(orderId: string | number): string {
+  return `${API_BASE_URL}/api/v1/dms/orders/${orderId}/invoice.pdf`;
 }
 
 export async function listDmsCustomers(): Promise<{

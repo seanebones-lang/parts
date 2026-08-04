@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any, Literal, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
 from app.api.deps import require_user_if_production
@@ -181,6 +182,30 @@ class ReindexBody(BaseModel):
     force: bool = True
 
 
+class CatalogUpsertBody(BaseModel):
+    sku: str
+    name: str
+    description: str = ""
+    make: str = ""
+    model: str = ""
+    year: str = ""
+    category: str = ""
+    oem_brand: str = ""
+    list_price: float = 0.0
+    msrp: float = 0.0
+    source: str = "manual"
+    location_qty: Optional[dict[str, int]] = None
+
+
+class CatalogCsvBody(BaseModel):
+    csv_text: str
+    source: str = "csv"
+
+
+class OrderStatusBody(BaseModel):
+    status: Literal["open", "picking", "invoiced", "completed", "cancelled"]
+
+
 # ---------------------------------------------------------------------------
 # Routes
 # ---------------------------------------------------------------------------
@@ -301,6 +326,63 @@ async def dms_catalog(
         ) from exc
 
 
+@router.post("/catalog")
+async def dms_catalog_upsert(
+    body: CatalogUpsertBody,
+    current_user: Optional[User] = Depends(require_user_if_production),
+):
+    """Create or update a catalog SKU (optional location_qty)."""
+    _ = current_user
+    try:
+        svc = get_dms_service()
+        result = svc.upsert_catalog_part(
+            sku=body.sku,
+            name=body.name,
+            description=body.description,
+            make=body.make,
+            model=body.model,
+            year=body.year,
+            category=body.category,
+            oem_brand=body.oem_brand,
+            list_price=body.list_price,
+            msrp=body.msrp,
+            source=body.source,
+            location_qty=body.location_qty,
+        )
+        return {"success": True, **result}
+    except ValueError as exc:
+        raise _http_exc_from_value_error(exc) from exc
+    except HTTPException:
+        raise
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Catalog upsert failed: {exc}",
+        ) from exc
+
+
+@router.post("/catalog/import-csv")
+async def dms_catalog_import_csv(
+    body: CatalogCsvBody,
+    current_user: Optional[User] = Depends(require_user_if_production),
+):
+    """Bulk import catalog from CSV text (sku,name required)."""
+    _ = current_user
+    try:
+        svc = get_dms_service()
+        result = svc.import_catalog_csv(body.csv_text, source=body.source)
+        return {"success": bool(result.get("ok")), **result}
+    except ValueError as exc:
+        raise _http_exc_from_value_error(exc) from exc
+    except HTTPException:
+        raise
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"CSV import failed: {exc}",
+        ) from exc
+
+
 @router.get("/customers")
 async def dms_list_customers():
     """List DMS customers."""
@@ -358,6 +440,101 @@ async def dms_list_orders():
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"DMS orders list failed: {exc}",
         ) from exc
+
+
+@router.get("/orders/{order_id}")
+async def dms_get_order(order_id: int):
+    try:
+        svc = get_dms_service()
+        order = svc.get_order(order_id)
+        return {"success": True, "order": order}
+    except ValueError as exc:
+        raise _http_exc_from_value_error(exc) from exc
+    except HTTPException:
+        raise
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"DMS get order failed: {exc}",
+        ) from exc
+
+
+@router.patch("/orders/{order_id}/status")
+async def dms_set_order_status(
+    order_id: int,
+    body: OrderStatusBody,
+    current_user: Optional[User] = Depends(require_user_if_production),
+):
+    """Lifecycle: open→picking→invoiced→completed; cancel restores stock."""
+    _ = current_user
+    try:
+        svc = get_dms_service()
+        result = svc.set_order_status(order_id, body.status)
+        return {"success": True, **result}
+    except ValueError as exc:
+        raise _http_exc_from_value_error(exc) from exc
+    except HTTPException:
+        raise
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"DMS status update failed: {exc}",
+        ) from exc
+
+
+@router.post("/orders/{order_id}/invoice")
+async def dms_order_invoice(
+    order_id: int,
+    current_user: Optional[User] = Depends(require_user_if_production),
+):
+    """Generate invoice PDF (advances to invoiced). Returns path metadata."""
+    _ = current_user
+    try:
+        svc = get_dms_service()
+        result = svc.write_invoice_pdf(order_id)
+        return {"success": True, **result}
+    except ValueError as exc:
+        raise _http_exc_from_value_error(exc) from exc
+    except HTTPException:
+        raise
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Invoice failed: {exc}",
+        ) from exc
+
+
+@router.get("/orders/{order_id}/invoice.pdf")
+async def dms_order_invoice_pdf(order_id: int):
+    """Download invoice PDF (generates if missing)."""
+    try:
+        svc = get_dms_service()
+        result = svc.write_invoice_pdf(order_id)
+        path = Path(result["path"])
+        if not path.is_file():
+            raise HTTPException(status_code=500, detail="invoice file missing after write")
+        return FileResponse(
+            path,
+            media_type="application/pdf",
+            filename=path.name,
+        )
+    except ValueError as exc:
+        raise _http_exc_from_value_error(exc) from exc
+    except HTTPException:
+        raise
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Invoice PDF failed: {exc}",
+        ) from exc
+
+
+@router.get("/rbac")
+async def dms_rbac(role: Optional[str] = Query(None)):
+    """Describe role permissions (PARRTS_DEFAULT_ROLE / query role)."""
+    from parrts.rbac import describe
+
+    return {"success": True, **describe(role)}
 
 
 @router.post("/orders")

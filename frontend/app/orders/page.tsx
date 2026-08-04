@@ -21,10 +21,13 @@ import {
   type DmsCustomer,
   type DmsOrder,
   ApiError,
+  createDmsInvoice,
+  dmsInvoicePdfUrl,
   isApiUnreachable,
   listDmsCustomers,
   listDmsOrders,
   createDmsOrder,
+  setDmsOrderStatus,
 } from "@/lib/dms-api";
 
 function formatMoney(n?: number): string {
@@ -400,6 +403,65 @@ export default function OrdersPage() {
                               <Button asChild size="sm" variant="outline">
                                 <a href={shipHref}>Ship</a>
                               </Button>
+                              {o.status === "open" && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() =>
+                                    void setDmsOrderStatus(String(oid), "picking").then(() => load())
+                                  }
+                                >
+                                  Pick
+                                </Button>
+                              )}
+                              {(o.status === "open" || o.status === "picking") && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() =>
+                                    void createDmsInvoice(String(oid)).then(() => load())
+                                  }
+                                >
+                                  Invoice
+                                </Button>
+                              )}
+                              {o.status === "invoiced" && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() =>
+                                    void setDmsOrderStatus(String(oid), "completed").then(() =>
+                                      load()
+                                    )
+                                  }
+                                >
+                                  Complete
+                                </Button>
+                              )}
+                              {o.status !== "cancelled" && o.status !== "completed" && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() =>
+                                    void setDmsOrderStatus(String(oid), "cancelled").then(() =>
+                                      load()
+                                    )
+                                  }
+                                >
+                                  Cancel
+                                </Button>
+                              )}
+                              {oid != null && (
+                                <Button asChild size="sm" variant="ghost">
+                                  <a
+                                    href={dmsInvoicePdfUrl(oid)}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                  >
+                                    PDF
+                                  </a>
+                                </Button>
+                              )}
                             </div>
                           </td>
                         </tr>

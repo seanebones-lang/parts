@@ -438,6 +438,9 @@ class DmsService:
             )
             d = dict(o)
             d["lines"] = [dict(ln) for ln in lines]
+            d["total"] = round(
+                sum(float(ln["unit_price"]) * int(ln["qty"]) for ln in d["lines"]), 2
+            )
             result.append(d)
         return result
 
@@ -505,3 +508,288 @@ class DmsService:
                 "inventory_path": str(inv_path),
                 "error": str(exc),
             }
+
+    # ----- Catalog admin -------------------------------------------------
+
+    def upsert_catalog_part(
+        self,
+        *,
+        sku: str,
+        name: str,
+        description: str = "",
+        make: str = "",
+        model: str = "",
+        year: str = "",
+        category: str = "",
+        oem_brand: str = "",
+        list_price: float = 0.0,
+        msrp: float = 0.0,
+        source: str = "manual",
+        location_qty: dict[str, int] | None = None,
+    ) -> dict[str, Any]:
+        """Create or update a catalog SKU; optional per-location qty map."""
+        self.ensure_schema()
+        sku_s = str(sku or "").strip()
+        name_s = str(name or "").strip()
+        if not sku_s:
+            raise ValueError("sku is required")
+        if not name_s:
+            raise ValueError("name is required")
+        self.store.execute(
+            """
+            INSERT INTO catalog_parts (
+                sku, name, description, make, model, year, category,
+                oem_brand, list_price, msrp, source
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(sku) DO UPDATE SET
+                name=excluded.name,
+                description=excluded.description,
+                make=excluded.make,
+                model=excluded.model,
+                year=excluded.year,
+                category=excluded.category,
+                oem_brand=excluded.oem_brand,
+                list_price=excluded.list_price,
+                msrp=excluded.msrp,
+                source=excluded.source
+            """,
+            (
+                sku_s,
+                name_s,
+                description or "",
+                make or "",
+                model or "",
+                year or "",
+                category or "",
+                oem_brand or "",
+                float(list_price or 0),
+                float(msrp or 0),
+                source or "manual",
+            ),
+        )
+        inv_touched = 0
+        if location_qty:
+            loc_by_code = {code: lid for lid, (code, _n) in self._location_map().items()}
+            cost = round(float(list_price or 0) * 0.65, 2)
+            price = float(list_price or 0)
+            for loc_key, qty in location_qty.items():
+                key = str(loc_key).strip()
+                if key in loc_by_code:
+                    lid = loc_by_code[key]
+                elif key.isdigit() and int(key) in self._location_map():
+                    lid = int(key)
+                else:
+                    existing = self.store.fetchone(
+                        "SELECT id FROM locations WHERE code = ?", (key,)
+                    )
+                    if existing:
+                        lid = int(existing["id"])
+                    else:
+                        c = self.store.execute(
+                            "INSERT INTO locations (code, name) VALUES (?, ?)",
+                            (key, key),
+                        )
+                        if c.lastrowid is None:
+                            raise RuntimeError("failed to allocate location id")
+                        lid = int(c.lastrowid)
+                        loc_by_code[key] = lid
+                self.store.execute(
+                    """
+                    INSERT INTO inventory_levels (sku, location_id, qty, cost, price)
+                    VALUES (?, ?, ?, ?, ?)
+                    ON CONFLICT(sku, location_id) DO UPDATE SET
+                        qty=excluded.qty,
+                        cost=excluded.cost,
+                        price=excluded.price
+                    """,
+                    (sku_s, lid, int(qty), cost, price),
+                )
+                inv_touched += 1
+        self.store.commit()
+        row = self.store.fetchone(
+            "SELECT sku, name, description, make, model, year, category, oem_brand, "
+            "list_price, msrp, source FROM catalog_parts WHERE sku = ?",
+            (sku_s,),
+        )
+        return {"ok": True, "part": dict(row) if row else {"sku": sku_s}, "inventory_rows": inv_touched}
+
+    def import_catalog_csv(self, csv_text: str, *, source: str = "csv") -> dict[str, Any]:
+        """
+        Import catalog from CSV text.
+
+        Required columns: sku, name
+        Optional: description, make, model, year, category, oem_brand, list_price, msrp
+        Location qty columns: any header matching a location code (e.g. L1, CHI-N)
+        """
+        import csv
+        import io
+
+        self.ensure_schema()
+        reader = csv.DictReader(io.StringIO(csv_text))
+        if not reader.fieldnames:
+            raise ValueError("CSV has no header row")
+        fields = [f.strip() for f in reader.fieldnames if f]
+        lower_map = {f.lower(): f for f in fields}
+        if "sku" not in lower_map or "name" not in lower_map:
+            raise ValueError("CSV must include sku and name columns")
+
+        loc_codes = {code for _lid, (code, _n) in self._location_map().items()}
+        # also accept location codes as column headers case-insensitively
+        loc_col = {}
+        for f in fields:
+            if f in loc_codes:
+                loc_col[f] = f
+            elif f.upper() in loc_codes:
+                loc_col[f] = f.upper()
+
+        upserted = 0
+        errors: list[str] = []
+        for i, raw in enumerate(reader, start=2):
+            try:
+                def g(key: str, default: str = "") -> str:
+                    src_k = lower_map.get(key)
+                    if not src_k:
+                        return default
+                    return str(raw.get(src_k) or default).strip()
+
+                sku = g("sku")
+                name = g("name")
+                if not sku:
+                    continue
+                lq: dict[str, int] = {}
+                for col, code in loc_col.items():
+                    val = str(raw.get(col) or "").strip()
+                    if val != "":
+                        lq[code] = int(float(val))
+                self.upsert_catalog_part(
+                    sku=sku,
+                    name=name or sku,
+                    description=g("description"),
+                    make=g("make"),
+                    model=g("model"),
+                    year=g("year"),
+                    category=g("category"),
+                    oem_brand=g("oem_brand"),
+                    list_price=float(g("list_price") or 0 or 0),
+                    msrp=float(g("msrp") or 0 or 0),
+                    source=source,
+                    location_qty=lq or None,
+                )
+                upserted += 1
+            except Exception as exc:  # noqa: BLE001
+                errors.append(f"row {i}: {exc}")
+                if len(errors) >= 25:
+                    break
+        return {"ok": len(errors) == 0, "upserted": upserted, "errors": errors}
+
+    # ----- Order lifecycle -----------------------------------------------
+
+    ORDER_TRANSITIONS: dict[str, set[str]] = {
+        "open": {"picking", "cancelled"},
+        "picking": {"invoiced", "cancelled"},
+        "invoiced": {"completed", "cancelled"},
+        "completed": set(),
+        "cancelled": set(),
+    }
+
+    def get_order(self, order_id: int) -> dict[str, Any]:
+        self.ensure_schema()
+        o = self.store.fetchone(
+            """
+            SELECT o.id, o.customer_id, o.status, o.created_at, o.notes,
+                   c.name AS customer_name, c.email AS customer_email,
+                   c.company AS customer_company
+            FROM orders o
+            LEFT JOIN customers c ON c.id = o.customer_id
+            WHERE o.id = ?
+            """,
+            (int(order_id),),
+        )
+        if o is None:
+            raise ValueError(f"Unknown order_id: {order_id}")
+        lines = self.store.fetchall(
+            """
+            SELECT id, order_id, sku, location_id, qty, unit_price
+            FROM order_lines WHERE order_id = ? ORDER BY id
+            """,
+            (int(order_id),),
+        )
+        d = dict(o)
+        line_dicts = [dict(ln) for ln in lines]
+        d["lines"] = line_dicts
+        d["total"] = round(sum(float(ln["unit_price"]) * int(ln["qty"]) for ln in line_dicts), 2)
+        return d
+
+    def set_order_status(self, order_id: int, status: str) -> dict[str, Any]:
+        """Advance order lifecycle; cancel restores reserved stock."""
+        self.ensure_schema()
+        new_status = str(status or "").strip().lower()
+        order = self.get_order(order_id)
+        cur = str(order["status"] or "open").lower()
+        allowed = self.ORDER_TRANSITIONS.get(cur, set())
+        if new_status == cur:
+            return {"ok": True, "order": order, "unchanged": True}
+        if new_status not in allowed:
+            raise ValueError(f"Cannot transition order {order_id} from {cur!r} to {new_status!r}")
+
+        if new_status == "cancelled" and cur != "cancelled":
+            # restore stock
+            for ln in order["lines"]:
+                self.store.execute(
+                    "UPDATE inventory_levels SET qty = qty + ? WHERE sku = ? AND location_id = ?",
+                    (int(ln["qty"]), str(ln["sku"]), int(ln["location_id"])),
+                )
+
+        self.store.execute(
+            "UPDATE orders SET status = ? WHERE id = ?",
+            (new_status, int(order_id)),
+        )
+        self.store.commit()
+        return {"ok": True, "order": self.get_order(order_id), "from": cur, "to": new_status}
+
+    def write_invoice_pdf(self, order_id: int, path: Path | str | None = None) -> dict[str, Any]:
+        """Generate a simple PDF invoice for an order (auto-marks invoiced if open/picking)."""
+        from parrts.dms.invoice_pdf import write_simple_pdf
+
+        order = self.get_order(order_id)
+        st = str(order["status"]).lower()
+        if st in {"open", "picking"}:
+            # open -> picking -> invoiced or open cannot go direct to invoiced
+            if st == "open":
+                self.set_order_status(order_id, "picking")
+            self.set_order_status(order_id, "invoiced")
+            order = self.get_order(order_id)
+
+        out = (
+            Path(path)
+            if path is not None
+            else (self.root / ".parrts" / "invoices" / f"invoice_{int(order_id)}.pdf")
+        )
+        lines = [
+            "Parts — Invoice",
+            f"Order #{order['id']}    Status: {order['status']}",
+            f"Created: {order.get('created_at') or ''}",
+            f"Customer: {order.get('customer_name') or order.get('customer_id')}  "
+            f"{order.get('customer_email') or ''}",
+            f"Company: {order.get('customer_company') or ''}",
+            f"Notes: {order.get('notes') or ''}",
+            "-" * 60,
+            f"{'SKU':<18} {'Qty':>5} {'Unit':>10} {'Line':>10}",
+        ]
+        for ln in order["lines"]:
+            lt = float(ln["unit_price"]) * int(ln["qty"])
+            lines.append(
+                f"{str(ln['sku'])[:18]:<18} {int(ln['qty']):>5} "
+                f"{float(ln['unit_price']):>10.2f} {lt:>10.2f}"
+            )
+        lines.append("-" * 60)
+        lines.append(f"TOTAL: ${float(order.get('total') or 0):.2f}")
+        lines.append("Thank you — NextEleven Parts")
+        write_simple_pdf(out, lines, title=f"Invoice {order_id}")
+        return {
+            "ok": True,
+            "order_id": int(order_id),
+            "path": str(out),
+            "total": order.get("total"),
+            "status": order.get("status"),
+        }
