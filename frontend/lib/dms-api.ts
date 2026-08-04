@@ -29,6 +29,19 @@ async function dmsPost<T = unknown>(
   });
 }
 
+async function dmsPut<T = unknown>(
+  path: string,
+  body?: unknown,
+  init?: RequestInit
+): Promise<T> {
+  return getJson<T>(dmsPath(path), {
+    ...init,
+    baseUrl: API_BASE_URL,
+    method: "PUT",
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+}
+
 /** True when fetch failed due to network / API down (not 4xx business errors). */
 export function isApiUnreachable(err: unknown): boolean {
   if (err instanceof TypeError) return true;
@@ -315,11 +328,24 @@ export async function getDmsStatus(): Promise<DmsStatus> {
   };
 }
 
-export async function listDmsInventory(): Promise<{
+export async function listDmsInventory(opts?: {
+  location?: string;
+  user_key?: string;
+}): Promise<{
   rows: DmsInventoryRow[];
   raw: unknown;
+  acl_user?: string | null;
 }> {
-  const raw = await dmsGet<unknown>("/inventory");
+  const params = new URLSearchParams();
+  if (opts?.location?.trim()) params.set("location", opts.location.trim());
+  if (opts?.user_key?.trim()) params.set("user_key", opts.user_key.trim());
+  const qs = params.toString() ? `?${params.toString()}` : "";
+  const headers: HeadersInit = {};
+  if (opts?.user_key?.trim()) {
+    headers["X-Parts-User"] = opts.user_key.trim();
+  }
+  const raw = await dmsGet<unknown>(`/inventory${qs}`, { headers });
+  const o = asRecord(raw);
   const rows = extractArray(raw, [
     "inventory",
     "items",
@@ -328,7 +354,11 @@ export async function listDmsInventory(): Promise<{
     "results",
     "data",
   ]).map(normalizeInventoryRow);
-  return { rows, raw };
+  return {
+    rows,
+    raw,
+    acl_user: o ? str(o.acl_user) ?? null : null,
+  };
 }
 
 export async function listDmsCatalog(q?: string): Promise<{
@@ -456,6 +486,108 @@ export async function syncOem(input: OemSyncInput = {}): Promise<unknown> {
 
 export async function reindexDms(): Promise<unknown> {
   return dmsPost("/reindex", {});
+}
+
+// --- Orgs / locations / ACL (Wave 23 multi-rooftop operator UI) ---
+
+export type DmsOrg = {
+  id?: number | string;
+  code?: string;
+  name?: string;
+  [key: string]: unknown;
+};
+
+export type DmsLocation = {
+  id?: number | string;
+  code?: string;
+  name?: string;
+  org_id?: number | string | null;
+  [key: string]: unknown;
+};
+
+export type DmsAcl = {
+  user_key?: string;
+  location_codes?: string[];
+  restricted?: boolean;
+  [key: string]: unknown;
+};
+
+export async function listDmsOrgs(): Promise<{ orgs: DmsOrg[]; raw: unknown }> {
+  const raw = await dmsGet<unknown>("/orgs");
+  const orgs = extractArray(raw, ["orgs", "items", "results", "data"]).map((item) => {
+    const o = asRecord(item) ?? {};
+    return {
+      ...o,
+      id: o.id as number | string | undefined,
+      code: str(o.code),
+      name: str(o.name) ?? str(o.code),
+    } as DmsOrg;
+  });
+  return { orgs, raw };
+}
+
+export async function createDmsOrg(input: {
+  code: string;
+  name?: string;
+}): Promise<unknown> {
+  return dmsPost("/orgs", {
+    code: input.code,
+    name: input.name ?? input.code,
+  });
+}
+
+export async function listDmsLocations(): Promise<{
+  locations: DmsLocation[];
+  raw: unknown;
+}> {
+  const raw = await dmsGet<unknown>("/locations");
+  const locations = extractArray(raw, [
+    "locations",
+    "items",
+    "results",
+    "data",
+  ]).map((item) => {
+    const o = asRecord(item) ?? {};
+    return {
+      ...o,
+      id: o.id as number | string | undefined,
+      code: str(o.code),
+      name: str(o.name) ?? str(o.code),
+      org_id: (o.org_id as number | string | null | undefined) ?? null,
+    } as DmsLocation;
+  });
+  return { locations, raw };
+}
+
+export async function setDmsLocationOrg(
+  locationCode: string,
+  orgCode: string
+): Promise<unknown> {
+  const code = encodeURIComponent(locationCode);
+  return dmsPut(`/locations/${code}/org`, { org_code: orgCode });
+}
+
+export async function getDmsAcl(userKey: string): Promise<DmsAcl> {
+  const key = encodeURIComponent(userKey.trim());
+  const raw = await dmsGet<unknown>(`/acl/${key}`);
+  const o = asRecord(raw) ?? {};
+  const codes = extractArray(raw, ["location_codes", "locations", "codes"]).map(
+    (c) => String(c)
+  );
+  return {
+    ...o,
+    user_key: str(o.user_key) ?? userKey,
+    location_codes: codes,
+    restricted: typeof o.restricted === "boolean" ? o.restricted : codes.length > 0,
+  };
+}
+
+export async function setDmsAcl(
+  userKey: string,
+  locationCodes: string[]
+): Promise<unknown> {
+  const key = encodeURIComponent(userKey.trim());
+  return dmsPut(`/acl/${key}`, { location_codes: locationCodes });
 }
 
 export { API_BASE_URL, ApiError };

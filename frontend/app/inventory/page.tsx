@@ -48,21 +48,27 @@ export default function InventoryPage() {
   const [error, setError] = useState<string | null>(null);
   const [unreachable, setUnreachable] = useState(false);
   const [flash, setFlash] = useState<string | null>(null);
+  const [userKeyInput, setUserKeyInput] = useState("");
+  const [activeUserKey, setActiveUserKey] = useState("");
+  const [aclUser, setAclUser] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (filterKey?: string) => {
     setLoading(true);
     setError(null);
     setUnreachable(false);
+    const key = (filterKey ?? activeUserKey).trim();
     try {
       const [inv, st] = await Promise.all([
-        listDmsInventory(),
+        listDmsInventory(key ? { user_key: key } : undefined),
         getDmsStatus().catch(() => null),
       ]);
       setRows(inv.rows);
+      setAclUser(inv.acl_user ?? (key || null));
       setStatus(st);
     } catch (e) {
       setRows([]);
       setStatus(null);
+      setAclUser(null);
       if (isApiUnreachable(e) || (e instanceof ApiError && e.status === 404)) {
         setUnreachable(true);
         setError(
@@ -76,7 +82,7 @@ export default function InventoryPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [activeUserKey]);
 
   useEffect(() => {
     void load();
@@ -116,6 +122,12 @@ export default function InventoryPage() {
       <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-950">
         <strong>DMS Core (local SQLite)</strong> — OEM live feed when configured.
         Stock levels come from <code className="text-xs">/api/v1/dms/inventory</code>.
+        Optional ACL filter: <code className="text-xs">user_key</code> /{" "}
+        <code className="text-xs">X-Parts-User</code> (
+        <Link href="/orgs" className="underline font-semibold">
+          Orgs / ACL
+        </Link>
+        ).
       </div>
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -182,6 +194,48 @@ export default function InventoryPage() {
             OEM sync (synthetic)
           </Button>
         </div>
+      </div>
+
+      <div className="flex flex-wrap items-end gap-2 rounded-md border px-3 py-3">
+        <label className="text-sm space-y-1 min-w-[12rem] flex-1">
+          <span className="text-muted-foreground">ACL user_key filter</span>
+          <input
+            className="w-full rounded-md border px-3 py-2 text-sm"
+            value={userKeyInput}
+            onChange={(e) => setUserKeyInput(e.target.value)}
+            placeholder="counter1 (empty = all)"
+            disabled={loading || !!actionBusy || unreachable}
+          />
+        </label>
+        <Button
+          size="sm"
+          variant="secondary"
+          disabled={loading || !!actionBusy || unreachable}
+          onClick={() => {
+            const k = userKeyInput.trim();
+            setActiveUserKey(k);
+            void load(k);
+          }}
+        >
+          Apply filter
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={loading || !!actionBusy || unreachable || (!activeUserKey && !userKeyInput)}
+          onClick={() => {
+            setUserKeyInput("");
+            setActiveUserKey("");
+            void load("");
+          }}
+        >
+          Clear
+        </Button>
+        {aclUser ? (
+          <Badge variant="default">filtered: {aclUser}</Badge>
+        ) : (
+          <Badge variant="outline">unfiltered</Badge>
+        )}
       </div>
 
       {status ? (

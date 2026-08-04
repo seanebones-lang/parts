@@ -119,6 +119,59 @@ def test_dms_seed_counter_role_header_403(dms_client: TestClient):
     )
     assert ok.status_code == 200, ok.text
 
+
+def test_dms_orgs_locations_acl_and_inventory_filter(dms_client: TestClient):
+    """Wave 23: org create, location assign, ACL, inventory user_key filter."""
+    assert (
+        dms_client.post(
+            "/api/v1/dms/seed", json={"seed": 3, "n_skus": 4, "locations": 3}
+        ).status_code
+        == 200
+    )
+
+    cr = dms_client.post("/api/v1/dms/orgs", json={"code": "CHI", "name": "Chicago"})
+    assert cr.status_code == 200, cr.text
+    assert cr.json()["org"]["code"] == "CHI"
+
+    lst = dms_client.get("/api/v1/dms/orgs").json()
+    assert lst["count"] >= 1
+    assert any(o["code"] == "CHI" for o in lst["orgs"])
+
+    locs = dms_client.get("/api/v1/dms/locations").json()
+    assert locs["count"] >= 1
+    code = locs["locations"][0]["code"]
+
+    asg = dms_client.put(
+        f"/api/v1/dms/locations/{code}/org", json={"org_code": "CHI"}
+    )
+    assert asg.status_code == 200, asg.text
+    assert asg.json().get("ok") is True
+
+    acl = dms_client.put(
+        "/api/v1/dms/acl/counter1", json={"location_codes": [code]}
+    )
+    assert acl.status_code == 200, acl.text
+    body = acl.json()
+    assert body.get("restricted") is True
+    assert body.get("location_codes") == [code]
+
+    got = dms_client.get("/api/v1/dms/acl/counter1").json()
+    assert got["restricted"] is True
+    assert got["location_codes"] == [code]
+
+    all_inv = dms_client.get("/api/v1/dms/inventory").json()
+    filt = dms_client.get(
+        "/api/v1/dms/inventory",
+        params={"user_key": "counter1"},
+        headers={"X-Parts-User": "counter1"},
+    ).json()
+    assert filt["success"] is True
+    assert filt["acl_user"] == "counter1"
+    assert filt["count"] <= all_inv["count"]
+    assert filt["count"] >= 1
+    assert all(r["location_code"] == code for r in filt["inventory"])
+
+
 def test_dms_oem_sync_file(dms_client: TestClient):
     sample = ROOT / "data" / "oem" / "sample_oem_catalog.json"
     if not sample.is_file():

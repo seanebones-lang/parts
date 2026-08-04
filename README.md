@@ -2,7 +2,7 @@
 
 **Repository:** https://github.com/seanebones-lang/parts  
 **Owner:** NextEleven LLC  
-**Package:** `parrts` v0.13.1  
+**Package:** `parrts` v0.14.0  
 **License:** Proprietary — NextEleven LLC (see `LICENSE`)  
 **Next session TODO:** [`docs/SESSION_HANDOFF_TODO.md`](docs/SESSION_HANDOFF_TODO.md)
 
