@@ -44,8 +44,8 @@ Ship path: orchestrator commits/pushes **parts** (and mirror `legacy` when user 
 | M2 FE org UI / beat schedule | **Open** | Wave 23+ |
 | Full multi-rooftop HA / partner OEM / RO-GL | **Open** | later |
 
-**Tip commit at handoff write:** (set after push)  
-**Remotes:** `origin` (parts) + `legacy` (Parrts-Dist-RAG).  
+**Tip commit at handoff write:** `afd98b3` (Wave 22 JWT role mint; package **v0.13.1**)  
+**Remotes:** `origin` (parts) + `legacy` (Parrts-Dist-RAG) both match.  
 **Desktop/parts:** full tree @ same SHA as SoT.
 
 ---
