@@ -33,7 +33,7 @@ Load: `parrts-dist-rag-dev` + `direct-execution`.
 | Staging pay/ship keys | Open Wave 25 |
 | Multi-rooftop HA / partner OEM | Later |
 
-**Tip:** (set after push)
+**Tip:**  Wave 24 OEM beat v0.14.1
 
 ---
 
