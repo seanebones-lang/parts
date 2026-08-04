@@ -3,9 +3,9 @@
 **Product:** Parts by NextEleven LLC  
 **Repo:** https://github.com/seanebones-lang/parts  
 **Local:** `~/Desktop/Parrts-Dist-RAG`  
-**Package:** `parrts` (current line: v0.7.x)  
+**Package:** `parrts` (current line: v0.10.0)  
 **Document status:** Living roadmap — update checkboxes only after measured delivery  
-**Last updated:** 2026-07-31
+**Last updated:** 2026-08-04
 
 ---
 
@@ -190,13 +190,13 @@ Do **not** block A on full OEM partner deals — file/HTTP adapters already carr
 - [x] Core search + embedded DMS + OEM adapters + UI  
 
 ### M1 — Single-site production GA
-- [ ] Postgres DMS dual-mode  
-- [ ] Migrations  
+- [x] Postgres DMS dual-mode  
+- [x] Migrations (Alembic `001_dms_core`)  
 - [ ] Catalog admin  
 - [ ] Full order lifecycle + invoice PDF  
 - [ ] RBAC  
 - [ ] Prod install + backup runbooks  
-- [ ] CI required green  
+- [x] CI required green  
 
 ### M2 — Multi-rooftop enterprise
 - [ ] Org model + location ACL  

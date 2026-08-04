@@ -8,8 +8,23 @@ The DMS core **is** the inventory and order system for Parts. SQLite embedded mo
 
 | Deploy | Path |
 |--------|------|
-| Embedded | `.parrts/dms.db` (stdlib sqlite3) |
-| Server | Postgres via compose / `POSTGRES_*` (enterprise path) |
+| Embedded (default) | `.parrts/dms.db` (stdlib sqlite3) — `DMS_BACKEND=sqlite` |
+| Server | Postgres — `DMS_BACKEND=postgres` + `DMS_DATABASE_URL` (or `POSTGRES_*`) |
+
+### Postgres dual-mode
+
+```bash
+export DMS_BACKEND=postgres
+export DMS_DATABASE_URL=postgresql://postgres:pass@localhost:5432/dealership_parts
+# one-time schema
+parrts dms migrate                 # alembic upgrade head (001_dms_core)
+# or ensure_schema() on first DmsService use also CREATE TABLE IF NOT EXISTS
+parrts dms --backend postgres status
+parrts dms --backend postgres seed --reindex
+```
+
+Same `DmsService` API and `/api/v1/dms/*` routes — backend is env-selected.  
+Alembic lives at `alembic.ini` + `src/parrts/dms/migrations/`.
 
 ## OEM adapters (production)
 

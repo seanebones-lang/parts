@@ -65,13 +65,33 @@ def cmd_status(args: argparse.Namespace) -> int:
 def _dms_service(args: argparse.Namespace):
     from parrts.dms.service import DmsService
 
-    return DmsService(root=_root_from_args(args))
+    backend = getattr(args, "dms_backend", None)
+    database_url = getattr(args, "dms_database_url", None)
+    return DmsService(
+        root=_root_from_args(args),
+        backend=backend,
+        database_url=database_url,
+    )
 
 
 def cmd_dms_status(args: argparse.Namespace) -> int:
     svc = _dms_service(args)
     print(json.dumps(svc.status(), indent=2))
     return 0
+
+
+def cmd_dms_migrate(args: argparse.Namespace) -> int:
+    """Run Alembic upgrade head for Postgres DMS schema."""
+    from parrts.dms.migrate import current, upgrade_head
+
+    url = getattr(args, "dms_database_url", None)
+    action = getattr(args, "migrate_action", "upgrade") or "upgrade"
+    if action == "current":
+        result = current(database_url=url)
+    else:
+        result = upgrade_head(database_url=url)
+    print(json.dumps({"action": f"dms.migrate.{action}", **result}, indent=2))
+    return 0 if result.get("ok") else 1
 
 
 def cmd_dms_seed(args: argparse.Namespace) -> int:
@@ -317,11 +337,37 @@ def build_parser() -> argparse.ArgumentParser:
     p_status.set_defaults(func=cmd_status)
 
     # --- DMS subcommands ---
-    p_dms = sub.add_parser("dms", help="Offline DMS + OEM feed operations")
+    p_dms = sub.add_parser("dms", help="DMS + OEM feed operations (sqlite|postgres)")
+    p_dms.add_argument(
+        "--backend",
+        dest="dms_backend",
+        choices=["sqlite", "postgres"],
+        default=None,
+        help="Override DMS_BACKEND (default: env or sqlite)",
+    )
+    p_dms.add_argument(
+        "--database-url",
+        dest="dms_database_url",
+        default=None,
+        help="Postgres URL (or set DMS_DATABASE_URL / DATABASE_URL)",
+    )
     dms_sub = p_dms.add_subparsers(dest="dms_command", required=True)
 
-    p_dms_status = dms_sub.add_parser("status", help="DMS SQLite status counts")
+    p_dms_status = dms_sub.add_parser("status", help="DMS status counts (backend + db)")
     p_dms_status.set_defaults(func=cmd_dms_status)
+
+    p_dms_migrate = dms_sub.add_parser(
+        "migrate",
+        help="Alembic upgrade head for Postgres DMS (requires DMS_DATABASE_URL)",
+    )
+    p_dms_migrate.add_argument(
+        "migrate_action",
+        nargs="?",
+        default="upgrade",
+        choices=["upgrade", "current"],
+        help="upgrade (default) or current",
+    )
+    p_dms_migrate.set_defaults(func=cmd_dms_migrate)
 
     p_dms_seed = dms_sub.add_parser("seed", help="Seed demo catalog via SyntheticOemFeed")
     p_dms_seed.add_argument("--seed", type=int, default=42)

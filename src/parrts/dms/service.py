@@ -7,8 +7,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from parrts.dms.backend import DmsBackendConfig, open_store, resolve_backend
 from parrts.dms.oem import DEFAULT_LOCATION_CODES, OemFeed, SyntheticOemFeed
-from parrts.dms.store import DmsStore
 from parrts.models import LocationInventory, PartRecord
 
 
@@ -21,11 +21,24 @@ class InsufficientStockError(ValueError):
 
 
 class DmsService:
-    """Offline DMS operations backed by SQLite at ``{root}/.parrts/dms.db``."""
+    """DMS operations — SQLite embedded (default) or Postgres when DMS_BACKEND=postgres."""
 
-    def __init__(self, root: Path | str) -> None:
+    def __init__(
+        self,
+        root: Path | str,
+        *,
+        backend: str | None = None,
+        database_url: str | None = None,
+        config: DmsBackendConfig | None = None,
+    ) -> None:
         self.root = Path(root).resolve()
-        self.store = DmsStore(self.root)
+        self.config = config or resolve_backend(
+            backend=backend,
+            database_url=database_url,
+            root=self.root,
+        )
+        self.store = open_store(self.config, self.root)
+        self.backend = self.config.backend
 
     def ensure_schema(self) -> None:
         self.store.ensure_schema()
@@ -79,6 +92,7 @@ class DmsService:
         )
         return {
             "ok": True,
+            "backend": self.backend,
             "db_path": str(self.store.db_path),
             "locations": int(locs["c"]) if locs else 0,
             "catalog_parts": int(parts["c"]) if parts else 0,
@@ -88,7 +102,6 @@ class DmsService:
             "orders": int(orders["c"]) if orders else 0,
             "last_oem_sync": dict(last_sync) if last_sync else None,
         }
-
     def sync_oem(self, feed: OemFeed, source: str | None = None) -> dict[str, Any]:
         """Upsert catalog + inventory from an OEM feed; log oem_sync_runs."""
         self.ensure_schema()

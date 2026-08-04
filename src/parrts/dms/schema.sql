@@ -1,12 +1,6 @@
-"""SQLite persistence for offline DMS (stdlib sqlite3 only)."""
+-- DMS core schema (SQLite + Postgres compatible shapes)
+-- SQLite uses AUTOINCREMENT; Postgres migration uses SERIAL / IDENTITY.
 
-from __future__ import annotations
-
-import sqlite3
-from pathlib import Path
-from typing import Any
-
-SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS locations (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     code TEXT NOT NULL UNIQUE,
@@ -81,48 +75,3 @@ CREATE INDEX IF NOT EXISTS idx_inventory_sku ON inventory_levels(sku);
 CREATE INDEX IF NOT EXISTS idx_inventory_loc ON inventory_levels(location_id);
 CREATE INDEX IF NOT EXISTS idx_orders_customer ON orders(customer_id);
 CREATE INDEX IF NOT EXISTS idx_order_lines_order ON order_lines(order_id);
-"""
-
-
-class DmsStore:
-    """Thin SQLite wrapper for DMS tables under ``{root}/.parrts/dms.db``."""
-
-    backend_name = "sqlite"
-
-    def __init__(self, root: Path | str) -> None:
-        self.root = Path(root).resolve()
-        self.db_path = self.root / ".parrts" / "dms.db"
-        self._conn: sqlite3.Connection | None = None
-
-    def connect(self) -> sqlite3.Connection:
-        if self._conn is None:
-            self.db_path.parent.mkdir(parents=True, exist_ok=True)
-            self._conn = sqlite3.connect(str(self.db_path))
-            self._conn.row_factory = sqlite3.Row
-            self._conn.execute("PRAGMA foreign_keys = ON")
-        return self._conn
-
-    def close(self) -> None:
-        if self._conn is not None:
-            self._conn.close()
-            self._conn = None
-
-    def ensure_schema(self) -> None:
-        conn = self.connect()
-        conn.executescript(SCHEMA_SQL)
-        conn.commit()
-
-    def execute(self, sql: str, params: tuple[Any, ...] | list[Any] = ()) -> sqlite3.Cursor:
-        return self.connect().execute(sql, params)
-
-    def executemany(self, sql: str, seq: list[tuple[Any, ...]]) -> sqlite3.Cursor:
-        return self.connect().executemany(sql, seq)
-
-    def commit(self) -> None:
-        self.connect().commit()
-
-    def fetchone(self, sql: str, params: tuple[Any, ...] | list[Any] = ()) -> sqlite3.Row | None:
-        return self.execute(sql, params).fetchone()
-
-    def fetchall(self, sql: str, params: tuple[Any, ...] | list[Any] = ()) -> list[sqlite3.Row]:
-        return list(self.execute(sql, params).fetchall())

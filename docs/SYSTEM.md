@@ -17,13 +17,15 @@
 
 ### Embedded (default local install)
 
-- SQLite DMS at `.parrts/dms.db`
+- SQLite DMS at `.parrts/dms.db` (`DMS_BACKEND=sqlite`)
 - Local vector/BM25 index under `.parrts/index/`
 - Suitable for single-rooftop or edge workstation
 
 ### Multi-user server
 
-- Postgres (+ Redis) via `docker-compose.prod.yml`
+- Postgres DMS: `DMS_BACKEND=postgres` + `DMS_DATABASE_URL` (or `POSTGRES_*`)
+- Schema: `parrts dms migrate` (Alembic `001_dms_core`) — also auto `CREATE TABLE IF NOT EXISTS` on first use
+- Compose stack: Postgres (+ Redis) via `docker-compose.prod.yml`
 - `AUTH_MODE=production`, strong `SECRET_KEY`, `DEBUG=false`
 - Same application code; different storage/ops profile
 

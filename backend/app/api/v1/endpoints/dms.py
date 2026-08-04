@@ -1,7 +1,9 @@
 """
-Offline DMS API — backed by ``parrts.dms.DmsService`` (SQLite under ``.parrts/dms.db``).
+DMS API — backed by ``parrts.dms.DmsService``.
 
-No Postgres required. Soft-loaded via ``app.api.v1.api``.
+Default: SQLite under ``.parrts/dms.db``.
+Postgres: set ``DMS_BACKEND=postgres`` + ``DMS_DATABASE_URL`` (or POSTGRES_*).
+Run ``parrts dms migrate`` once for Alembic head on empty Postgres.
 """
 
 from __future__ import annotations
