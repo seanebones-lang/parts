@@ -148,19 +148,51 @@ PYTHONPATH=backend:src python -c 'from app.tasks.oem_tasks import run_scheduled_
 # Postgres dual-mode also attempts pg_dump when DMS_BACKEND=postgres
 ```
 
+## 6. Staging commerce runbook (Wave 25)
+
+**Never invent charges, labels, or mail.** Demo mode stays usable offline; staging live steps require real test credentials.
+
+| Env | Surface |
+|-----|---------|
+| `STRIPE_SECRET_KEY` (`sk_test_…`) | `/payments` · `POST /api/v1/payments/order-intent` · Orders **Pay** |
+| `EASYPOST_API_KEY` (test) | `/shipping` · `POST /api/v1/shipping/rates` · `/label` |
+| IMAP/SMTP `EMAIL_*` | Email desk send; dry-run always OK |
+
+```bash
+# Fail-closed smoke (no keys required; live steps auto-skip)
+./scripts/staging_commerce_smoke.sh
+
+# With API up
+./scripts/demo_up.sh
+./scripts/staging_commerce_smoke.sh
+
+# Live Stripe test intent + EasyPost rates (keys on shell AND API process)
+export STRIPE_SECRET_KEY=sk_test_...
+export EASYPOST_API_KEY=EZTK...
+# restart API so it sees env, then:
+./scripts/staging_commerce_smoke.sh
+# optional label purchase after rates:
+STAGING_LIVE_LABEL=1 ./scripts/staging_commerce_smoke.sh
+
+# Real SMTP only in staging (still fail-closed if SMTP missing)
+STAGING_LIVE_EMAIL=1 ./scripts/staging_commerce_smoke.sh
+```
+
+UI path: seed DMS → create order on `/orders` → **Pay** → `/payments?order_id=…` → intent. Shipping: `/shipping` rates then label when keyed. Without keys, APIs return **503** with clear detail — not fake success.
+
 Keep backups off-box. After restore: `parrts dms status` and optional `parrts dms reindex`.
 
-## 6. Order lifecycle
+## 7. Order lifecycle
 
 `open → picking → invoiced → completed` · `cancelled` restores stock.  
 Invoice PDF: `parrts dms invoice ID` or Orders UI / `GET /api/v1/dms/orders/{id}/invoice.pdf`.
 
-## 7. Catalog admin
+## 8. Catalog admin
 
 - UI `/catalog` — upsert SKU + CSV paste  
 - CLI `parrts dms import-csv --path file.csv --reindex`  
 - API `POST /api/v1/dms/catalog` · `POST /api/v1/dms/catalog/import-csv`
 
-## 8. SSL / reverse proxy notes
+## 9. SSL / reverse proxy notes
 
 Terminate TLS at nginx/Caddy; proxy `:8000` API and `:3000` UI (or FE `npm start` behind same host). Set `NEXT_PUBLIC_API_URL` to public API origin. Restrict CORS to dealer hostnames in production settings.

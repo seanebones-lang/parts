@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "parrts"
-version = "0.14.1"
+version = "0.14.2"
 description = "Modern hybrid RAG core for multi-location auto parts inventory"
 readme = "README.md"
 requires-python = ">=3.11"

@@ -76,3 +76,14 @@ def test_shipping_rates_503_without_key(client: TestClient) -> None:
         },
     )
     assert r.status_code == 503
+
+
+def test_shipping_label_503_without_key(client: TestClient) -> None:
+    r = client.post(
+        "/api/v1/shipping/label",
+        json={"shipment_id": "shp_x", "rate_id": "rate_y"},
+    )
+    assert r.status_code == 503
+    assert "EASYPOST" in str(r.json().get("detail", "")).upper() or "not configured" in str(
+        r.json().get("detail", "")
+    ).lower()
