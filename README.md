@@ -2,7 +2,7 @@
 
 **Repository:** https://github.com/seanebones-lang/parts  
 **Owner:** NextEleven LLC  
-**Package:** `parrts` v0.10.0  
+**Package:** `parrts` v0.11.0  
 **License:** Proprietary — NextEleven LLC (see `LICENSE`)
 
 ---
@@ -116,8 +116,8 @@ docker compose -f docker-compose.prod.yml up -d --build
 | DMS inventory / customers / orders | **Production path** (SQLite default; Postgres via `DMS_BACKEND=postgres` + migrate) |
 | OEM ingest adapters | **Production path** (configure feed) |
 | Auth JWT | **Production** when `AUTH_MODE=production` |
-| Payments (Stripe) | **Integration** — live when keys set, otherwise disabled |
-| Shipping (EasyPost) | **Integration** — live when keys set |
+| Payments (Stripe) | **Production path when keyed** — `/payments` + `/api/v1/payments/order-intent` |
+| Shipping (EasyPost) | **Production path when keyed** — `/shipping` + `/api/v1/shipping/rates|label` |
 | Analytics / agents UI | **In product** — deepens with telemetry wiring |
 | Multi-tenant SaaS billing | Roadmap |
 

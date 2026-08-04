@@ -32,6 +32,25 @@ function formatMoney(n?: number): string {
   return `$${n.toFixed(2)}`;
 }
 
+function orderTotal(o: DmsOrder): number | undefined {
+  if (o.total !== undefined && o.total !== null && Number.isFinite(Number(o.total))) {
+    return Number(o.total);
+  }
+  const lines = o.lines?.length ? o.lines : o.items ?? [];
+  if (!lines.length) return undefined;
+  let sum = 0;
+  let any = false;
+  for (const l of lines) {
+    const price = Number((l as { unit_price?: number }).unit_price ?? 0);
+    const q = Number(l.qty ?? l.quantity ?? 0);
+    if (Number.isFinite(price) && Number.isFinite(q)) {
+      sum += price * q;
+      any = true;
+    }
+  }
+  return any ? sum : undefined;
+}
+
 function formatWhen(s?: string): string {
   if (!s) return "—";
   try {
@@ -319,12 +338,25 @@ export default function OrdersPage() {
                       <th className="py-2 pr-3 font-medium">Customer</th>
                       <th className="py-2 pr-3 font-medium">Status</th>
                       <th className="py-2 pr-3 font-medium text-right">Total</th>
-                      <th className="py-2 font-medium">Created</th>
+                      <th className="py-2 pr-3 font-medium">Created</th>
+                      <th className="py-2 font-medium">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {orders.map((o, i) => {
                       const lines = o.lines?.length ? o.lines : o.items ?? [];
+                      const total = orderTotal(o);
+                      const oid = o.id ?? o.order_number;
+                      const payHref =
+                        oid != null
+                          ? `/payments?order_id=${encodeURIComponent(String(oid))}${
+                              total != null ? `&amount=${encodeURIComponent(String(total))}` : ""
+                            }`
+                          : "/payments";
+                      const shipHref =
+                        oid != null
+                          ? `/shipping?order_id=${encodeURIComponent(String(oid))}`
+                          : "/shipping";
                       return (
                         <tr
                           key={`${o.id ?? o.order_number ?? i}`}
@@ -355,10 +387,20 @@ export default function OrdersPage() {
                             <Badge variant="secondary">{o.status || "open"}</Badge>
                           </td>
                           <td className="py-2 pr-3 text-right tabular-nums">
-                            {formatMoney(o.total)}
+                            {formatMoney(total)}
                           </td>
-                          <td className="py-2 text-muted-foreground text-xs">
+                          <td className="py-2 pr-3 text-muted-foreground text-xs">
                             {formatWhen(o.created_at)}
+                          </td>
+                          <td className="py-2">
+                            <div className="flex flex-wrap gap-1">
+                              <Button asChild size="sm" variant="outline">
+                                <a href={payHref}>Pay</a>
+                              </Button>
+                              <Button asChild size="sm" variant="outline">
+                                <a href={shipHref}>Ship</a>
+                              </Button>
+                            </div>
                           </td>
                         </tr>
                       );

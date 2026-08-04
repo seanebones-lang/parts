@@ -1,10 +1,14 @@
 """
 Payment processing endpoints.
+
+Enterprise Stripe flows may use Postgres invoices.
+Order-level intent + /config work offline without DB when STRIPE_SECRET_KEY is set.
 """
 
-from typing import Optional
+from typing import Any, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.agents.payment_agent import PaymentAgent
@@ -16,14 +20,67 @@ from app.services.payment_service import PaymentService
 router = APIRouter()
 
 
+class OrderIntentRequest(BaseModel):
+    amount: float = Field(..., gt=0)
+    currency: str = "usd"
+    order_id: str | int | None = None
+    customer_email: str | None = None
+    description: str | None = None
+
+
+@router.get("/config")
+async def payment_config() -> dict[str, Any]:
+    """Key-gated status — no secrets, no DB."""
+    from parrts.commerce import payment_status
+
+    return payment_status()
+
+
+@router.post("/order-intent")
+async def create_order_payment_intent(
+    body: OrderIntentRequest,
+    current_user: Optional[User] = Depends(require_user_if_production),
+) -> dict[str, Any]:
+    """
+    Create Stripe PaymentIntent for a DMS order amount.
+
+    Does not require Postgres invoice rows. Fail closed without STRIPE_SECRET_KEY.
+    """
+    _ = current_user
+    from parrts.commerce import create_payment_intent_for_order
+
+    result = create_payment_intent_for_order(
+        amount=body.amount,
+        currency=body.currency,
+        order_id=body.order_id,
+        customer_email=body.customer_email,
+        description=body.description,
+    )
+    if not result.get("success"):
+        code = (
+            status.HTTP_503_SERVICE_UNAVAILABLE
+            if not result.get("configured", True)
+            else status.HTTP_400_BAD_REQUEST
+        )
+        raise HTTPException(status_code=code, detail=result.get("error") or "payment failed")
+    return result
+
+
 @router.post("/create-intent")
 async def create_payment_intent(
     payment_data: dict,
     db: AsyncSession = Depends(get_db),
     current_user: Optional[User] = Depends(require_user_if_production),
 ):
-    """Create a Stripe payment intent."""
+    """Create a Stripe payment intent (invoice path — needs DB)."""
     _ = current_user
+    from parrts.commerce import stripe_secret_key
+
+    if not stripe_secret_key():
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="STRIPE_SECRET_KEY not configured — refusing to create payment",
+        )
     try:
         service = PaymentService(db)
 
@@ -113,6 +170,7 @@ async def handle_stripe_webhook(
     """
     try:
         import stripe
+
         from app.core.config import settings
 
         payload = await request.body()
