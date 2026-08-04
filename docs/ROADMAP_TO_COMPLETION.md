@@ -3,9 +3,10 @@
 **Product:** Parts by NextEleven LLC  
 **Repo:** https://github.com/seanebones-lang/parts  
 **Local:** `~/Desktop/Parrts-Dist-RAG`  
-**Package:** `parrts` (current line: v0.10.0)  
+**Package:** `parrts` (current line: v0.13.0)  
 **Document status:** Living roadmap — update checkboxes only after measured delivery  
-**Last updated:** 2026-08-04
+**Last updated:** 2026-08-04  
+**Session handoff:** [`SESSION_HANDOFF_TODO.md`](SESSION_HANDOFF_TODO.md)
 
 ---
 
@@ -199,12 +200,17 @@ Do **not** block A on full OEM partner deals — file/HTTP adapters already carr
 - [x] CI required green  
 
 ### M2 — Multi-rooftop enterprise
-- [ ] Org model + location ACL  
+- [x] Org model + location ACL (**foundation** v0.13 — FE UI next)  
+- [x] RBAC JWT/header enforcement on DMS mutations (v0.13)  
+- [x] OEM schedule task helper (v0.13; beat wiring next)  
+- [ ] Org/ACL operator UI  
+- [ ] Celery beat entry in compose  
+- [ ] JWT role claim mint on login E2E  
 - [ ] Transfers + approvals  
 - [ ] Observability + load baseline  
 
 ### M3 — Live supply network
-- [ ] Scheduled feeds  
+- [~] Scheduled feeds (task exists; beat + watermark next)  
 - [ ] One contracted connector in prod  
 - [ ] Supersession / mapping  
 
@@ -274,13 +280,16 @@ CI: `gh run list -R seanebones-lang/parts -L 1` must be **success** before calli
 
 ## Immediate next sprint (start here)
 
-M1 residual closed in v0.12.0 (catalog, lifecycle, invoice PDF, RBAC matrix, install/backup).
+**Full ordered TODO:** [`SESSION_HANDOFF_TODO.md`](SESSION_HANDOFF_TODO.md)
 
-Next focus (M2 / enterprise):
-1. JWT role claim → `parrts.rbac` enforcement on mutating routes  
-2. Multi-rooftop org + location ACL  
-3. Scheduled OEM feeds + partner connector pack  
-4. Pay→ship→email happy path with test keys in staging  
+Shipped through **v0.13.0** (M1 closed + M2 foundation).
+
+Next session:
+1. Confirm CI green; dual-push `parts` + legacy mirror if needed  
+2. Wave 22 — JWT role mint on login E2E  
+3. Wave 23 — Org/ACL FE  
+4. Wave 24 — OEM beat in compose  
+5. Wave 25 — staging commerce with test keys only  
 
 ---
 

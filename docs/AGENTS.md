@@ -2,6 +2,8 @@
 
 **Root:** `/Users/nexteleven/Desktop/Parrts-Dist-RAG`  
 **Ship:** `origin` → `https://github.com/seanebones-lang/parts`  
+**Legacy mirror:** `legacy` → `https://github.com/seanebones-lang/Parrts-Dist-RAG`  
+**Handoff TODO:** `docs/SESSION_HANDOFF_TODO.md`  
 **Children do not commit.**
 
 ## Wave 15 — Email desk (selling point)

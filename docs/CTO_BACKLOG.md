@@ -1,7 +1,8 @@
 # Parts — CTO Backlog
 
 **Product identity:** Parts is the **dealership parts system**.  
-**Ship:** https://github.com/seanebones-lang/parts · **parrts v0.13.0**
+**Ship:** https://github.com/seanebones-lang/parts · **parrts v0.13.0**  
+**Handoff TODO:** [`SESSION_HANDOFF_TODO.md`](SESSION_HANDOFF_TODO.md) ← **start here next session**
 
 ## Completeness (honest)
 
@@ -12,32 +13,27 @@
 | Catalog / orders / invoice / pay-ship | **In system** |
 | JWT → RBAC enforcement | **In system** (`require_permission`, X-Parts-Role) |
 | Multi-rooftop org + location ACL | **Foundation in system** |
-| OEM scheduled sync task | **In system** (Celery `oem.scheduled_sync`, skip without URL) |
-| Multi-node HA / partner OEM connectors | **Next** |
-| Full RO/GL | **Next** |
+| OEM scheduled sync task | **In system** (skip without URL) |
+| FE org/ACL UI · beat in compose · JWT mint E2E | **Next** (Wave 22–24) |
+| Multi-node HA / partner OEM / RO-GL | **Later** |
 
-## Wave 20 — M2 foundation (this ship)
+## Done waves (summary)
 
-- [x] `require_permission(perm)` FastAPI dep (demo header + prod JWT role)
-- [x] Role aliases (user→counter, superuser→admin) + JWT claim `role`/`parts_role`
-- [x] Wire DMS seed/oem/catalog/import/reindex/invoice + cancel permission
-- [x] Orgs + location.org_id + user_location_acl filter on inventory
-- [x] API `/dms/orgs` `/locations` `/acl/{user}` 
-- [x] Celery OEM schedule helper fail-closed without `OEM_FEED_URL`
-- [x] Tests
+- W15–16 Email desk production  
+- W17 Postgres DMS + Alembic  
+- W18 Pay/ship UI bound  
+- W19 M1 residual (catalog, lifecycle, invoice, install/backup)  
+- W20 M2 foundation (RBAC wire, org/ACL, OEM schedule helper)
 
-## Waves 15–19
+## Next (see full ordered TODO)
 
-- [x] Email desk · Postgres DMS · commerce · M1 residual
-
-## Next
-
-- JWT role claim on token mint path end-to-end with real login
-- Org UI + location picker in FE
-- Beat schedule entry for OEM nightly in compose
-- Staging pay→ship→email with test keys
+1. Wave 21 — CI green + dual-remote push hygiene  
+2. Wave 22 — JWT role mint E2E on login  
+3. Wave 23 — Org/ACL FE  
+4. Wave 24 — Celery beat OEM nightly in compose  
+5. Wave 25 — Staging pay→ship→email with real test keys  
 
 ## Never
 Unauthorized OEM scraping · fake delivery without keys
 
-**Install:** [`INSTALL.md`](INSTALL.md) · **Email:** [`EMAIL_DESK.md`](EMAIL_DESK.md)
+**Install:** [`INSTALL.md`](INSTALL.md) · **Email:** [`EMAIL_DESK.md`](EMAIL_DESK.md) · **Handoff:** [`SESSION_HANDOFF_TODO.md`](SESSION_HANDOFF_TODO.md)

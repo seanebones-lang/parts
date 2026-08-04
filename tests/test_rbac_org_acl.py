@@ -54,23 +54,25 @@ def test_org_and_location_acl(tmp_path: Path) -> None:
     assert len(all_rows) >= len(filt)
 
 
-@pytest.mark.asyncio
-async def test_require_permission_demo_role_header(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_require_permission_demo_role_header(monkeypatch: pytest.MonkeyPatch) -> None:
     pytest.importorskip("fastapi")
+    import asyncio
+
     from app.api.deps import require_permission
     from app.core.config import settings
     from fastapi import HTTPException
 
     monkeypatch.setattr(settings, "AUTH_MODE", "demo")
     dep = require_permission("dms.seed")
-    # counter cannot seed
-    with pytest.raises(HTTPException) as ei:
-        await dep(credentials=None, x_parts_role="counter")
-    assert ei.value.status_code == 403
-    # admin can
-    user = await dep(credentials=None, x_parts_role="admin")
-    assert user is None
 
+    async def _run() -> None:
+        with pytest.raises(HTTPException) as ei:
+            await dep(credentials=None, x_parts_role="counter")
+        assert ei.value.status_code == 403
+        user = await dep(credentials=None, x_parts_role="admin")
+        assert user is None
+
+    asyncio.run(_run())
 
 def test_oem_schedule_skips_without_url(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("OEM_FEED_URL", raising=False)
