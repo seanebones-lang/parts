@@ -19,7 +19,7 @@ cd ~/Desktop/Parrts-Dist-RAG && git fetch origin && git log --oneline -5
 | Live Stripe/EasyPost/SMTP | Only with real test keys |
 | Wave 26 transfers/approvals | Open |
 
-**Tip:** (after push)
+**Tip:** `1acdc29` Wave 25 staging smoke v0.14.2
 
 ## TODO
 
