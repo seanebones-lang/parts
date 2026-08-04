@@ -55,6 +55,8 @@ def test_org_and_location_acl(tmp_path: Path) -> None:
 
 
 def test_require_permission_demo_role_header(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Needs backend stack (sqlalchemy); skipped on core CI job."""
+    pytest.importorskip("sqlalchemy")
     pytest.importorskip("fastapi")
     import asyncio
 
@@ -74,10 +76,11 @@ def test_require_permission_demo_role_header(monkeypatch: pytest.MonkeyPatch) ->
 
     asyncio.run(_run())
 
-def test_oem_schedule_skips_without_url(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_oem_schedule_skips_without_url(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    pytest.importorskip("sqlalchemy")  # app.tasks import chain
     monkeypatch.delenv("OEM_FEED_URL", raising=False)
     from app.tasks.oem_tasks import run_scheduled_oem_sync
 
-    out = run_scheduled_oem_sync(root=str(Path.cwd()))
+    out = run_scheduled_oem_sync(root=str(tmp_path))
     assert out["skipped"] is True
     assert out["ok"] is True
