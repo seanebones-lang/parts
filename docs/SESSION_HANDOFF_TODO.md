@@ -14,4 +14,4 @@
 ## Cont
 > Partner OEM / M3 only with credentials — else Wave 27 prep docs only.
 
-Tip: (after push)
+Tip: `d3891b4` Wave 26 transfers v0.15.0
