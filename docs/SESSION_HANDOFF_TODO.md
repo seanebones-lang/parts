@@ -43,8 +43,8 @@ Ship path: orchestrator commits/pushes **parts** (and mirror `legacy` when user 
 | OEM beat in compose / staging keys | **Open** | Wave 24+ |
 | Full multi-rooftop HA / partner OEM / RO-GL | **Open** | later |
 
-**Tip commit at handoff write:** (set after push)  
-**Remotes:** `origin` (parts) + `legacy` (Parrts-Dist-RAG).
+**Tip commit at handoff write:** `03c3645` (Wave 23 org/ACL FE; package **v0.14.0**)  
+**Remotes:** `origin` (parts) + `legacy` (Parrts-Dist-RAG) both match.
 
 ---
 
