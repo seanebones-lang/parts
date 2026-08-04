@@ -198,6 +198,65 @@ def test_dms_oem_runs_and_status_include_sync_log(dms_client: TestClient):
     ][0].get("parts_upserted") is not None
 
 
+def test_dms_transfers_api_conservation(dms_client: TestClient, monkeypatch: pytest.MonkeyPatch):
+    """Wave 26: small transfer completes; large pending until manager approve."""
+    monkeypatch.setenv("PARRTS_TRANSFER_APPROVAL_QTY", "4")
+    assert (
+        dms_client.post(
+            "/api/v1/dms/seed", json={"seed": 9, "n_skus": 6, "locations": 3}
+        ).status_code
+        == 200
+    )
+    inv = dms_client.get("/api/v1/dms/inventory").json()["inventory"]
+    row = next(r for r in inv if int(r["qty"]) >= 8)
+    locs = dms_client.get("/api/v1/dms/locations").json()["locations"]
+    to = next(loc for loc in locs if loc["code"] != row["location_code"])
+
+    small = dms_client.post(
+        "/api/v1/dms/transfers",
+        json={
+            "sku": row["sku"],
+            "from_location": row["location_code"],
+            "to_location": to["code"],
+            "qty": 1,
+        },
+        headers={"X-Parts-Role": "counter"},
+    )
+    assert small.status_code == 200, small.text
+    assert small.json()["transfer"]["status"] == "completed"
+    assert small.json()["conserved"] is True
+
+    big = dms_client.post(
+        "/api/v1/dms/transfers",
+        json={
+            "sku": row["sku"],
+            "from_location": row["location_code"],
+            "to_location": to["code"],
+            "qty": 5,
+        },
+        headers={"X-Parts-Role": "counter"},
+    )
+    assert big.status_code == 200, big.text
+    body = big.json()
+    assert body["transfer"]["status"] == "pending_approval"
+    tid = body["transfer"]["id"]
+
+    deny = dms_client.post(
+        f"/api/v1/dms/transfers/{tid}/approve",
+        headers={"X-Parts-Role": "counter"},
+    )
+    # require_permission blocks counter before service PermissionError
+    assert deny.status_code == 403, deny.text
+
+    ok = dms_client.post(
+        f"/api/v1/dms/transfers/{tid}/approve",
+        headers={"X-Parts-Role": "manager"},
+    )
+    assert ok.status_code == 200, ok.text
+    assert ok.json()["transfer"]["status"] == "completed"
+    assert ok.json()["conserved"] is True
+
+
 def test_dms_oem_sync_file(dms_client: TestClient):
     sample = ROOT / "data" / "oem" / "sample_oem_catalog.json"
     if not sample.is_file():

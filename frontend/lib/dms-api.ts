@@ -590,4 +590,73 @@ export async function setDmsAcl(
   return dmsPut(`/acl/${key}`, { location_codes: locationCodes });
 }
 
+// --- Transfers (Wave 26) ---
+
+export type DmsTransfer = {
+  id?: number | string;
+  sku?: string;
+  from_code?: string;
+  to_code?: string;
+  qty?: number;
+  status?: string;
+  requested_by?: string;
+  approved_by?: string;
+  notes?: string;
+  created_at?: string;
+  [key: string]: unknown;
+};
+
+export async function listDmsTransfers(opts?: {
+  status?: string;
+  limit?: number;
+}): Promise<{ transfers: DmsTransfer[]; approval_threshold?: number; raw: unknown }> {
+  const params = new URLSearchParams();
+  if (opts?.status) params.set("status", opts.status);
+  if (opts?.limit) params.set("limit", String(opts.limit));
+  const qs = params.toString() ? `?${params.toString()}` : "";
+  const raw = await dmsGet<unknown>(`/transfers${qs}`);
+  const o = asRecord(raw) ?? {};
+  const transfers = extractArray(raw, ["transfers", "items", "results"]).map((item) => {
+    const r = asRecord(item) ?? {};
+    return {
+      ...r,
+      id: r.id as number | string | undefined,
+      sku: str(r.sku),
+      from_code: str(r.from_code),
+      to_code: str(r.to_code),
+      qty: num(r.qty),
+      status: str(r.status),
+      requested_by: str(r.requested_by),
+      approved_by: str(r.approved_by),
+      notes: str(r.notes),
+      created_at: str(r.created_at),
+    } as DmsTransfer;
+  });
+  return {
+    transfers,
+    approval_threshold: num(o.approval_threshold),
+    raw,
+  };
+}
+
+export async function createDmsTransfer(input: {
+  sku: string;
+  from_location: string;
+  to_location: string;
+  qty: number;
+  notes?: string;
+  requested_by?: string;
+  force_complete?: boolean;
+}): Promise<unknown> {
+  return dmsPost("/transfers", input);
+}
+
+export async function approveDmsTransfer(id: string | number): Promise<unknown> {
+  return dmsPost(`/transfers/${id}/approve`, {});
+}
+
+export async function cancelDmsTransfer(id: string | number): Promise<unknown> {
+  return dmsPost(`/transfers/${id}/cancel`, {});
+}
+
 export { API_BASE_URL, ApiError };

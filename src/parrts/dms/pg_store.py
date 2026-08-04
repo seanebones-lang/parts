@@ -83,11 +83,26 @@ CREATE TABLE IF NOT EXISTS user_location_acl (
     CONSTRAINT uq_acl_user_loc UNIQUE (user_key, location_code)
 );
 
+CREATE TABLE IF NOT EXISTS stock_transfers (
+    id SERIAL PRIMARY KEY,
+    sku TEXT NOT NULL REFERENCES catalog_parts(sku),
+    from_location_id INTEGER NOT NULL REFERENCES locations(id),
+    to_location_id INTEGER NOT NULL REFERENCES locations(id),
+    qty INTEGER NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending',
+    requested_by TEXT DEFAULT '',
+    approved_by TEXT DEFAULT '',
+    notes TEXT DEFAULT '',
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
+
 CREATE INDEX IF NOT EXISTS idx_inventory_sku ON inventory_levels(sku);
 CREATE INDEX IF NOT EXISTS idx_inventory_loc ON inventory_levels(location_id);
 CREATE INDEX IF NOT EXISTS idx_orders_customer ON orders(customer_id);
 CREATE INDEX IF NOT EXISTS idx_order_lines_order ON order_lines(order_id);
 CREATE INDEX IF NOT EXISTS idx_acl_user ON user_location_acl(user_key);
+CREATE INDEX IF NOT EXISTS idx_transfers_status ON stock_transfers(status);
 """
 
 

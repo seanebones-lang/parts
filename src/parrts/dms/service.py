@@ -907,3 +907,281 @@ class DmsService:
             return rows
         allow = set(allowed)
         return [r for r in rows if str(r.get("location_code") or "") in allow]
+
+    # --- Inter-store transfers (Wave 26) ---------------------------------
+
+    @staticmethod
+    def transfer_approval_threshold() -> int:
+        """Qty at/above this needs manager+ approval (env PARRTS_TRANSFER_APPROVAL_QTY)."""
+        import os
+
+        raw = (os.environ.get("PARRTS_TRANSFER_APPROVAL_QTY") or "10").strip()
+        try:
+            n = int(raw)
+        except ValueError:
+            n = 10
+        return max(1, n)
+
+    def sku_total_qty(self, sku: str) -> int:
+        self.ensure_schema()
+        row = self.store.fetchone(
+            "SELECT COALESCE(SUM(qty), 0) AS c FROM inventory_levels WHERE sku = ?",
+            (str(sku),),
+        )
+        return int(row["c"]) if row else 0
+
+    def _get_transfer_row(self, transfer_id: int) -> dict[str, Any]:
+        row = self.store.fetchone(
+            """
+            SELECT t.id, t.sku, t.from_location_id, t.to_location_id, t.qty, t.status,
+                   t.requested_by, t.approved_by, t.notes, t.created_at, t.updated_at,
+                   fl.code AS from_code, tl.code AS to_code
+            FROM stock_transfers t
+            JOIN locations fl ON fl.id = t.from_location_id
+            JOIN locations tl ON tl.id = t.to_location_id
+            WHERE t.id = ?
+            """,
+            (int(transfer_id),),
+        )
+        if row is None:
+            raise ValueError(f"Unknown transfer id: {transfer_id}")
+        return dict(row)
+
+    def _apply_transfer_move(self, sku: str, from_lid: int, to_lid: int, qty: int) -> None:
+        """Move qty from → to; conserve total stock. Raises InsufficientStockError."""
+        inv = self.store.fetchone(
+            "SELECT qty FROM inventory_levels WHERE sku = ? AND location_id = ?",
+            (sku, from_lid),
+        )
+        if inv is None or int(inv["qty"]) < qty:
+            have = int(inv["qty"]) if inv else 0
+            raise InsufficientStockError(
+                f"Insufficient stock for transfer {sku} from location {from_lid}: "
+                f"need {qty}, have {have}"
+            )
+        self.store.execute(
+            "UPDATE inventory_levels SET qty = qty - ? WHERE sku = ? AND location_id = ?",
+            (qty, sku, from_lid),
+        )
+        dest = self.store.fetchone(
+            "SELECT qty FROM inventory_levels WHERE sku = ? AND location_id = ?",
+            (sku, to_lid),
+        )
+        if dest is None:
+            # Ensure catalog row exists
+            cat = self.store.fetchone("SELECT sku FROM catalog_parts WHERE sku = ?", (sku,))
+            if cat is None:
+                raise ValueError(f"Unknown sku: {sku}")
+            self.store.execute(
+                """
+                INSERT INTO inventory_levels (sku, location_id, qty, cost, price)
+                VALUES (?, ?, ?, 0, 0)
+                """,
+                (sku, to_lid, qty),
+            )
+        else:
+            self.store.execute(
+                "UPDATE inventory_levels SET qty = qty + ? WHERE sku = ? AND location_id = ?",
+                (qty, sku, to_lid),
+            )
+
+    def create_transfer(
+        self,
+        *,
+        sku: str,
+        from_location: str | int,
+        to_location: str | int,
+        qty: int,
+        requested_by: str = "",
+        notes: str = "",
+        role: str | None = None,
+        force_complete: bool = False,
+    ) -> dict[str, Any]:
+        """
+        Create inter-store transfer.
+
+        - qty < approval threshold → completed immediately (stock moved)
+        - qty >= threshold → pending_approval until manager approves
+        - force_complete with manager+ role also completes large moves
+        Stock conservation: total qty for SKU unchanged on complete.
+        """
+        from parrts.rbac import can, normalize_role
+
+        self.ensure_schema()
+        sku_s = str(sku or "").strip()
+        if not sku_s:
+            raise ValueError("sku required")
+        q = int(qty)
+        if q <= 0:
+            raise ValueError("qty must be positive")
+        from_lid = self._location_id(from_location)
+        to_lid = self._location_id(to_location)
+        if from_lid == to_lid:
+            raise ValueError("from_location and to_location must differ")
+        cat = self.store.fetchone("SELECT sku FROM catalog_parts WHERE sku = ?", (sku_s,))
+        if cat is None:
+            raise ValueError(f"Unknown sku: {sku_s}")
+
+        threshold = self.transfer_approval_threshold()
+        r = normalize_role(role)
+        needs_approval = q >= threshold and not (
+            force_complete and can(r, "transfers.approve")
+        )
+        now = _utc_now()
+        before_total = self.sku_total_qty(sku_s)
+        status = "pending_approval" if needs_approval else "completed"
+
+        if status == "completed":
+            self._apply_transfer_move(sku_s, from_lid, to_lid, q)
+
+        cur = self.store.execute(
+            """
+            INSERT INTO stock_transfers
+              (sku, from_location_id, to_location_id, qty, status,
+               requested_by, approved_by, notes, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                sku_s,
+                from_lid,
+                to_lid,
+                q,
+                status,
+                str(requested_by or ""),
+                str(requested_by or "") if status == "completed" else "",
+                notes or "",
+                now,
+                now,
+            ),
+        )
+        self.store.commit()
+        if cur.lastrowid is None:
+            raise RuntimeError("failed to allocate transfer id")
+        tid = int(cur.lastrowid)
+        after_total = self.sku_total_qty(sku_s)
+        if status == "completed" and after_total != before_total:
+            raise RuntimeError(
+                f"stock conservation violated for {sku_s}: before={before_total} after={after_total}"
+            )
+        tr = self._get_transfer_row(tid)
+        return {
+            "ok": True,
+            "transfer": tr,
+            "approval_threshold": threshold,
+            "stock_before": before_total,
+            "stock_after": after_total,
+            "conserved": after_total == before_total,
+        }
+
+    def approve_transfer(
+        self,
+        transfer_id: int,
+        *,
+        approved_by: str = "",
+        role: str | None = None,
+    ) -> dict[str, Any]:
+        """Manager+ completes a pending_approval transfer (moves stock)."""
+        from parrts.rbac import can, normalize_role
+
+        self.ensure_schema()
+        if not can(role, "transfers.approve"):
+            raise PermissionError(
+                f"role {normalize_role(role)!r} cannot transfers.approve"
+            )
+        tr = self._get_transfer_row(transfer_id)
+        if str(tr["status"]) != "pending_approval":
+            raise ValueError(
+                f"transfer {transfer_id} status is {tr['status']!r}, expected pending_approval"
+            )
+        sku = str(tr["sku"])
+        qty = int(tr["qty"])
+        from_lid = int(tr["from_location_id"])
+        to_lid = int(tr["to_location_id"])
+        before = self.sku_total_qty(sku)
+        self._apply_transfer_move(sku, from_lid, to_lid, qty)
+        now = _utc_now()
+        self.store.execute(
+            """
+            UPDATE stock_transfers
+            SET status = ?, approved_by = ?, updated_at = ?
+            WHERE id = ?
+            """,
+            ("completed", str(approved_by or ""), now, int(transfer_id)),
+        )
+        self.store.commit()
+        after = self.sku_total_qty(sku)
+        if after != before:
+            raise RuntimeError(
+                f"stock conservation violated for {sku}: before={before} after={after}"
+            )
+        return {
+            "ok": True,
+            "transfer": self._get_transfer_row(transfer_id),
+            "stock_before": before,
+            "stock_after": after,
+            "conserved": True,
+        }
+
+    def cancel_transfer(
+        self,
+        transfer_id: int,
+        *,
+        role: str | None = None,
+        cancelled_by: str = "",
+    ) -> dict[str, Any]:
+        """Cancel pending transfer (no stock change). Completed cannot cancel."""
+        from parrts.rbac import can, normalize_role
+
+        self.ensure_schema()
+        if not can(role, "transfers.cancel"):
+            raise PermissionError(
+                f"role {normalize_role(role)!r} cannot transfers.cancel"
+            )
+        tr = self._get_transfer_row(transfer_id)
+        st = str(tr["status"])
+        if st == "completed":
+            raise ValueError("cannot cancel a completed transfer")
+        if st == "cancelled":
+            return {"ok": True, "transfer": tr}
+        now = _utc_now()
+        notes = (tr.get("notes") or "") + f" [cancelled by {cancelled_by or 'system'}]"
+        self.store.execute(
+            "UPDATE stock_transfers SET status = ?, notes = ?, updated_at = ? WHERE id = ?",
+            ("cancelled", notes.strip(), now, int(transfer_id)),
+        )
+        self.store.commit()
+        return {"ok": True, "transfer": self._get_transfer_row(transfer_id)}
+
+    def list_transfers(
+        self, *, status: str | None = None, limit: int = 50
+    ) -> list[dict[str, Any]]:
+        self.ensure_schema()
+        lim = max(1, min(int(limit or 50), 200))
+        if status:
+            rows = self.store.fetchall(
+                """
+                SELECT t.id, t.sku, t.from_location_id, t.to_location_id, t.qty, t.status,
+                       t.requested_by, t.approved_by, t.notes, t.created_at, t.updated_at,
+                       fl.code AS from_code, tl.code AS to_code
+                FROM stock_transfers t
+                JOIN locations fl ON fl.id = t.from_location_id
+                JOIN locations tl ON tl.id = t.to_location_id
+                WHERE t.status = ?
+                ORDER BY t.id DESC LIMIT ?
+                """,
+                (str(status), lim),
+            )
+        else:
+            rows = self.store.fetchall(
+                """
+                SELECT t.id, t.sku, t.from_location_id, t.to_location_id, t.qty, t.status,
+                       t.requested_by, t.approved_by, t.notes, t.created_at, t.updated_at,
+                       fl.code AS from_code, tl.code AS to_code
+                FROM stock_transfers t
+                JOIN locations fl ON fl.id = t.from_location_id
+                JOIN locations tl ON tl.id = t.to_location_id
+                ORDER BY t.id DESC LIMIT ?
+                """,
+                (lim,),
+            )
+        return [dict(r) for r in rows]

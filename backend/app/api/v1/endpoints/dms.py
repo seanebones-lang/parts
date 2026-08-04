@@ -656,6 +656,116 @@ async def dms_set_acl(
         raise _http_exc_from_value_error(exc) from exc
 
 
+class TransferCreateBody(BaseModel):
+    sku: str
+    from_location: str
+    to_location: str
+    qty: int = Field(..., gt=0)
+    notes: str = ""
+    requested_by: str = ""
+    force_complete: bool = False
+
+
+@router.get("/transfers")
+async def dms_list_transfers(
+    status_filter: Optional[str] = Query(None, alias="status"),
+    limit: int = Query(50, ge=1, le=200),
+    current_user: Optional[User] = Depends(require_permission("transfers.read")),
+):
+    _ = current_user
+    svc = get_dms_service()
+    rows = svc.list_transfers(status=status_filter, limit=limit)
+    return {
+        "success": True,
+        "transfers": rows,
+        "count": len(rows),
+        "approval_threshold": svc.transfer_approval_threshold(),
+    }
+
+
+@router.post("/transfers")
+async def dms_create_transfer(
+    body: TransferCreateBody,
+    current_user: Optional[User] = Depends(require_permission("transfers.write")),
+    x_parts_role: Optional[str] = Header(None, alias="X-Parts-Role"),
+):
+    """Inter-store transfer. Large qty → pending_approval (manager)."""
+    from app.api.deps import resolve_parts_role
+    from parrts.dms.service import InsufficientStockError
+
+    role = resolve_parts_role(current_user, x_parts_role=x_parts_role)
+    try:
+        svc = get_dms_service()
+        result = svc.create_transfer(
+            sku=body.sku,
+            from_location=body.from_location,
+            to_location=body.to_location,
+            qty=body.qty,
+            requested_by=body.requested_by or (
+                getattr(current_user, "username", None) or ""
+            ),
+            notes=body.notes,
+            role=role,
+            force_complete=body.force_complete,
+        )
+        return {"success": True, **result}
+    except InsufficientStockError as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+    except PermissionError as exc:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise _http_exc_from_value_error(exc) from exc
+
+
+@router.post("/transfers/{transfer_id}/approve")
+async def dms_approve_transfer(
+    transfer_id: int,
+    current_user: Optional[User] = Depends(require_permission("transfers.approve")),
+    x_parts_role: Optional[str] = Header(None, alias="X-Parts-Role"),
+):
+    from app.api.deps import resolve_parts_role
+    from parrts.dms.service import InsufficientStockError
+
+    role = resolve_parts_role(current_user, x_parts_role=x_parts_role)
+    try:
+        svc = get_dms_service()
+        result = svc.approve_transfer(
+            transfer_id,
+            approved_by=getattr(current_user, "username", None) or "manager",
+            role=role,
+        )
+        return {"success": True, **result}
+    except InsufficientStockError as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+    except PermissionError as exc:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise _http_exc_from_value_error(exc) from exc
+
+
+@router.post("/transfers/{transfer_id}/cancel")
+async def dms_cancel_transfer(
+    transfer_id: int,
+    current_user: Optional[User] = Depends(require_permission("transfers.cancel")),
+    x_parts_role: Optional[str] = Header(None, alias="X-Parts-Role"),
+):
+    from app.api.deps import resolve_parts_role
+
+    role = resolve_parts_role(current_user, x_parts_role=x_parts_role)
+    try:
+        svc = get_dms_service()
+        result = svc.cancel_transfer(
+            transfer_id,
+            role=role,
+            cancelled_by=getattr(current_user, "username", None) or "manager",
+        )
+        return {"success": True, **result}
+    except PermissionError as exc:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise _http_exc_from_value_error(exc) from exc
+
+
 @router.post("/orders")
 async def dms_create_order(
     body: OrderCreateBody,
