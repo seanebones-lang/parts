@@ -43,7 +43,9 @@ Ship path: orchestrator commits/pushes **parts** (and mirror `legacy` when user 
 | M2 FE org UI / beat schedule / JWT mint E2E | **Open** | this TODO |
 | Full multi-rooftop HA / partner OEM / RO-GL | **Open** | later |
 
-**Tip commit at handoff write:** check `git log -1 --oneline` (expect ≥ `858914c` or later handoff commit).
+**Tip commit at handoff write:** `ead1f39` — `docs(handoff): full SESSION_HANDOFF_TODO + sync maps; fix RBAC async CI`  
+**Remotes:** `origin` (parts) + `legacy` (Parrts-Dist-RAG) both at same SHA after handoff push.  
+**Desktop/parts:** reset to `origin/main` @ `ead1f39` (full tree, not thin LICENSE-only).
 
 ---
 
