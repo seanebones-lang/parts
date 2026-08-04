@@ -62,8 +62,8 @@ async def login(
                 detail="Invalid MFA code"
             )
     
-    # Create access token
-    access_token = auth_service.create_access_token(data={"sub": str(user.id)})
+    # Create access token with role + parts_role claims (Wave 22)
+    access_token = auth_service.create_access_token_for_user(user)
     refresh_token = auth_service.create_refresh_token(user.id)
     
     return LoginResponse(
@@ -97,8 +97,8 @@ async def refresh_token(
             detail="User not found or inactive"
         )
     
-    # Create new access token
-    access_token = auth_service.create_access_token(data={"sub": str(user.id)})
+    # Create new access token with role + parts_role claims (Wave 22)
+    access_token = auth_service.create_access_token_for_user(user)
     
     return TokenRefreshResponse(
         access_token=access_token,

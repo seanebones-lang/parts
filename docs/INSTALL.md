@@ -48,15 +48,52 @@ Fail closed without keys — no fake charges/labels/mail.
 
 ## 4. Roles (RBAC)
 
-`PARRTS_DEFAULT_ROLE=counter|manager|admin` (default **admin** in open demo).  
-Headers: `X-Parts-Role` (demo tooling), production uses JWT `role` / `parts_role` or `User.role`.
+`PARRTS_DEFAULT_ROLE=counter|manager|admin` (default **admin** in open demo).
+
+| Source | When |
+|--------|------|
+| `X-Parts-Role` header | Demo tooling (no JWT required) |
+| JWT claims `role` + `parts_role` | Minted on **login** / **refresh** from `User.role` / `is_superuser` |
+| `User.role` row | Fallback when claims absent |
+
+App roles → Parts RBAC via `parrts.rbac.map_app_role`:
+
+| App / JWT `role` | Parts role |
+|------------------|------------|
+| `user`, `staff`, `counter` | counter |
+| `manager`, `supervisor` | manager |
+| `admin`, `superuser`, `owner` | admin |
 
 ```bash
 # Demo as counter (cannot seed / import CSV)
 curl -H 'X-Parts-Role: counter' -X POST http://127.0.0.1:8000/api/v1/dms/seed
+# → 403 Forbidden: role 'counter' cannot dms.seed
+
+# Demo default (no header) → admin open desk
+curl -X POST http://127.0.0.1:8000/api/v1/dms/seed -H 'Content-Type: application/json' \
+  -d '{"seed":1,"n_skus":5,"locations":3}'
+# → 200
+
+# Production: login mints role + parts_role into access_token
+curl -s -X POST http://127.0.0.1:8000/api/v1/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"username":"counter1","password":"***"}' | jq '{role: .user.role, token: .access_token}'
+# Decode JWT payload → {"sub":"…","role":"user","parts_role":"counter","is_superuser":false,…}
+
+TOKEN=$(curl -s -X POST http://127.0.0.1:8000/api/v1/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"username":"counter1","password":"***"}' | jq -r .access_token)
+
+# Counter JWT cannot seed or catalog import
+curl -H "Authorization: Bearer $TOKEN" -X POST http://127.0.0.1:8000/api/v1/dms/seed
 # → 403
 
-GET /api/v1/dms/rbac?role=manager
+curl -H "Authorization: Bearer $TOKEN" -X POST http://127.0.0.1:8000/api/v1/dms/catalog/import \
+  -F 'file=@parts.csv'
+# → 403
+
+# Inspect permission matrix
+curl 'http://127.0.0.1:8000/api/v1/dms/rbac?role=manager'
 ```
 
 | Role | Can |
@@ -65,7 +102,7 @@ GET /api/v1/dms/rbac?role=manager
 | manager | + catalog write/import, cancel, reindex, OEM sync |
 | admin | + seed, orgs, ACL |
 
-Mutating DMS routes use `Depends(require_permission(...))`.
+Mutating DMS routes use `Depends(require_permission(...))`. Login/refresh use `AuthService.create_access_token_for_user`.
 
 ### Location ACL (multi-rooftop foundation)
 

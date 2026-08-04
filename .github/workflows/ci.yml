@@ -82,7 +82,8 @@ jobs:
             tests/test_dms_api.py \
             tests/test_email_api.py \
             tests/test_auth_demo_mode.py \
-            tests/test_commerce_api.py
+            tests/test_commerce_api.py \
+            tests/test_rbac_org_acl.py
       - name: verify_boot script
         env:
           PYTHONPATH: backend:src

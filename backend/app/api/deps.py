@@ -6,8 +6,9 @@ AUTH_MODE (settings / env):
   - production: mutating routes require a valid JWT (same rules as get_current_user)
 
 RBAC:
-  - production: role from User.role / is_superuser
+  - production: role from JWT claims (role/parts_role) then User.role / is_superuser
   - demo: role from X-Parts-Role header or PARRTS_DEFAULT_ROLE (default admin)
+  - login/refresh mint role + parts_role via AuthService.create_access_token_for_user
 
 Wire mutating handlers with::
 

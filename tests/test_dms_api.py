@@ -102,6 +102,23 @@ def test_dms_seed_inventory_catalog(dms_client: TestClient):
     assert q["count"] >= 1
 
 
+def test_dms_seed_counter_role_header_403(dms_client: TestClient):
+    """Demo open desk defaults admin; X-Parts-Role: counter cannot seed."""
+    r = dms_client.post(
+        "/api/v1/dms/seed",
+        headers={"X-Parts-Role": "counter"},
+        json={"seed": 1, "n_skus": 2, "locations": 1},
+    )
+    assert r.status_code == 403, r.text
+    assert "counter" in r.text.lower() or "forbidden" in r.text.lower()
+
+    # Default (no header) still open as admin in demo
+    ok = dms_client.post(
+        "/api/v1/dms/seed",
+        json={"seed": 1, "n_skus": 2, "locations": 1},
+    )
+    assert ok.status_code == 200, ok.text
+
 def test_dms_oem_sync_file(dms_client: TestClient):
     sample = ROOT / "data" / "oem" / "sample_oem_catalog.json"
     if not sample.is_file():

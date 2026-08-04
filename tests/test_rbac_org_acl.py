@@ -76,6 +76,104 @@ def test_require_permission_demo_role_header(monkeypatch: pytest.MonkeyPatch) ->
 
     asyncio.run(_run())
 
+
+def test_jwt_access_token_mints_role_claims() -> None:
+    """Wave 22: login/refresh mint role + parts_role via map_app_role."""
+    pytest.importorskip("sqlalchemy")
+    pytest.importorskip("jose")
+    from app.core.config import settings
+    from app.services.auth_service import AuthService
+    from jose import jwt
+
+    cases = [
+        ("user", False, "user", "counter"),
+        ("manager", False, "manager", "manager"),
+        ("admin", False, "admin", "admin"),
+        ("superuser", False, "superuser", "admin"),
+        ("user", True, "superuser", "admin"),  # is_superuser wins
+    ]
+    for app_role, is_super, expect_role, expect_parts in cases:
+        u = MagicMock()
+        u.id = 7
+        u.role = app_role
+        u.is_superuser = is_super
+        claims = AuthService.access_token_claims_for_user(u)
+        assert claims["sub"] == "7"
+        assert claims["role"] == expect_role
+        assert claims["parts_role"] == expect_parts
+        assert claims["is_superuser"] is is_super
+
+        svc = AuthService(db=MagicMock())  # type: ignore[arg-type]
+        token = svc.create_access_token_for_user(u)
+        decoded = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        assert decoded["sub"] == "7"
+        assert decoded["role"] == expect_role
+        assert decoded["parts_role"] == expect_parts
+
+def test_require_permission_production_counter_jwt_403(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Production: counter JWT cannot dms.seed or catalog.import."""
+    pytest.importorskip("sqlalchemy")
+    pytest.importorskip("fastapi")
+    import asyncio
+    from unittest.mock import AsyncMock, patch
+
+    from app.api.deps import require_permission
+    from app.core.config import settings
+    from app.services.auth_service import AuthService
+    from fastapi import HTTPException
+    from fastapi.security import HTTPAuthorizationCredentials
+
+    monkeypatch.setattr(settings, "AUTH_MODE", "production")
+
+    counter = MagicMock()
+    counter.id = 11
+    counter.role = "user"
+    counter.is_superuser = False
+    counter.is_active = True
+
+    svc = AuthService(db=MagicMock())  # type: ignore[arg-type]
+    token = svc.create_access_token_for_user(counter)
+    creds = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
+
+    async def _fake_get_db():
+        yield MagicMock()
+
+    async def _run() -> None:
+        with patch("app.api.deps.get_db", _fake_get_db):
+            with patch("app.api.deps.AuthService") as MockAuth:
+                inst = MockAuth.return_value
+                # Real verify so claims (role/parts_role) attach to user
+                inst.verify_token.side_effect = lambda t: AuthService(MagicMock()).verify_token(t)
+                inst.get_user_by_id = AsyncMock(return_value=counter)
+
+                for perm in ("dms.seed", "catalog.import"):
+                    dep = require_permission(perm)
+                    with pytest.raises(HTTPException) as ei:
+                        await dep(credentials=creds, x_parts_role=None)
+                    assert ei.value.status_code == 403, perm
+                    assert "counter" in str(ei.value.detail)
+
+                # admin claim path allowed
+                admin = MagicMock()
+                admin.id = 1
+                admin.role = "admin"
+                admin.is_superuser = False
+                admin.is_active = True
+                admin_tok = svc.create_access_token_for_user(admin)
+                admin_creds = HTTPAuthorizationCredentials(
+                    scheme="Bearer", credentials=admin_tok
+                )
+                inst.get_user_by_id = AsyncMock(return_value=admin)
+                ok = await require_permission("dms.seed")(
+                    credentials=admin_creds, x_parts_role=None
+                )
+                assert ok is admin
+
+    asyncio.run(_run())
+
+
 def test_oem_schedule_skips_without_url(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     pytest.importorskip("sqlalchemy")  # app.tasks import chain
     monkeypatch.delenv("OEM_FEED_URL", raising=False)

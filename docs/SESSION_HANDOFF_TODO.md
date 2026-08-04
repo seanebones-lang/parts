@@ -1,7 +1,7 @@
 # Parts — Session Handoff + Full TODO
 
 **Updated:** 2026-08-04  
-**Package:** `parrts` **v0.13.0**  
+**Package:** `parrts` **v0.13.1**  
 **Local SoT tree:** `/Users/nexteleven/Desktop/Parrts-Dist-RAG`  
 **Ship remote (always):** https://github.com/seanebones-lang/parts (`origin` / `main`)  
 **Legacy mirror:** https://github.com/seanebones-lang/Parrts-Dist-RAG (`legacy` remote)  
@@ -39,12 +39,13 @@ Ship path: orchestrator commits/pushes **parts** (and mirror `legacy` when user 
 | JWT/RBAC `require_permission` | **Done** v0.13 | X-Parts-Role demo; User.role prod |
 | Org + location ACL foundation | **Done** v0.13 | tables + inventory filter |
 | OEM Celery schedule helper | **Done** v0.13 | skips without `OEM_FEED_URL` |
+| **JWT role mint on login/refresh** | **Done** v0.13.1 | `role` + `parts_role` claims |
 | **M1 single-site GA checklist** | **Closed** | |
-| M2 FE org UI / beat schedule / JWT mint E2E | **Open** | this TODO |
+| M2 FE org UI / beat schedule | **Open** | Wave 23+ |
 | Full multi-rooftop HA / partner OEM / RO-GL | **Open** | later |
 
-**Tip commit at handoff write:** `e8ab3ba` (handoff + dual-remote sync; package **v0.13.0**)  
-**Remotes:** `origin` (parts) + `legacy` (Parrts-Dist-RAG) both match.  
+**Tip commit at handoff write:** (set after push)  
+**Remotes:** `origin` (parts) + `legacy` (Parrts-Dist-RAG).  
 **Desktop/parts:** full tree @ same SHA as SoT.
 
 ---
@@ -52,17 +53,17 @@ Ship path: orchestrator commits/pushes **parts** (and mirror `legacy` when user 
 ## 2. Full TODO (ordered for next sessions)
 
 ### Wave 21 — Green CI + handoff hygiene (do first if red)
-- [ ] Confirm `gh run list -R seanebones-lang/parts -L 1` = **success**
-- [ ] Core pytest has **no** bare `@pytest.mark.asyncio` without plugin (use `asyncio.run` or backend-smoke only)
-- [ ] Push `main` to **origin/parts** and **legacy/Parrts-Dist-RAG**
+- [x] Confirm `gh run list -R seanebones-lang/parts -L 1` = **success**
+- [x] Core pytest has **no** bare `@pytest.mark.asyncio` without plugin (use `asyncio.run` or backend-smoke only)
+- [x] Push `main` to **origin/parts** and **legacy/Parrts-Dist-RAG**
 - [ ] Sync Desktop notes + Obsidian status cards
 
 ### Wave 22 — Auth JWT role mint E2E
-- [ ] On login/token create: put `role` (or `parts_role`) in JWT claims from `User.role`
-- [ ] Map `user|manager|admin|superuser` via `parrts.rbac.map_app_role`
-- [ ] Production path: mutating DMS routes 403 for counter on seed/import (measured TestClient)
-- [ ] Demo path still open with default admin; `X-Parts-Role: counter` still 403 seed
-- [ ] Doc: INSTALL § roles with curl examples stay accurate
+- [x] On login/token create: put `role` (or `parts_role`) in JWT claims from `User.role`
+- [x] Map `user|manager|admin|superuser` via `parrts.rbac.map_app_role`
+- [x] Production path: mutating DMS routes 403 for counter on seed/import (measured)
+- [x] Demo path still open with default admin; `X-Parts-Role: counter` still 403 seed
+- [x] Doc: INSTALL § roles with curl examples stay accurate
 
 ### Wave 23 — Org / ACL operator UI
 - [ ] FE page `/orgs` or section under settings: list/create orgs
@@ -114,6 +115,8 @@ Ship path: orchestrator commits/pushes **parts** (and mirror `legacy` when user 
 |------|------|
 | Core DMS | `src/parrts/dms/` |
 | RBAC | `src/parrts/rbac.py` |
+| Auth JWT mint | `backend/app/services/auth_service.py` (`create_access_token_for_user`) |
+| Auth endpoints | `backend/app/api/v1/endpoints/auth.py` |
 | Commerce | `src/parrts/commerce.py` |
 | Email desk | `src/parrts/email/` |
 | Auth deps | `backend/app/api/deps.py` |
@@ -171,6 +174,6 @@ git push legacy main   # mirror Parrts-Dist-RAG
 ## 6. Cont command for next agent
 
 > `cd ~/Desktop/Parrts-Dist-RAG && cont`  
-> Read `docs/SESSION_HANDOFF_TODO.md` Wave 22+; execute next open eng boxes; pytest + push **parts** (+ legacy if dual-ship).
+> Read `docs/SESSION_HANDOFF_TODO.md` Wave 23+; execute next open eng boxes; pytest + push **parts** (+ legacy if dual-ship).
 
 *NextEleven LLC — Parts handoff. Update checkboxes only after measured ship.*

@@ -4,7 +4,7 @@ Authentication service with MFA support.
 
 import secrets
 import hashlib
-from typing import Optional, Dict, Any
+from typing import Any, Optional, Dict
 from datetime import datetime, timedelta
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_
@@ -48,6 +48,28 @@ class AuthService:
         """Hash a password."""
         return pwd_context.hash(password)
     
+    @staticmethod
+    def access_token_claims_for_user(user: User) -> Dict[str, Any]:
+        """Build JWT claims including Parts RBAC role from User.role / is_superuser.
+
+        Claims:
+          - sub: user id
+          - role: raw app role (user|manager|admin|superuser|…)
+          - parts_role: mapped counter|manager|admin via parrts.rbac.map_app_role
+          - is_superuser: bool
+        """
+        from parrts.rbac import map_app_role, role_from_user
+
+        is_super = bool(getattr(user, "is_superuser", False))
+        raw_role = "superuser" if is_super else (getattr(user, "role", None) or "user")
+        parts_role = role_from_user(user) if is_super else map_app_role(raw_role)
+        return {
+            "sub": str(user.id),
+            "role": str(raw_role),
+            "parts_role": str(parts_role),
+            "is_superuser": is_super,
+        }
+
     def create_access_token(self, data: dict, expires_delta: Optional[timedelta] = None) -> str:
         """Create a JWT access token."""
         to_encode = data.copy()
@@ -59,6 +81,15 @@ class AuthService:
         to_encode.update({"exp": expire})
         encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
         return encoded_jwt
+
+    def create_access_token_for_user(
+        self, user: User, expires_delta: Optional[timedelta] = None
+    ) -> str:
+        """Mint access JWT with role + parts_role claims from the User row."""
+        return self.create_access_token(
+            data=self.access_token_claims_for_user(user),
+            expires_delta=expires_delta,
+        )
     
     def create_refresh_token(self, user_id: int) -> str:
         """Create a refresh token."""
@@ -307,6 +338,12 @@ async def get_current_user(
             detail="User not found",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
+    # Expose JWT claims (role / parts_role) for RBAC resolution
+    try:
+        user._jwt_claims = payload  # type: ignore[attr-defined]
+    except Exception:  # noqa: BLE001
+        pass
     
     return user
 
