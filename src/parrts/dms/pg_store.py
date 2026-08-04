@@ -71,10 +71,23 @@ CREATE TABLE IF NOT EXISTS oem_sync_runs (
     message TEXT DEFAULT ''
 );
 
+CREATE TABLE IF NOT EXISTS orgs (
+    id SERIAL PRIMARY KEY,
+    code TEXT NOT NULL UNIQUE,
+    name TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS user_location_acl (
+    user_key TEXT NOT NULL,
+    location_code TEXT NOT NULL,
+    CONSTRAINT uq_acl_user_loc UNIQUE (user_key, location_code)
+);
+
 CREATE INDEX IF NOT EXISTS idx_inventory_sku ON inventory_levels(sku);
 CREATE INDEX IF NOT EXISTS idx_inventory_loc ON inventory_levels(location_id);
 CREATE INDEX IF NOT EXISTS idx_orders_customer ON orders(customer_id);
 CREATE INDEX IF NOT EXISTS idx_order_lines_order ON order_lines(order_id);
+CREATE INDEX IF NOT EXISTS idx_acl_user ON user_location_acl(user_key);
 """
 
 
@@ -152,6 +165,12 @@ class PostgresDmsStore:
         conn = self.connect()
         with conn.cursor() as cur:
             cur.execute(PG_SCHEMA_SQL)
+            try:
+                cur.execute(
+                    "ALTER TABLE locations ADD COLUMN IF NOT EXISTS org_id INTEGER"
+                )
+            except Exception:  # noqa: BLE001
+                pass
         conn.commit()
 
     def execute(self, sql: str, params: tuple[Any, ...] | list[Any] = ()) -> _CursorProxy:

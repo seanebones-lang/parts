@@ -12,11 +12,11 @@ import os
 from pathlib import Path
 from typing import Any, Literal, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
-from app.api.deps import require_user_if_production
+from app.api.deps import require_permission, require_user_if_production
 from app.models.user import User
 
 router = APIRouter()
@@ -229,7 +229,7 @@ async def dms_status():
 @router.post("/seed")
 async def dms_seed(
     body: Optional[SeedBody] = None,
-    current_user: Optional[User] = Depends(require_user_if_production),
+    current_user: Optional[User] = Depends(require_permission("dms.seed")),
 ):
     """Seed synthetic OEM catalog + multi-location inventory."""
     _ = current_user
@@ -254,7 +254,7 @@ async def dms_seed(
 @router.post("/oem/sync")
 async def dms_oem_sync(
     body: OemSyncBody,
-    current_user: Optional[User] = Depends(require_user_if_production),
+    current_user: Optional[User] = Depends(require_permission("dms.oem")),
 ):
     """
     Sync OEM catalog/inventory.
@@ -281,16 +281,20 @@ async def dms_oem_sync(
 @router.get("/inventory")
 async def dms_inventory(
     location: Optional[str] = Query(None, description="Location code, name, or id"),
+    user_key: Optional[str] = Query(None, description="ACL user key (optional)"),
+    x_parts_user: Optional[str] = Header(None, alias="X-Parts-User"),
 ):
-    """List inventory levels (optional location filter)."""
+    """List inventory levels (optional location filter + user location ACL)."""
     try:
         svc = get_dms_service()
-        rows = svc.list_inventory(location=location)
+        acl_user = x_parts_user or user_key
+        rows = svc.filter_inventory_for_user(acl_user, location=location)
         return {
             "success": True,
             "location": location,
             "inventory": rows,
             "count": len(rows),
+            "acl_user": acl_user,
         }
     except ValueError as exc:
         raise _http_exc_from_value_error(exc) from exc
@@ -329,7 +333,7 @@ async def dms_catalog(
 @router.post("/catalog")
 async def dms_catalog_upsert(
     body: CatalogUpsertBody,
-    current_user: Optional[User] = Depends(require_user_if_production),
+    current_user: Optional[User] = Depends(require_permission("catalog.write")),
 ):
     """Create or update a catalog SKU (optional location_qty)."""
     _ = current_user
@@ -364,7 +368,7 @@ async def dms_catalog_upsert(
 @router.post("/catalog/import-csv")
 async def dms_catalog_import_csv(
     body: CatalogCsvBody,
-    current_user: Optional[User] = Depends(require_user_if_production),
+    current_user: Optional[User] = Depends(require_permission("catalog.import")),
 ):
     """Bulk import catalog from CSV text (sku,name required)."""
     _ = current_user
@@ -464,9 +468,20 @@ async def dms_set_order_status(
     order_id: int,
     body: OrderStatusBody,
     current_user: Optional[User] = Depends(require_user_if_production),
+    x_parts_role: Optional[str] = Header(None, alias="X-Parts-Role"),
 ):
     """Lifecycle: open→picking→invoiced→completed; cancel restores stock."""
+    from app.api.deps import resolve_parts_role
+    from parrts.rbac import can, normalize_role
+
     _ = current_user
+    role = resolve_parts_role(current_user, x_parts_role=x_parts_role)
+    perm = "orders.cancel" if body.status == "cancelled" else "orders.status"
+    if not can(role, perm):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Forbidden: role {normalize_role(role)!r} cannot {perm}",
+        )
     try:
         svc = get_dms_service()
         result = svc.set_order_status(order_id, body.status)
@@ -485,7 +500,7 @@ async def dms_set_order_status(
 @router.post("/orders/{order_id}/invoice")
 async def dms_order_invoice(
     order_id: int,
-    current_user: Optional[User] = Depends(require_user_if_production),
+    current_user: Optional[User] = Depends(require_permission("orders.invoice")),
 ):
     """Generate invoice PDF (advances to invoiced). Returns path metadata."""
     _ = current_user
@@ -530,11 +545,99 @@ async def dms_order_invoice_pdf(order_id: int):
 
 
 @router.get("/rbac")
-async def dms_rbac(role: Optional[str] = Query(None)):
-    """Describe role permissions (PARRTS_DEFAULT_ROLE / query role)."""
+async def dms_rbac(
+    role: Optional[str] = Query(None),
+    x_parts_role: Optional[str] = Header(None, alias="X-Parts-Role"),
+):
+    """Describe role permissions (query role, X-Parts-Role, or default)."""
+    from app.api.deps import resolve_parts_role
     from parrts.rbac import describe
 
-    return {"success": True, **describe(role)}
+    resolved = role or resolve_parts_role(None, x_parts_role=x_parts_role)
+    return {"success": True, **describe(resolved)}
+
+
+class OrgBody(BaseModel):
+    code: str
+    name: str = ""
+
+
+class LocationOrgBody(BaseModel):
+    org_code: str
+
+
+class AclBody(BaseModel):
+    location_codes: list[str] = Field(default_factory=list)
+
+
+@router.get("/orgs")
+async def dms_list_orgs():
+    svc = get_dms_service()
+    orgs = svc.list_orgs()
+    return {"success": True, "orgs": orgs, "count": len(orgs)}
+
+
+@router.post("/orgs")
+async def dms_create_org(
+    body: OrgBody,
+    current_user: Optional[User] = Depends(require_permission("orgs.manage")),
+):
+    _ = current_user
+    try:
+        svc = get_dms_service()
+        org = svc.ensure_org(body.code, body.name or None)
+        return {"success": True, "org": org}
+    except ValueError as exc:
+        raise _http_exc_from_value_error(exc) from exc
+
+
+@router.get("/locations")
+async def dms_list_locations():
+    svc = get_dms_service()
+    locs = svc.list_locations()
+    return {"success": True, "locations": locs, "count": len(locs)}
+
+
+@router.put("/locations/{location_code}/org")
+async def dms_set_location_org(
+    location_code: str,
+    body: LocationOrgBody,
+    current_user: Optional[User] = Depends(require_permission("orgs.manage")),
+):
+    _ = current_user
+    try:
+        svc = get_dms_service()
+        result = svc.set_location_org(location_code, body.org_code)
+        return {"success": True, **result}
+    except ValueError as exc:
+        raise _http_exc_from_value_error(exc) from exc
+
+
+@router.get("/acl/{user_key}")
+async def dms_get_acl(user_key: str):
+    svc = get_dms_service()
+    allowed = svc.allowed_location_codes(user_key)
+    return {
+        "success": True,
+        "user_key": user_key,
+        "location_codes": allowed,
+        "restricted": allowed is not None,
+    }
+
+
+@router.put("/acl/{user_key}")
+async def dms_set_acl(
+    user_key: str,
+    body: AclBody,
+    current_user: Optional[User] = Depends(require_permission("acl.manage")),
+):
+    _ = current_user
+    try:
+        svc = get_dms_service()
+        result = svc.set_user_location_acl(user_key, body.location_codes)
+        return {"success": True, **result}
+    except ValueError as exc:
+        raise _http_exc_from_value_error(exc) from exc
 
 
 @router.post("/orders")
@@ -576,7 +679,7 @@ async def dms_create_order(
 @router.post("/reindex")
 async def dms_reindex(
     body: Optional[ReindexBody] = None,
-    current_user: Optional[User] = Depends(require_user_if_production),
+    current_user: Optional[User] = Depends(require_permission("dms.reindex")),
 ):
     """Export DMS inventory to RAG inventory.json and rebuild index."""
     _ = current_user

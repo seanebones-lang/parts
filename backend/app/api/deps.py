@@ -1,29 +1,31 @@
 """
-API dependencies — auth helpers aware of AUTH_MODE.
+API dependencies — auth helpers aware of AUTH_MODE + Parts RBAC.
 
 AUTH_MODE (settings / env):
   - demo (default): mutating routes may omit Bearer; optional JWT still accepted
   - production: mutating routes require a valid JWT (same rules as get_current_user)
 
+RBAC:
+  - production: role from User.role / is_superuser
+  - demo: role from X-Parts-Role header or PARRTS_DEFAULT_ROLE (default admin)
+
 Wire mutating handlers with::
 
-    from app.api.deps import require_user_if_production
-    from app.models.user import User
-    from typing import Optional
+    from app.api.deps import require_user_if_production, require_permission
 
     @router.post("/")
     async def create_thing(
         ...,
-        current_user: Optional[User] = Depends(require_user_if_production),
+        current_user: Optional[User] = Depends(require_permission("catalog.write")),
     ):
         ...
 """
 
 from __future__ import annotations
 
-from typing import Optional
+from typing import Callable, Optional
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, Header, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -81,6 +83,11 @@ async def _resolve_user_from_credentials(
             )
         return None
 
+    # Attach JWT claims for role override if present
+    try:
+        user._jwt_claims = payload  # type: ignore[attr-defined]
+    except Exception:  # noqa: BLE001
+        pass
     return user
 
 
@@ -131,3 +138,52 @@ async def require_user_if_production(
         status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
         detail="Database unavailable for auth",
     )
+
+
+def resolve_parts_role(
+    user: Optional[User] = None,
+    *,
+    x_parts_role: Optional[str] = None,
+    claims: dict | None = None,
+) -> str:
+    """Resolve counter|manager|admin for the current request."""
+    from parrts.rbac import role_from_claims, role_from_user
+
+    if user is not None:
+        jwt_claims = getattr(user, "_jwt_claims", None) or claims
+        if isinstance(jwt_claims, dict) and (
+            jwt_claims.get("role") or jwt_claims.get("parts_role")
+        ):
+            return role_from_claims(jwt_claims)
+        return role_from_user(user)
+    if x_parts_role:
+        return role_from_claims({"role": x_parts_role})
+    return role_from_user(None)
+
+
+def require_permission(permission: str) -> Callable:
+    """
+    FastAPI dependency factory: auth gate + RBAC permission check.
+
+    Demo: uses X-Parts-Role or PARRTS_DEFAULT_ROLE (default admin — open desk).
+    Production: JWT user required; role from user.role / JWT claim.
+    """
+
+    async def _dep(
+        credentials: Optional[HTTPAuthorizationCredentials] = Depends(optional_bearer),
+        x_parts_role: Optional[str] = Header(None, alias="X-Parts-Role"),
+    ) -> Optional[User]:
+        from parrts.rbac import can, normalize_role
+
+        user = await require_user_if_production(credentials=credentials)
+        role = resolve_parts_role(user, x_parts_role=x_parts_role)
+        if not can(role, permission):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Forbidden: role {normalize_role(role)!r} cannot {permission}",
+            )
+        return user
+
+    # annotate for OpenAPI / tests
+    _dep._parts_permission = permission  # type: ignore[attr-defined]
+    return _dep

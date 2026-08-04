@@ -77,10 +77,23 @@ CREATE TABLE IF NOT EXISTS oem_sync_runs (
     message TEXT DEFAULT ''
 );
 
+CREATE TABLE IF NOT EXISTS orgs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    code TEXT NOT NULL UNIQUE,
+    name TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS user_location_acl (
+    user_key TEXT NOT NULL,
+    location_code TEXT NOT NULL,
+    UNIQUE (user_key, location_code)
+);
+
 CREATE INDEX IF NOT EXISTS idx_inventory_sku ON inventory_levels(sku);
 CREATE INDEX IF NOT EXISTS idx_inventory_loc ON inventory_levels(location_id);
 CREATE INDEX IF NOT EXISTS idx_orders_customer ON orders(customer_id);
 CREATE INDEX IF NOT EXISTS idx_order_lines_order ON order_lines(order_id);
+CREATE INDEX IF NOT EXISTS idx_acl_user ON user_location_acl(user_key);
 """
 
 
@@ -110,6 +123,11 @@ class DmsStore:
     def ensure_schema(self) -> None:
         conn = self.connect()
         conn.executescript(SCHEMA_SQL)
+        # Soft-add org_id on locations for multi-rooftop (SQLite)
+        try:
+            conn.execute("ALTER TABLE locations ADD COLUMN org_id INTEGER")
+        except Exception:  # noqa: BLE001 — column may already exist
+            pass
         conn.commit()
 
     def execute(self, sql: str, params: tuple[Any, ...] | list[Any] = ()) -> sqlite3.Cursor:

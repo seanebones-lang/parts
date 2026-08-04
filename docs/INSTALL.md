@@ -46,18 +46,41 @@ docker compose -f docker-compose.prod.yml up -d --build
 
 Fail closed without keys — no fake charges/labels/mail.
 
-## 4. Roles (light RBAC)
+## 4. Roles (RBAC)
 
-`PARRTS_DEFAULT_ROLE=counter|manager|admin` (default admin in open demo).  
-Permissions matrix: `parrts.rbac` · `GET /api/v1/dms/rbac?role=manager`.
+`PARRTS_DEFAULT_ROLE=counter|manager|admin` (default **admin** in open demo).  
+Headers: `X-Parts-Role` (demo tooling), production uses JWT `role` / `parts_role` or `User.role`.
+
+```bash
+# Demo as counter (cannot seed / import CSV)
+curl -H 'X-Parts-Role: counter' -X POST http://127.0.0.1:8000/api/v1/dms/seed
+# → 403
+
+GET /api/v1/dms/rbac?role=manager
+```
 
 | Role | Can |
 |------|-----|
-| counter | search, orders, invoice, pay/ship |
-| manager | + catalog write/import, cancel, reindex |
-| admin | + seed |
+| counter | search, orders write/status/invoice, pay/ship |
+| manager | + catalog write/import, cancel, reindex, OEM sync |
+| admin | + seed, orgs, ACL |
 
-Wire JWT claim → role in production auth as next hardening step; matrix is live for policy checks.
+Mutating DMS routes use `Depends(require_permission(...))`.
+
+### Location ACL (multi-rooftop foundation)
+
+```bash
+PUT /api/v1/dms/orgs  {"code":"CHI","name":"Chicago"}
+PUT /api/v1/dms/locations/CHI-N/org  {"org_code":"CHI"}
+PUT /api/v1/dms/acl/counter1  {"location_codes":["CHI-N"]}
+GET /api/v1/dms/inventory?user_key=counter1   # or header X-Parts-User
+```
+
+Empty ACL = unrestricted. Non-empty = filter inventory to those codes.
+
+### OEM schedule
+
+Celery task `oem.scheduled_sync` / `run_scheduled_oem_sync()` — **skips** unless `OEM_FEED_URL` set; optional `OEM_SYNC_REINDEX=true`.
 
 ## 5. Backup / restore
 

@@ -2,7 +2,7 @@
 
 **Repository:** https://github.com/seanebones-lang/parts  
 **Owner:** NextEleven LLC  
-**Package:** `parrts` v0.12.0  
+**Package:** `parrts` v0.13.0  
 **License:** Proprietary — NextEleven LLC (see `LICENSE`)
 
 ---

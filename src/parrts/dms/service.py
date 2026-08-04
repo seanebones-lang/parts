@@ -793,3 +793,96 @@ class DmsService:
             "total": order.get("total"),
             "status": order.get("status"),
         }
+
+    # ----- Multi-rooftop org + location ACL --------------------------------
+
+    def ensure_org(self, code: str, name: str | None = None) -> dict[str, Any]:
+        self.ensure_schema()
+        code_s = str(code or "").strip()
+        if not code_s:
+            raise ValueError("org code required")
+        name_s = (name or code_s).strip()
+        row = self.store.fetchone("SELECT id, code, name FROM orgs WHERE code = ?", (code_s,))
+        if row:
+            return dict(row)
+        cur = self.store.execute(
+            "INSERT INTO orgs (code, name) VALUES (?, ?)", (code_s, name_s)
+        )
+        self.store.commit()
+        oid = int(cur.lastrowid) if cur.lastrowid else None
+        if oid is None:
+            row = self.store.fetchone("SELECT id, code, name FROM orgs WHERE code = ?", (code_s,))
+            return dict(row) if row else {"code": code_s, "name": name_s}
+        return {"id": oid, "code": code_s, "name": name_s}
+
+    def list_orgs(self) -> list[dict[str, Any]]:
+        self.ensure_schema()
+        rows = self.store.fetchall("SELECT id, code, name FROM orgs ORDER BY id")
+        return [dict(r) for r in rows]
+
+    def list_locations(self) -> list[dict[str, Any]]:
+        self.ensure_schema()
+        rows = self.store.fetchall(
+            "SELECT id, code, name, org_id FROM locations ORDER BY id"
+        )
+        return [dict(r) for r in rows]
+
+    def set_location_org(self, location_code: str, org_code: str) -> dict[str, Any]:
+        self.ensure_schema()
+        org = self.ensure_org(org_code)
+        lid = self._location_id(location_code)
+        self.store.execute(
+            "UPDATE locations SET org_id = ? WHERE id = ?",
+            (int(org["id"]), lid),
+        )
+        self.store.commit()
+        row = self.store.fetchone(
+            "SELECT id, code, name, org_id FROM locations WHERE id = ?", (lid,)
+        )
+        return {"ok": True, "location": dict(row) if row else None, "org": org}
+
+    def set_user_location_acl(
+        self, user_key: str, location_codes: list[str]
+    ) -> dict[str, Any]:
+        """Replace ACL rows for user_key. Empty list = clear (all locations allowed)."""
+        self.ensure_schema()
+        key = str(user_key or "").strip()
+        if not key:
+            raise ValueError("user_key required")
+        self.store.execute("DELETE FROM user_location_acl WHERE user_key = ?", (key,))
+        codes = [str(c).strip() for c in location_codes if str(c).strip()]
+        for code in codes:
+            self.store.execute(
+                "INSERT INTO user_location_acl (user_key, location_code) VALUES (?, ?)",
+                (key, code),
+            )
+        self.store.commit()
+        return {"ok": True, "user_key": key, "location_codes": codes, "restricted": bool(codes)}
+
+    def allowed_location_codes(self, user_key: str | None) -> list[str] | None:
+        """
+        Return allowed location codes for user_key.
+
+        None => unrestricted (all locations).
+        [] => restricted but empty (no access).
+        """
+        if not user_key:
+            return None
+        self.ensure_schema()
+        rows = self.store.fetchall(
+            "SELECT location_code FROM user_location_acl WHERE user_key = ? ORDER BY location_code",
+            (str(user_key),),
+        )
+        if not rows:
+            return None
+        return [str(r["location_code"]) for r in rows]
+
+    def filter_inventory_for_user(
+        self, user_key: str | None, location: str | None = None
+    ) -> list[dict[str, Any]]:
+        rows = self.list_inventory(location=location)
+        allowed = self.allowed_location_codes(user_key)
+        if allowed is None:
+            return rows
+        allow = set(allowed)
+        return [r for r in rows if str(r.get("location_code") or "") in allow]

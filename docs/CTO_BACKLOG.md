@@ -1,57 +1,43 @@
 # Parts — CTO Backlog
 
 **Product identity:** Parts is the **dealership parts system**.  
-**Ship:** https://github.com/seanebones-lang/parts · **parrts v0.12.0**
+**Ship:** https://github.com/seanebones-lang/parts · **parrts v0.13.0**
 
 ## Completeness (honest)
 
 | Layer | Status |
 |-------|--------|
-| **Inbound email auto-answer + G/Y/R desk** | **Production-ready** (selling point) |
-| IMAP/SMTP mailbox | **In system** (activates with credentials) |
-| AI counter search | **In system** |
-| DMS inventory/customers/orders | **In system** (SQLite + Postgres dual-mode) |
-| Catalog admin + CSV | **In system** (`/catalog` + import-csv) |
-| Order lifecycle + invoice PDF | **In system** (open→picking→invoiced→completed) |
-| Light RBAC roles | **In system** (`parrts.rbac` + `/dms/rbac`) |
-| Install + backup runbooks | **In system** (`docs/INSTALL.md`, backup/restore scripts) |
-| OEM file + HTTP feeds | **In system** (live when URL/token set) |
-| Payments / shipping | **In system** — live when Stripe/EasyPost keys set |
-| Postgres multi-node HA | **Next** |
-| Named OEM partner connectors | **Next** (contracts) |
-| Full RO/GL + JWT role claim wire | **Next** |
+| Email desk (selling point) | **Production-ready** |
+| AI counter + DMS sqlite/postgres | **In system** |
+| Catalog / orders / invoice / pay-ship | **In system** |
+| JWT → RBAC enforcement | **In system** (`require_permission`, X-Parts-Role) |
+| Multi-rooftop org + location ACL | **Foundation in system** |
+| OEM scheduled sync task | **In system** (Celery `oem.scheduled_sync`, skip without URL) |
+| Multi-node HA / partner OEM connectors | **Next** |
+| Full RO/GL | **Next** |
 
-## Wave 19 — M1 residual close (this ship)
+## Wave 20 — M2 foundation (this ship)
 
-- [x] Catalog upsert + CSV import (core/API/CLI/FE `/catalog`)
-- [x] Order lifecycle status machine + cancel restores stock
-- [x] Invoice PDF (stdlib writer) + download route
-- [x] Light RBAC matrix (`counter|manager|admin`)
-- [x] `docs/INSTALL.md` + `scripts/backup_dms.sh` + `restore_dms.sh`
+- [x] `require_permission(perm)` FastAPI dep (demo header + prod JWT role)
+- [x] Role aliases (user→counter, superuser→admin) + JWT claim `role`/`parts_role`
+- [x] Wire DMS seed/oem/catalog/import/reindex/invoice + cancel permission
+- [x] Orgs + location.org_id + user_location_acl filter on inventory
+- [x] API `/dms/orgs` `/locations` `/acl/{user}` 
+- [x] Celery OEM schedule helper fail-closed without `OEM_FEED_URL`
 - [x] Tests
 
-## Wave 18 — Pay/ship UI bound
+## Waves 15–19
 
-- [x] Stripe/EasyPost key-gated commerce + FE
+- [x] Email desk · Postgres DMS · commerce · M1 residual
 
-## Wave 17 — Postgres DMS dual-mode + Alembic
+## Next
 
-- [x] `DMS_BACKEND` + `001_dms_core`
-
-## Wave 15–16 — Email desk
-
-- [x] Production desk selling point
-
-## M1 single-site GA
-
-- [x] Postgres dual-mode + Alembic
-- [x] Catalog admin + CSV
-- [x] Order lifecycle + invoice PDF
-- [x] RBAC (light matrix; JWT claim wire still optional harden)
-- [x] Prod install + backup runbooks
-- [x] CI green
+- JWT role claim on token mint path end-to-end with real login
+- Org UI + location picker in FE
+- Beat schedule entry for OEM nightly in compose
+- Staging pay→ship→email with test keys
 
 ## Never
-Unauthorized OEM scraping · fake mailbox/Stripe/EasyPost without keys
+Unauthorized OEM scraping · fake delivery without keys
 
-**Install:** [`INSTALL.md`](INSTALL.md) · **Email:** [`EMAIL_DESK.md`](EMAIL_DESK.md) · **DMS:** [`DMS_OEM.md`](DMS_OEM.md)
+**Install:** [`INSTALL.md`](INSTALL.md) · **Email:** [`EMAIL_DESK.md`](EMAIL_DESK.md)
