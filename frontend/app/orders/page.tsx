@@ -132,13 +132,17 @@ export default function OrdersPage() {
         ? Number(customerId.trim())
         : customerId.trim();
 
-      await createDmsOrder({
+      const res = (await createDmsOrder({
         customer_id: cid,
         location_code: locationCode.trim() || undefined,
         notes: notes.trim() || undefined,
         lines: [{ sku: sku.trim(), qty: q }],
-      });
-      setFlash("Order created");
+      })) as { queued?: boolean; message?: string };
+      if (res && res.queued) {
+        setFlash(res.message || "Order queued offline — will retry when API is back");
+      } else {
+        setFlash("Order created");
+      }
       setSku("");
       setQty("1");
       setNotes("");

@@ -83,13 +83,17 @@ export default function CustomersPage() {
     setError(null);
     try {
       if (!name.trim()) throw new Error("Name is required");
-      await createDmsCustomer({
+      const res = (await createDmsCustomer({
         name: name.trim(),
         email: email.trim() || undefined,
         phone: phone.trim() || undefined,
         company: company.trim() || undefined,
-      });
-      setFlash("Customer created");
+      })) as { queued?: boolean; message?: string };
+      if (res && res.queued) {
+        setFlash(res.message || "Customer queued offline — will retry when API is back");
+      } else {
+        setFlash("Customer created");
+      }
       setName("");
       setEmail("");
       setPhone("");

@@ -1,19 +1,18 @@
 # Parts — Session Handoff
 
-**Package:** parrts **v0.19.0**  
+**Package:** parrts **v0.20.0**  
 **SoT:** ~/Desktop/Parrts-Dist-RAG · ship seanebones-lang/parts
 
-## Done through Wave 30
-- Through W29: email, DMS, analytics, supersession, payment ledger, compliance
-- **Ship-from-order:** `shipment_events` · order ship_status/tracking · shipping rates/label ledger · FE order badges + ship name prefill
-- **Light PWA:** `manifest.webmanifest` + icons + layout metadata
+## Done through Wave 31
+- Through W30: DMS, analytics, supersession, payment/shipment ledgers, light PWA manifest
+- **Offline queue (edge):** localStorage queue for create order/customer when API down; auto-flush on `online`; banner Retry/Clear
+- **PWA polish:** `sw.js` shell cache (never API) + install prompt banner
 
-## Next (Wave 31+)
+## Next (Wave 32+)
 - Partner OEM only with real contract
-- Full multi-rooftop HA / RO-GL later
-- Optional: offline queue / install prompt polish
+- HA / RO-GL / load baseline later
 
 ## Cont
-> Partner OEM / M3 only with credentials — else GA residuals (offline queue, PWA polish).
+> Partner OEM only with credentials — else multi-tenant/load residuals.
 
-Tip: Wave 30 ship ledger + PWA v0.19.0
+Tip: Wave 31 offline queue + SW v0.20.0

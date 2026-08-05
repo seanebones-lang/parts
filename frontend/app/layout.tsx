@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import { Navigation } from './navigation'
+import { OfflineQueueBanner } from '@/components/offline-queue-banner'
+import { PwaRegister } from '@/components/pwa-register'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -53,6 +55,8 @@ export default function RootLayout({
               </div>
             </div>
           </header>
+          <PwaRegister />
+          <OfflineQueueBanner />
           <main>{children}</main>
         </div>
       </body>

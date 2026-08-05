@@ -4,6 +4,7 @@
  */
 
 import { API_BASE_URL, ApiError, getJson } from "@/lib/api";
+import { enqueueOfflineMutation, isBrowserOffline } from "@/lib/offline-queue";
 
 const DMS_PREFIX = "/api/v1/dms";
 
@@ -451,7 +452,25 @@ export async function listDmsCustomers(): Promise<{
 export async function createDmsCustomer(
   input: CreateCustomerInput
 ): Promise<unknown> {
-  return dmsPost("/customers", input);
+  try {
+    return await dmsPost("/customers", input);
+  } catch (e) {
+    if (isBrowserOffline() || isApiUnreachable(e)) {
+      const queued = enqueueOfflineMutation({
+        kind: "create_customer",
+        path: "/api/v1/dms/customers",
+        body: { ...input },
+      });
+      return {
+        success: true,
+        queued: true,
+        offline: true,
+        queue_id: queued.id,
+        message: "API unreachable — customer create queued offline; will retry when online",
+      };
+    }
+    throw e;
+  }
 }
 
 export async function listDmsOrders(): Promise<{
@@ -474,7 +493,25 @@ export async function createDmsOrder(input: CreateOrderInput): Promise<unknown> 
     lines: input.lines,
     items: input.items ?? input.lines,
   };
-  return dmsPost("/orders", body);
+  try {
+    return await dmsPost("/orders", body);
+  } catch (e) {
+    if (isBrowserOffline() || isApiUnreachable(e)) {
+      const queued = enqueueOfflineMutation({
+        kind: "create_order",
+        path: "/api/v1/dms/orders",
+        body: body as Record<string, unknown>,
+      });
+      return {
+        success: true,
+        queued: true,
+        offline: true,
+        queue_id: queued.id,
+        message: "API unreachable — order create queued offline; will retry when online",
+      };
+    }
+    throw e;
+  }
 }
 
 export async function seedDms(): Promise<unknown> {
