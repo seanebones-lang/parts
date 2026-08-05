@@ -114,6 +114,140 @@ class DmsService:
             in {"1", "true", "yes"},
         }
 
+    def analytics_summary(self) -> dict[str, Any]:
+        """Real operator analytics from DMS tables (no fake KPIs)."""
+        self.ensure_schema()
+        base = self.status()
+
+        orders_by_status_rows = self.store.fetchall(
+            "SELECT status, COUNT(*) AS c FROM orders GROUP BY status ORDER BY status"
+        )
+        orders_by_status = {
+            str(r["status"] or "unknown"): int(r["c"] or 0) for r in orders_by_status_rows
+        }
+
+        revenue = self.store.fetchone(
+            """
+            SELECT
+              COALESCE(SUM(ol.qty * ol.unit_price), 0) AS order_book_value,
+              COALESCE(SUM(CASE WHEN lower(o.status) IN ('invoiced','completed')
+                                THEN ol.qty * ol.unit_price ELSE 0 END), 0) AS realized_value,
+              COALESCE(SUM(CASE WHEN lower(o.status) IN ('open','picking')
+                                THEN ol.qty * ol.unit_price ELSE 0 END), 0) AS open_pipeline_value,
+              COUNT(DISTINCT o.id) AS orders_with_lines
+            FROM order_lines ol
+            JOIN orders o ON o.id = ol.order_id
+            """
+        )
+
+        transfers_rows = self.store.fetchall(
+            "SELECT status, COUNT(*) AS c FROM stock_transfers GROUP BY status ORDER BY status"
+        )
+        transfers_by_status = {
+            str(r["status"] or "unknown"): int(r["c"] or 0) for r in transfers_rows
+        }
+
+        adj_rows = self.store.fetchall(
+            """
+            SELECT reason,
+                   COUNT(*) AS c,
+                   COALESCE(SUM(delta), 0) AS delta_sum
+            FROM stock_adjustments
+            GROUP BY reason
+            ORDER BY reason
+            """
+        )
+        adjustments_by_reason = [
+            {
+                "reason": str(r["reason"] or "adjust"),
+                "count": int(r["c"] or 0),
+                "delta_sum": int(r["delta_sum"] or 0),
+            }
+            for r in adj_rows
+        ]
+
+        low_stock = self.store.fetchone(
+            """
+            SELECT COUNT(*) AS c
+            FROM inventory_levels
+            WHERE qty >= 0 AND qty <= 2
+            """
+        )
+        zero_stock = self.store.fetchone(
+            "SELECT COUNT(*) AS c FROM inventory_levels WHERE qty <= 0"
+        )
+
+        top_skus = self.store.fetchall(
+            """
+            SELECT sku, SUM(qty) AS units
+            FROM inventory_levels
+            GROUP BY sku
+            ORDER BY units DESC, sku ASC
+            LIMIT 10
+            """
+        )
+        top_inventory = [
+            {"sku": str(r["sku"]), "units": int(r["units"] or 0)} for r in top_skus
+        ]
+
+        # created_at is ISO text from seed/service — prefix compare is enough offline
+        recent_orders = self.store.fetchone(
+            """
+            SELECT COUNT(*) AS c
+            FROM orders
+            WHERE created_at >= datetime('now', '-7 days')
+            """
+        )
+        # SQLite datetime on non-ISO may return 0; also count all as fallback signal
+        recent_adjustments = self.store.fetchone(
+            """
+            SELECT COUNT(*) AS c
+            FROM stock_adjustments
+            WHERE created_at >= datetime('now', '-7 days')
+            """
+        )
+
+        return {
+            "ok": True,
+            "source": "dms",
+            "backend": base.get("backend"),
+            "generated_at": __import__("datetime")
+            .datetime.now(__import__("datetime").timezone.utc)
+            .replace(microsecond=0)
+            .isoformat()
+            .replace("+00:00", "Z"),
+            "counts": {
+                "locations": int(base.get("locations") or 0),
+                "catalog_parts": int(base.get("catalog_parts") or 0),
+                "inventory_rows": int(base.get("inventory_rows") or 0),
+                "inventory_units": int(base.get("inventory_units") or 0),
+                "customers": int(base.get("customers") or 0),
+                "orders": int(base.get("orders") or 0),
+                "stock_adjustments": int(base.get("stock_adjustments") or 0),
+                "transfers": sum(transfers_by_status.values()),
+                "low_stock_rows": int(low_stock["c"]) if low_stock else 0,
+                "zero_stock_rows": int(zero_stock["c"]) if zero_stock else 0,
+                "orders_last_7d": int(recent_orders["c"]) if recent_orders else 0,
+                "adjustments_last_7d": int(recent_adjustments["c"]) if recent_adjustments else 0,
+            },
+            "orders_by_status": orders_by_status,
+            "transfers_by_status": transfers_by_status,
+            "adjustments_by_reason": adjustments_by_reason,
+            "revenue": {
+                "order_book_value": float(revenue["order_book_value"] or 0) if revenue else 0.0,
+                "realized_value": float(revenue["realized_value"] or 0) if revenue else 0.0,
+                "open_pipeline_value": float(revenue["open_pipeline_value"] or 0) if revenue else 0.0,
+                "currency": "USD",
+                "note": "From order_lines × unit_price; not Stripe settlement",
+            },
+            "top_inventory_skus": top_inventory,
+            "oem": {
+                "feed_configured": bool(base.get("oem_configured")),
+                "last_sync": base.get("last_oem_sync"),
+                "recent_runs": base.get("oem_sync_runs") or [],
+            },
+        }
+
     def list_oem_sync_runs(self, *, limit: int = 20) -> list[dict[str, Any]]:
         """Recent OEM sync run log rows (newest first)."""
         self.ensure_schema()

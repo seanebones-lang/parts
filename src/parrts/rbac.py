@@ -54,6 +54,7 @@ PERMISSIONS: dict[str, str] = {
     "inventory.read": "counter",
     "inventory.receive": "counter",
     "inventory.adjust": "manager",
+    "analytics.read": "counter",
     "payments.create": "counter",
     "shipping.create": "counter",
     "admin": "admin",

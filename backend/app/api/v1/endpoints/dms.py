@@ -226,6 +226,24 @@ async def dms_status():
         ) from exc
 
 
+@router.get("/analytics")
+async def dms_analytics(
+    current_user: Optional[User] = Depends(require_permission("analytics.read")),
+):
+    """Operator analytics from real DMS events (orders, stock, transfers, OEM runs)."""
+    _ = current_user
+    try:
+        svc = get_dms_service()
+        return {"success": True, **svc.analytics_summary()}
+    except HTTPException:
+        raise
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"DMS analytics failed: {exc}",
+        ) from exc
+
+
 @router.get("/oem/runs")
 async def dms_oem_runs(limit: int = Query(20, ge=1, le=200)):
     """List recent oem_sync_runs (newest first)."""

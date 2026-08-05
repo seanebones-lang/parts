@@ -80,6 +80,12 @@ def cmd_dms_status(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_dms_analytics(args: argparse.Namespace) -> int:
+    svc = _dms_service(args)
+    print(json.dumps(svc.analytics_summary(), indent=2, default=str))
+    return 0
+
+
 def cmd_dms_oem_runs(args: argparse.Namespace) -> int:
     svc = _dms_service(args)
     runs = svc.list_oem_sync_runs(limit=int(getattr(args, "limit", 20) or 20))
@@ -395,6 +401,11 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_dms_status = dms_sub.add_parser("status", help="DMS status counts (backend + db)")
     p_dms_status.set_defaults(func=cmd_dms_status)
+
+    p_dms_analytics = dms_sub.add_parser(
+        "analytics", help="Operator analytics from real DMS events"
+    )
+    p_dms_analytics.set_defaults(func=cmd_dms_analytics)
 
     p_dms_oem_runs = dms_sub.add_parser(
         "oem-runs", help="List recent oem_sync_runs (newest first)"

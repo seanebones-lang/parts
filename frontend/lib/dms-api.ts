@@ -718,4 +718,111 @@ export async function listDmsStockAdjustments(opts?: {
   return { adjustments, raw };
 }
 
+export type DmsAnalytics = {
+  ok?: boolean;
+  success?: boolean;
+  source?: string;
+  backend?: string;
+  generated_at?: string;
+  counts?: {
+    locations?: number;
+    catalog_parts?: number;
+    inventory_rows?: number;
+    inventory_units?: number;
+    customers?: number;
+    orders?: number;
+    stock_adjustments?: number;
+    transfers?: number;
+    low_stock_rows?: number;
+    zero_stock_rows?: number;
+    orders_last_7d?: number;
+    adjustments_last_7d?: number;
+    [key: string]: number | undefined;
+  };
+  orders_by_status?: Record<string, number>;
+  transfers_by_status?: Record<string, number>;
+  adjustments_by_reason?: Array<{
+    reason?: string;
+    count?: number;
+    delta_sum?: number;
+  }>;
+  revenue?: {
+    order_book_value?: number;
+    realized_value?: number;
+    open_pipeline_value?: number;
+    currency?: string;
+    note?: string;
+  };
+  top_inventory_skus?: Array<{ sku?: string; units?: number }>;
+  oem?: {
+    feed_configured?: boolean;
+    last_sync?: unknown;
+    recent_runs?: unknown[];
+  };
+  [key: string]: unknown;
+};
+
+export async function getDmsAnalytics(): Promise<DmsAnalytics> {
+  const raw = await dmsGet<unknown>("/analytics");
+  const o = asRecord(raw) ?? {};
+  const countsRaw = asRecord(o.counts) ?? {};
+  const counts: DmsAnalytics["counts"] = {};
+  for (const [k, v] of Object.entries(countsRaw)) {
+    const n = num(v);
+    if (n !== undefined) counts[k] = n;
+  }
+  const orders_by_status: Record<string, number> = {};
+  const obs = asRecord(o.orders_by_status) ?? {};
+  for (const [k, v] of Object.entries(obs)) {
+    const n = num(v);
+    if (n !== undefined) orders_by_status[k] = n;
+  }
+  const transfers_by_status: Record<string, number> = {};
+  const tbs = asRecord(o.transfers_by_status) ?? {};
+  for (const [k, v] of Object.entries(tbs)) {
+    const n = num(v);
+    if (n !== undefined) transfers_by_status[k] = n;
+  }
+  const adjList = extractArray(o.adjustments_by_reason, ["adjustments_by_reason", "items"]);
+  const adjustments_by_reason = (adjList.length ? adjList : Array.isArray(o.adjustments_by_reason) ? (o.adjustments_by_reason as unknown[]) : []).map((item) => {
+    const r = asRecord(item) ?? {};
+    return {
+      reason: str(r.reason),
+      count: num(r.count),
+      delta_sum: num(r.delta_sum),
+    };
+  });
+  const topList = extractArray(o.top_inventory_skus, ["top_inventory_skus", "items"]);
+  const top_inventory_skus = (topList.length ? topList : Array.isArray(o.top_inventory_skus) ? (o.top_inventory_skus as unknown[]) : []).map((item) => {
+    const r = asRecord(item) ?? {};
+    return { sku: str(r.sku), units: num(r.units) };
+  });
+  const revenueRaw = asRecord(o.revenue) ?? {};
+  const oemRaw = asRecord(o.oem) ?? {};
+  return {
+    ...o,
+    ok: typeof o.ok === "boolean" ? o.ok : true,
+    source: str(o.source),
+    backend: str(o.backend),
+    generated_at: str(o.generated_at),
+    counts,
+    orders_by_status,
+    transfers_by_status,
+    adjustments_by_reason,
+    revenue: {
+      order_book_value: num(revenueRaw.order_book_value),
+      realized_value: num(revenueRaw.realized_value),
+      open_pipeline_value: num(revenueRaw.open_pipeline_value),
+      currency: str(revenueRaw.currency) ?? "USD",
+      note: str(revenueRaw.note),
+    },
+    top_inventory_skus,
+    oem: {
+      feed_configured: Boolean(oemRaw.feed_configured),
+      last_sync: oemRaw.last_sync,
+      recent_runs: Array.isArray(oemRaw.recent_runs) ? oemRaw.recent_runs : [],
+    },
+  };
+}
+
 export { API_BASE_URL, ApiError };
