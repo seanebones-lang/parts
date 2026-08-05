@@ -110,6 +110,31 @@ CREATE TABLE IF NOT EXISTS stock_adjustments (
     created_at TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS part_supersessions (
+    id SERIAL PRIMARY KEY,
+    old_sku TEXT NOT NULL REFERENCES catalog_parts(sku),
+    new_sku TEXT NOT NULL REFERENCES catalog_parts(sku),
+    effective_from TEXT DEFAULT '',
+    notes TEXT DEFAULT '',
+    created_at TEXT NOT NULL,
+    actor TEXT DEFAULT '',
+    CONSTRAINT uq_supersession_pair UNIQUE (old_sku, new_sku)
+);
+
+CREATE TABLE IF NOT EXISTS payment_events (
+    id SERIAL PRIMARY KEY,
+    order_id INTEGER NOT NULL REFERENCES orders(id),
+    provider TEXT NOT NULL DEFAULT 'stripe',
+    external_id TEXT DEFAULT '',
+    amount REAL NOT NULL DEFAULT 0,
+    currency TEXT NOT NULL DEFAULT 'usd',
+    status TEXT NOT NULL DEFAULT 'created',
+    configured INTEGER NOT NULL DEFAULT 0,
+    message TEXT DEFAULT '',
+    actor TEXT DEFAULT '',
+    created_at TEXT NOT NULL
+);
+
 CREATE INDEX IF NOT EXISTS idx_inventory_sku ON inventory_levels(sku);
 CREATE INDEX IF NOT EXISTS idx_inventory_loc ON inventory_levels(location_id);
 CREATE INDEX IF NOT EXISTS idx_orders_customer ON orders(customer_id);
@@ -118,6 +143,9 @@ CREATE INDEX IF NOT EXISTS idx_acl_user ON user_location_acl(user_key);
 CREATE INDEX IF NOT EXISTS idx_transfers_status ON stock_transfers(status);
 CREATE INDEX IF NOT EXISTS idx_adjustments_sku ON stock_adjustments(sku);
 CREATE INDEX IF NOT EXISTS idx_adjustments_created ON stock_adjustments(created_at);
+CREATE INDEX IF NOT EXISTS idx_supersession_old ON part_supersessions(old_sku);
+CREATE INDEX IF NOT EXISTS idx_supersession_new ON part_supersessions(new_sku);
+CREATE INDEX IF NOT EXISTS idx_payment_events_order ON payment_events(order_id);
 """
 
 
@@ -201,6 +229,15 @@ class PostgresDmsStore:
                 )
             except Exception:  # noqa: BLE001
                 pass
+            for col_sql in (
+                "ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_status TEXT DEFAULT ''",
+                "ALTER TABLE orders ADD COLUMN IF NOT EXISTS last_payment_id TEXT DEFAULT ''",
+                "ALTER TABLE orders ADD COLUMN IF NOT EXISTS paid_amount REAL DEFAULT 0",
+            ):
+                try:
+                    cur.execute(col_sql)
+                except Exception:  # noqa: BLE001
+                    pass
         conn.commit()
 
     def execute(self, sql: str, params: tuple[Any, ...] | list[Any] = ()) -> _CursorProxy:

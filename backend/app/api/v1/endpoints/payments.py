@@ -45,6 +45,7 @@ async def create_order_payment_intent(
     Create Stripe PaymentIntent for a DMS order amount.
 
     Does not require Postgres invoice rows. Fail closed without STRIPE_SECRET_KEY.
+    When order_id is an int, records a payment_events row on the DMS ledger.
     """
     _ = current_user
     from parrts.commerce import create_payment_intent_for_order
@@ -62,8 +63,44 @@ async def create_order_payment_intent(
             if not result.get("configured", True)
             else status.HTTP_400_BAD_REQUEST
         )
+        # Still record fail-closed attempt when order_id is numeric
+        _maybe_record_payment_ledger(body, result, success=False)
         raise HTTPException(status_code=code, detail=result.get("error") or "payment failed")
+    _maybe_record_payment_ledger(body, result, success=True)
     return result
+
+
+def _maybe_record_payment_ledger(
+    body: OrderIntentRequest, result: dict[str, Any], *, success: bool
+) -> None:
+    """Best-effort DMS ledger write; never invents Stripe success."""
+    oid = body.order_id
+    if oid is None:
+        return
+    try:
+        order_id = int(oid)
+    except (TypeError, ValueError):
+        return
+    try:
+        from app.api.v1.endpoints.dms import get_dms_service
+
+        svc = get_dms_service()
+        pi = (result.get("payment_intent") or {}) if success else {}
+        svc.record_payment_event(
+            order_id=order_id,
+            amount=float(body.amount),
+            currency=body.currency or "usd",
+            status=str(pi.get("status") or ("failed" if not success else "created")),
+            provider="stripe",
+            external_id=str(pi.get("id") or ""),
+            configured=bool(result.get("configured", success)),
+            message="" if success else str(result.get("error") or "payment failed")[:500],
+            actor="payments.order-intent",
+        )
+        result["dms_ledger"] = True
+    except Exception as exc:  # noqa: BLE001 — ledger is secondary
+        result["dms_ledger"] = False
+        result["dms_ledger_error"] = str(exc)[:200]
 
 
 @router.post("/create-intent")

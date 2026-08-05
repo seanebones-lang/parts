@@ -190,6 +190,54 @@ class DmsService:
             {"sku": str(r["sku"]), "units": int(r["units"] or 0)} for r in top_skus
         ]
 
+        # Dead stock: on-hand units with zero order_line demand ever
+        dead_rows = self.store.fetchall(
+            """
+            SELECT i.sku, SUM(i.qty) AS units
+            FROM inventory_levels i
+            WHERE i.qty > 0
+              AND NOT EXISTS (
+                SELECT 1 FROM order_lines ol WHERE ol.sku = i.sku
+              )
+            GROUP BY i.sku
+            ORDER BY units DESC, i.sku ASC
+            LIMIT 15
+            """
+        )
+        dead_stock_list = [
+            {"sku": str(r["sku"]), "units": int(r["units"] or 0)} for r in dead_rows
+        ]
+
+        # Fill rate proxy: ordered lines that could reserve (all create_order reserves)
+        # vs cancelled line qty share — honest operational proxy from DMS events only
+        line_stats = self.store.fetchone(
+            """
+            SELECT
+              COALESCE(SUM(ol.qty), 0) AS ordered_units,
+              COALESCE(SUM(CASE WHEN lower(o.status) = 'cancelled' THEN ol.qty ELSE 0 END), 0)
+                AS cancelled_units,
+              COALESCE(SUM(CASE WHEN lower(o.status) IN ('invoiced','completed')
+                                THEN ol.qty ELSE 0 END), 0) AS fulfilled_units
+            FROM order_lines ol
+            JOIN orders o ON o.id = ol.order_id
+            """
+        )
+        ordered_u = int(line_stats["ordered_units"] or 0) if line_stats else 0
+        fulfilled_u = int(line_stats["fulfilled_units"] or 0) if line_stats else 0
+        cancelled_u = int(line_stats["cancelled_units"] or 0) if line_stats else 0
+        fill_rate = {
+            "ordered_units": ordered_u,
+            "fulfilled_units": fulfilled_u,
+            "cancelled_units": cancelled_u,
+            "fulfillment_ratio": (
+                round(fulfilled_u / ordered_u, 4) if ordered_u > 0 else None
+            ),
+            "note": "fulfilled = invoiced|completed line qty / all ordered qty",
+        }
+
+        ss_count = self.store.fetchone("SELECT COUNT(*) AS c FROM part_supersessions")
+        pay_count = self.store.fetchone("SELECT COUNT(*) AS c FROM payment_events")
+
         # created_at is ISO text from seed/service — prefix compare is enough offline
         recent_orders = self.store.fetchone(
             """
@@ -241,6 +289,15 @@ class DmsService:
                 "note": "From order_lines × unit_price; not Stripe settlement",
             },
             "top_inventory_skus": top_inventory,
+            "dead_stock": dead_stock_list,
+            "fill_rate": fill_rate,
+            "supersessions": {
+                "mapping_count": int(ss_count["c"]) if ss_count else 0,
+            },
+            "payments": {
+                "event_count": int(pay_count["c"]) if pay_count else 0,
+                "note": "Ledger of intents/events; not bank settlement",
+            },
             "oem": {
                 "feed_configured": bool(base.get("oem_configured")),
                 "last_sync": base.get("last_oem_sync"),
@@ -389,9 +446,31 @@ class DmsService:
             raise
 
     def seed_demo(self, seed: int = 42, n_skus: int = 40, locations: int = 7) -> dict[str, Any]:
-        """Seed catalog/inventory via SyntheticOemFeed."""
+        """Seed catalog/inventory via SyntheticOemFeed + sample supersession when ≥2 SKUs."""
         feed = SyntheticOemFeed(seed=seed, n_skus=n_skus, locations=locations)
-        return self.sync_oem(feed, source="synthetic")
+        result = self.sync_oem(feed, source="synthetic")
+        # Sample supersession for demos (first two catalog SKUs) — ignore if already mapped
+        try:
+            rows = self.store.fetchall(
+                "SELECT sku FROM catalog_parts ORDER BY sku LIMIT 2"
+            )
+            if len(rows) >= 2:
+                old_s, new_s = str(rows[0]["sku"]), str(rows[1]["sku"])
+                existing = self.store.fetchone(
+                    "SELECT id FROM part_supersessions WHERE old_sku = ?",
+                    (old_s,),
+                )
+                if existing is None and old_s != new_s:
+                    self.set_supersession(
+                        old_sku=old_s,
+                        new_sku=new_s,
+                        notes="demo seed supersession",
+                        actor="seed",
+                    )
+                    result["demo_supersession"] = {"old_sku": old_s, "new_sku": new_s}
+        except Exception:  # noqa: BLE001 — seed must not fail on optional demo map
+            pass
+        return result
 
     def list_inventory(self, location: str | None = None) -> list[dict[str, Any]]:
         self.ensure_schema()
@@ -578,6 +657,7 @@ class DmsService:
         orders = self.store.fetchall(
             """
             SELECT o.id, o.customer_id, o.status, o.created_at, o.notes,
+                   o.payment_status, o.last_payment_id, o.paid_amount,
                    c.name AS customer_name
             FROM orders o
             LEFT JOIN customers c ON c.id = o.customer_id
@@ -854,6 +934,7 @@ class DmsService:
         o = self.store.fetchone(
             """
             SELECT o.id, o.customer_id, o.status, o.created_at, o.notes,
+                   o.payment_status, o.last_payment_id, o.paid_amount,
                    c.name AS customer_name, c.email AS customer_email,
                    c.company AS customer_company
             FROM orders o
@@ -875,6 +956,9 @@ class DmsService:
         line_dicts = [dict(ln) for ln in lines]
         d["lines"] = line_dicts
         d["total"] = round(sum(float(ln["unit_price"]) * int(ln["qty"]) for ln in line_dicts), 2)
+        d["payment_status"] = str(d.get("payment_status") or "") or None
+        d["last_payment_id"] = str(d.get("last_payment_id") or "") or None
+        d["paid_amount"] = float(d.get("paid_amount") or 0)
         return d
 
     def set_order_status(self, order_id: int, status: str) -> dict[str, Any]:
@@ -1493,3 +1577,341 @@ class DmsService:
             tuple(params),
         )
         return [dict(r) for r in rows]
+
+    # ----- Supersession chains -------------------------------------------
+
+    def set_supersession(
+        self,
+        *,
+        old_sku: str,
+        new_sku: str,
+        notes: str = "",
+        effective_from: str = "",
+        actor: str = "",
+    ) -> dict[str, Any]:
+        """Map old_sku → new_sku. Refuses self-maps and cycles."""
+        self.ensure_schema()
+        old_s = str(old_sku or "").strip()
+        new_s = str(new_sku or "").strip()
+        if not old_s or not new_s:
+            raise ValueError("old_sku and new_sku required")
+        if old_s == new_s:
+            raise ValueError("old_sku and new_sku must differ")
+        for sku in (old_s, new_s):
+            row = self.store.fetchone("SELECT sku FROM catalog_parts WHERE sku = ?", (sku,))
+            if row is None:
+                raise ValueError(f"Unknown catalog SKU: {sku}")
+
+        # Cycle check: following new_s must not reach old_s
+        seen: set[str] = set()
+        cur = new_s
+        while cur and cur not in seen:
+            if cur == old_s:
+                raise ValueError(f"Supersession cycle detected involving {old_s!r}")
+            seen.add(cur)
+            nxt = self.store.fetchone(
+                "SELECT new_sku FROM part_supersessions WHERE old_sku = ? ORDER BY id DESC LIMIT 1",
+                (cur,),
+            )
+            cur = str(nxt["new_sku"]) if nxt else ""
+
+        now = _utc_now()
+        # Replace prior mapping for this old_sku (single current successor)
+        self.store.execute("DELETE FROM part_supersessions WHERE old_sku = ?", (old_s,))
+        cur_ins = self.store.execute(
+            """
+            INSERT INTO part_supersessions
+                (old_sku, new_sku, effective_from, notes, created_at, actor)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (
+                old_s,
+                new_s,
+                (effective_from or "").strip(),
+                (notes or "").strip(),
+                now,
+                (actor or "").strip(),
+            ),
+        )
+        sid = int(getattr(cur_ins, "lastrowid", 0) or 0)
+        self.store.commit()
+        if not sid:
+            row = self.store.fetchone(
+                "SELECT id FROM part_supersessions WHERE old_sku = ? AND new_sku = ?",
+                (old_s, new_s),
+            )
+            sid = int(row["id"]) if row else 0
+        return {
+            "ok": True,
+            "supersession": {
+                "id": sid,
+                "old_sku": old_s,
+                "new_sku": new_s,
+                "effective_from": (effective_from or "").strip(),
+                "notes": (notes or "").strip(),
+                "created_at": now,
+                "actor": (actor or "").strip(),
+            },
+        }
+
+    def list_supersessions(self, *, limit: int = 100) -> list[dict[str, Any]]:
+        self.ensure_schema()
+        lim = max(1, min(int(limit or 100), 500))
+        rows = self.store.fetchall(
+            """
+            SELECT id, old_sku, new_sku, effective_from, notes, created_at, actor
+            FROM part_supersessions
+            ORDER BY id DESC
+            LIMIT ?
+            """,
+            (lim,),
+        )
+        return [dict(r) for r in rows]
+
+    def resolve_supersession(self, sku: str, *, max_hops: int = 20) -> dict[str, Any]:
+        """Walk old→new chain to current SKU. Detects cycles."""
+        self.ensure_schema()
+        start = str(sku or "").strip()
+        if not start:
+            raise ValueError("sku required")
+        chain: list[str] = [start]
+        seen: set[str] = {start}
+        cur = start
+        hops = max(1, min(int(max_hops or 20), 50))
+        for _ in range(hops):
+            row = self.store.fetchone(
+                "SELECT new_sku FROM part_supersessions WHERE old_sku = ? ORDER BY id DESC LIMIT 1",
+                (cur,),
+            )
+            if row is None:
+                break
+            nxt = str(row["new_sku"])
+            if nxt in seen:
+                return {
+                    "ok": False,
+                    "sku": start,
+                    "current_sku": cur,
+                    "chain": chain,
+                    "hops": len(chain) - 1,
+                    "error": f"cycle at {nxt}",
+                }
+            chain.append(nxt)
+            seen.add(nxt)
+            cur = nxt
+        return {
+            "ok": True,
+            "sku": start,
+            "current_sku": cur,
+            "chain": chain,
+            "hops": len(chain) - 1,
+            "superseded": cur != start,
+        }
+
+    def delete_supersession(self, old_sku: str) -> dict[str, Any]:
+        self.ensure_schema()
+        old_s = str(old_sku or "").strip()
+        if not old_s:
+            raise ValueError("old_sku required")
+        self.store.execute("DELETE FROM part_supersessions WHERE old_sku = ?", (old_s,))
+        self.store.commit()
+        return {"ok": True, "old_sku": old_s, "deleted": True}
+
+    # ----- Payment ledger (fail-closed Stripe intents recorded here) -----
+
+    def record_payment_event(
+        self,
+        *,
+        order_id: int,
+        amount: float,
+        currency: str = "usd",
+        status: str = "created",
+        provider: str = "stripe",
+        external_id: str = "",
+        configured: bool = False,
+        message: str = "",
+        actor: str = "",
+        update_order: bool = True,
+    ) -> dict[str, Any]:
+        """Append payment_events row; optionally stamp order payment fields."""
+        self.ensure_schema()
+        order = self.get_order(int(order_id))
+        now = _utc_now()
+        amt = float(amount or 0)
+        st = str(status or "created").strip().lower()
+        cur = self.store.execute(
+            """
+            INSERT INTO payment_events
+                (order_id, provider, external_id, amount, currency, status,
+                 configured, message, actor, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                int(order_id),
+                str(provider or "stripe"),
+                str(external_id or ""),
+                amt,
+                str(currency or "usd").lower(),
+                st,
+                1 if configured else 0,
+                str(message or "")[:500],
+                str(actor or ""),
+                now,
+            ),
+        )
+        eid = int(getattr(cur, "lastrowid", 0) or 0)
+        if update_order:
+            self.store.execute(
+                """
+                UPDATE orders
+                SET payment_status = ?, last_payment_id = ?, paid_amount = ?
+                WHERE id = ?
+                """,
+                (st, str(external_id or ""), amt if st in {"succeeded", "paid"} else 0.0, int(order_id)),
+            )
+            if st in {"succeeded", "paid"} and float(order.get("paid_amount") or 0) == 0:
+                # keep amount on success
+                self.store.execute(
+                    "UPDATE orders SET paid_amount = ? WHERE id = ?",
+                    (amt, int(order_id)),
+                )
+        self.store.commit()
+        if not eid:
+            row = self.store.fetchone(
+                "SELECT id FROM payment_events WHERE order_id = ? AND created_at = ? "
+                "ORDER BY id DESC LIMIT 1",
+                (int(order_id), now),
+            )
+            eid = int(row["id"]) if row else 0
+        return {
+            "ok": True,
+            "event": {
+                "id": eid,
+                "order_id": int(order_id),
+                "provider": str(provider or "stripe"),
+                "external_id": str(external_id or ""),
+                "amount": amt,
+                "currency": str(currency or "usd").lower(),
+                "status": st,
+                "configured": bool(configured),
+                "message": str(message or "")[:500],
+                "actor": str(actor or ""),
+                "created_at": now,
+            },
+            "order": self.get_order(int(order_id)),
+        }
+
+    def list_payment_events(
+        self, *, order_id: int | None = None, limit: int = 50
+    ) -> list[dict[str, Any]]:
+        self.ensure_schema()
+        lim = max(1, min(int(limit or 50), 200))
+        if order_id is not None:
+            rows = self.store.fetchall(
+                """
+                SELECT id, order_id, provider, external_id, amount, currency, status,
+                       configured, message, actor, created_at
+                FROM payment_events
+                WHERE order_id = ?
+                ORDER BY id DESC
+                LIMIT ?
+                """,
+                (int(order_id), lim),
+            )
+        else:
+            rows = self.store.fetchall(
+                """
+                SELECT id, order_id, provider, external_id, amount, currency, status,
+                       configured, message, actor, created_at
+                FROM payment_events
+                ORDER BY id DESC
+                LIMIT ?
+                """,
+                (lim,),
+            )
+        out = []
+        for r in rows:
+            d = dict(r)
+            d["configured"] = bool(int(d.get("configured") or 0))
+            out.append(d)
+        return out
+
+    # ----- Compliance audit export ---------------------------------------
+
+    def compliance_export(self, *, days: int = 90) -> dict[str, Any]:
+        """Export last N days of mutable DMS events as JSON-serializable dict."""
+        self.ensure_schema()
+        d = max(1, min(int(days or 90), 365))
+        # ISO prefix compare works for our _utc_now stamps; also include all if few rows
+        cutoff = (
+            __import__("datetime")
+            .datetime.now(__import__("datetime").timezone.utc)
+            .replace(microsecond=0)
+            - __import__("datetime").timedelta(days=d)
+        ).isoformat()
+
+        def _since(table: str, col: str = "created_at") -> list[dict[str, Any]]:
+            rows = self.store.fetchall(
+                f"SELECT * FROM {table} WHERE {col} >= ? ORDER BY id DESC LIMIT 5000",
+                (cutoff,),
+            )
+            return [dict(r) for r in rows]
+
+        orders = [dict(r) for r in self.store.fetchall(
+            "SELECT * FROM orders WHERE created_at >= ? ORDER BY id DESC LIMIT 5000",
+            (cutoff,),
+        )]
+        order_lines = [
+            dict(r)
+            for r in self.store.fetchall(
+                """
+                SELECT ol.* FROM order_lines ol
+                JOIN orders o ON o.id = ol.order_id
+                WHERE o.created_at >= ?
+                ORDER BY ol.id DESC LIMIT 5000
+                """,
+                (cutoff,),
+            )
+        ]
+        stock_adjustments = _since("stock_adjustments")
+        stock_transfers = [
+            dict(r)
+            for r in self.store.fetchall(
+                "SELECT * FROM stock_transfers WHERE created_at >= ? ORDER BY id DESC LIMIT 5000",
+                (cutoff,),
+            )
+        ]
+        payment_events = _since("payment_events")
+        part_supersessions = _since("part_supersessions")
+        oem_sync_runs = [
+            dict(r)
+            for r in self.store.fetchall(
+                "SELECT * FROM oem_sync_runs WHERE started_at >= ? ORDER BY id DESC LIMIT 500",
+                (cutoff,),
+            )
+        ]
+        payload = {
+            "ok": True,
+            "exported_at": _utc_now(),
+            "days": d,
+            "cutoff": cutoff,
+            "orders": orders,
+            "order_lines": order_lines,
+            "stock_adjustments": stock_adjustments,
+            "stock_transfers": stock_transfers,
+            "payment_events": payment_events,
+            "part_supersessions": part_supersessions,
+            "oem_sync_runs": oem_sync_runs,
+        }
+        payload["counts"] = {
+            k: len(payload[k])
+            for k in (
+                "orders",
+                "order_lines",
+                "stock_adjustments",
+                "stock_transfers",
+                "payment_events",
+                "part_supersessions",
+                "oem_sync_runs",
+            )
+        }
+        return payload

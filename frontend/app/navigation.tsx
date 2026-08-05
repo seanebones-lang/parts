@@ -16,6 +16,7 @@ export function Navigation({ className }: NavigationProps) {
     { href: '/customers', label: 'Customers', core: true },
     { href: '/orgs', label: 'Orgs / ACL', core: true },
     { href: '/transfers', label: 'Transfers', core: true },
+    { href: '/supersessions', label: 'Supersessions', core: true },
     { href: '/analytics', label: 'Analytics', core: true },
     { href: '/', label: 'Home' },
     { href: '/payments', label: 'Payments' },

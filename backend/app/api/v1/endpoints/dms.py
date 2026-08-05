@@ -914,3 +914,178 @@ async def dms_reindex(
         ) from exc
 
 
+# ---------------------------------------------------------------------------
+# Supersession + payments ledger + compliance (Wave 29)
+# ---------------------------------------------------------------------------
+
+
+class SupersessionBody(BaseModel):
+    old_sku: str
+    new_sku: str
+    notes: str = ""
+    effective_from: str = ""
+    actor: str = ""
+
+
+class PaymentEventBody(BaseModel):
+    amount: float = Field(..., ge=0)
+    currency: str = "usd"
+    status: str = "created"
+    provider: str = "stripe"
+    external_id: str = ""
+    configured: bool = False
+    message: str = ""
+    actor: str = ""
+
+
+@router.get("/supersessions")
+async def dms_list_supersessions(limit: int = Query(100, ge=1, le=500)):
+    try:
+        svc = get_dms_service()
+        rows = svc.list_supersessions(limit=limit)
+        return {"success": True, "supersessions": rows, "count": len(rows)}
+    except HTTPException:
+        raise
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"list supersessions failed: {exc}",
+        ) from exc
+
+
+@router.post("/supersessions")
+async def dms_set_supersession(
+    body: SupersessionBody,
+    current_user: Optional[User] = Depends(require_permission("catalog.supersession")),
+):
+    _ = current_user
+    try:
+        svc = get_dms_service()
+        result = svc.set_supersession(
+            old_sku=body.old_sku,
+            new_sku=body.new_sku,
+            notes=body.notes,
+            effective_from=body.effective_from,
+            actor=body.actor or "api",
+        )
+        return {"success": True, **result}
+    except ValueError as exc:
+        raise _http_exc_from_value_error(exc) from exc
+    except HTTPException:
+        raise
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"set supersession failed: {exc}",
+        ) from exc
+
+
+@router.get("/supersessions/resolve")
+async def dms_resolve_supersession(sku: str = Query(..., min_length=1)):
+    try:
+        svc = get_dms_service()
+        result = svc.resolve_supersession(sku)
+        return {"success": bool(result.get("ok", True)), **result}
+    except ValueError as exc:
+        raise _http_exc_from_value_error(exc) from exc
+    except HTTPException:
+        raise
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"resolve supersession failed: {exc}",
+        ) from exc
+
+
+@router.delete("/supersessions/{old_sku}")
+async def dms_delete_supersession(
+    old_sku: str,
+    current_user: Optional[User] = Depends(require_permission("catalog.supersession")),
+):
+    _ = current_user
+    try:
+        svc = get_dms_service()
+        result = svc.delete_supersession(old_sku)
+        return {"success": True, **result}
+    except ValueError as exc:
+        raise _http_exc_from_value_error(exc) from exc
+    except HTTPException:
+        raise
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"delete supersession failed: {exc}",
+        ) from exc
+
+
+@router.get("/payments/events")
+async def dms_list_payment_events(
+    order_id: Optional[int] = Query(None),
+    limit: int = Query(50, ge=1, le=200),
+):
+    try:
+        svc = get_dms_service()
+        rows = svc.list_payment_events(order_id=order_id, limit=limit)
+        return {"success": True, "events": rows, "count": len(rows)}
+    except HTTPException:
+        raise
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"list payment events failed: {exc}",
+        ) from exc
+
+
+@router.post("/orders/{order_id}/payment-events")
+async def dms_record_payment_event(
+    order_id: int,
+    body: PaymentEventBody,
+    current_user: Optional[User] = Depends(require_permission("payments.create")),
+):
+    """Record a payment ledger event (no Stripe call — use /payments/order-intent for live)."""
+    _ = current_user
+    try:
+        svc = get_dms_service()
+        result = svc.record_payment_event(
+            order_id=order_id,
+            amount=body.amount,
+            currency=body.currency,
+            status=body.status,
+            provider=body.provider,
+            external_id=body.external_id,
+            configured=body.configured,
+            message=body.message,
+            actor=body.actor or "api",
+        )
+        return {"success": True, **result}
+    except ValueError as exc:
+        raise _http_exc_from_value_error(exc) from exc
+    except HTTPException:
+        raise
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"record payment event failed: {exc}",
+        ) from exc
+
+
+@router.get("/compliance/export")
+async def dms_compliance_export(
+    days: int = Query(90, ge=1, le=365),
+    current_user: Optional[User] = Depends(require_permission("compliance.export")),
+):
+    """Export last N days of DMS mutable events (manager+)."""
+    _ = current_user
+    try:
+        svc = get_dms_service()
+        result = svc.compliance_export(days=days)
+        return {"success": True, **result}
+    except HTTPException:
+        raise
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"compliance export failed: {exc}",
+        ) from exc
+
+

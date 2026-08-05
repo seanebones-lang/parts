@@ -380,3 +380,79 @@ def test_router_status_cli_shape():
     assert isinstance(st, dict)
     assert "loaded" in st and "failed" in st
     assert "loaded_count" in st
+
+
+def test_dms_supersession_and_payment_and_compliance(dms_client: TestClient):
+    assert (
+        dms_client.post(
+            "/api/v1/dms/seed", json={"seed": 21, "n_skus": 5, "locations": 2}
+        ).status_code
+        == 200
+    )
+    cat = dms_client.get("/api/v1/dms/catalog").json()
+    parts = cat.get("catalog") or cat.get("parts") or []
+    assert len(parts) >= 2
+    a, b = parts[0]["sku"], parts[1]["sku"]
+    dms_client.delete(f"/api/v1/dms/supersessions/{a}")
+    r = dms_client.post(
+        "/api/v1/dms/supersessions",
+        json={"old_sku": a, "new_sku": b, "notes": "api test"},
+    )
+    assert r.status_code == 200, r.text
+    assert r.json().get("success") is True
+
+    res = dms_client.get("/api/v1/dms/supersessions/resolve", params={"sku": a})
+    assert res.status_code == 200, res.text
+    body = res.json()
+    assert body.get("current_sku") == b
+    assert body.get("superseded") is True
+
+    lst = dms_client.get("/api/v1/dms/supersessions")
+    assert lst.status_code == 200
+    assert lst.json().get("count", 0) >= 1
+
+    inv = dms_client.get("/api/v1/dms/inventory").json()["inventory"]
+    row = next(x for x in inv if int(x["qty"]) >= 1)
+    cust = dms_client.post(
+        "/api/v1/dms/customers",
+        json={"name": "API Pay", "email": "ap@test.local"},
+    ).json()["customer"]
+    order = dms_client.post(
+        "/api/v1/dms/orders",
+        json={
+            "customer_id": cust["id"],
+            "lines": [
+                {
+                    "sku": row["sku"],
+                    "location_id": int(row["location_id"]),
+                    "qty": 1,
+                }
+            ],
+        },
+    ).json()["order"]
+    oid = int(order["id"])
+    pe = dms_client.post(
+        f"/api/v1/dms/orders/{oid}/payment-events",
+        json={
+            "amount": float(order.get("total") or 1),
+            "status": "created",
+            "configured": False,
+            "message": "no stripe",
+        },
+    )
+    assert pe.status_code == 200, pe.text
+    evs = dms_client.get("/api/v1/dms/payments/events", params={"order_id": oid})
+    assert evs.status_code == 200
+    assert evs.json().get("count", 0) >= 1
+
+    exp = dms_client.get("/api/v1/dms/compliance/export", params={"days": 90})
+    assert exp.status_code == 200, exp.text
+    assert exp.json().get("success") is True
+    assert "counts" in exp.json()
+
+    deny = dms_client.post(
+        "/api/v1/dms/supersessions",
+        json={"old_sku": b, "new_sku": a, "notes": "deny"},
+        headers={"X-Parts-Role": "counter"},
+    )
+    assert deny.status_code == 403

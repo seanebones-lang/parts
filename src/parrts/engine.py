@@ -150,6 +150,41 @@ class PartsRAGEngine:
                     top_parents=min(3, len(hits)),
                 )
             tl = policy_for_hits(hits[:top_k], location_filter=location)
+            supersession_meta: dict[str, Any] = {"checked": False}
+            # Optional DMS supersession redirect note when .parrts/dms.db exists
+            try:
+                dms_db = self.root / ".parrts" / "dms.db"
+                if dms_db.is_file() and hits:
+                    from parrts.dms.service import DmsService
+
+                    dms = DmsService(root=self.root)
+                    noted: list[dict[str, Any]] = []
+                    for h in hits[:top_k]:
+                        sku = getattr(h, "sku", None) or (
+                            h.get("sku") if isinstance(h, dict) else None
+                        )
+                        if not sku:
+                            part = getattr(h, "part", None)
+                            sku = getattr(part, "sku", None) if part is not None else None
+                        if not sku:
+                            continue
+                        res = dms.resolve_supersession(str(sku))
+                        if res.get("superseded"):
+                            noted.append(
+                                {
+                                    "sku": res["sku"],
+                                    "current_sku": res["current_sku"],
+                                    "chain": res.get("chain"),
+                                }
+                            )
+                    supersession_meta = {
+                        "checked": True,
+                        "redirects": noted,
+                        "any": bool(noted),
+                    }
+            except Exception:  # noqa: BLE001 — retrieval must not fail on DMS optional
+                supersession_meta = {"checked": False, "error": "dms_supersession_unavailable"}
+
             result = QueryResult(
                 query=text,
                 hits=hits,
@@ -162,6 +197,7 @@ class PartsRAGEngine:
                     "embedder": type(self.embedder).__name__,
                     "rerank": bool(use_rerank and self.retriever.reranker_available),
                     "parent_expand": bool(expand_parent and location is None),
+                    "supersession": supersession_meta,
                     "llm": status_info(),
                     "correlation_id": get_correlation_id(),
                 },

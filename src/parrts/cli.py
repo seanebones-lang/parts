@@ -221,6 +221,70 @@ def cmd_dms_invoice(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_dms_supersede(args: argparse.Namespace) -> int:
+    svc = _dms_service(args)
+    try:
+        result = svc.set_supersession(
+            old_sku=args.old_sku,
+            new_sku=args.new_sku,
+            notes=getattr(args, "notes", "") or "",
+            actor=getattr(args, "actor", "") or "cli",
+        )
+    except ValueError as exc:
+        print(json.dumps({"ok": False, "error": str(exc)}, indent=2))
+        return 1
+    print(json.dumps({"ok": True, "action": "dms.supersede", **result}, indent=2, default=str))
+    return 0
+
+
+def cmd_dms_resolve_sku(args: argparse.Namespace) -> int:
+    svc = _dms_service(args)
+    try:
+        result = svc.resolve_supersession(args.sku)
+    except ValueError as exc:
+        print(json.dumps({"ok": False, "error": str(exc)}, indent=2))
+        return 1
+    print(json.dumps({"ok": True, "action": "dms.resolve-sku", **result}, indent=2))
+    return 0
+
+
+def cmd_dms_supersessions(args: argparse.Namespace) -> int:
+    svc = _dms_service(args)
+    rows = svc.list_supersessions(limit=int(getattr(args, "limit", 100) or 100))
+    print(json.dumps({"ok": True, "supersessions": rows, "count": len(rows)}, indent=2, default=str))
+    return 0
+
+
+def cmd_dms_export_audit(args: argparse.Namespace) -> int:
+    svc = _dms_service(args)
+    result = svc.compliance_export(days=int(getattr(args, "days", 90) or 90))
+    out = getattr(args, "out", None)
+    if out:
+        path = Path(out)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(result, indent=2, default=str), encoding="utf-8")
+        print(
+            json.dumps(
+                {
+                    "ok": True,
+                    "action": "dms.export-audit",
+                    "path": str(path),
+                    "counts": result.get("counts"),
+                },
+                indent=2,
+            )
+        )
+    else:
+        print(
+            json.dumps(
+                {"ok": True, "action": "dms.export-audit", **result},
+                indent=2,
+                default=str,
+            )
+        )
+    return 0
+
+
 def _email_service(args: argparse.Namespace):
     from parrts.email import EmailService
 
@@ -490,6 +554,26 @@ def build_parser() -> argparse.ArgumentParser:
     p_dms_inv.add_argument("order_id", type=int)
     p_dms_inv.add_argument("--out", default=None, help="Output PDF path")
     p_dms_inv.set_defaults(func=cmd_dms_invoice)
+
+    p_dms_ss = dms_sub.add_parser("supersede", help="Map old SKU → new SKU (supersession)")
+    p_dms_ss.add_argument("old_sku")
+    p_dms_ss.add_argument("new_sku")
+    p_dms_ss.add_argument("--notes", default="")
+    p_dms_ss.add_argument("--actor", default="cli")
+    p_dms_ss.set_defaults(func=cmd_dms_supersede)
+
+    p_dms_resolve = dms_sub.add_parser("resolve-sku", help="Resolve supersession chain for a SKU")
+    p_dms_resolve.add_argument("sku")
+    p_dms_resolve.set_defaults(func=cmd_dms_resolve_sku)
+
+    p_dms_ssl = dms_sub.add_parser("supersessions", help="List supersession mappings")
+    p_dms_ssl.add_argument("--limit", type=int, default=100)
+    p_dms_ssl.set_defaults(func=cmd_dms_supersessions)
+
+    p_dms_audit = dms_sub.add_parser("export-audit", help="Compliance export of recent DMS events")
+    p_dms_audit.add_argument("--days", type=int, default=90)
+    p_dms_audit.add_argument("--out", default=None, help="Write JSON to path")
+    p_dms_audit.set_defaults(func=cmd_dms_export_audit)
 
     # --- Email desk (selling point) ---
     p_email = sub.add_parser("email", help="Inbound email auto-answer desk (G/Y/R)")

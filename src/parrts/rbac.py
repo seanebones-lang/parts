@@ -36,6 +36,7 @@ PERMISSIONS: dict[str, str] = {
     "catalog.read": "counter",
     "catalog.write": "manager",
     "catalog.import": "manager",
+    "catalog.supersession": "manager",
     "orders.read": "counter",
     "orders.write": "counter",
     "orders.status": "counter",
@@ -55,7 +56,9 @@ PERMISSIONS: dict[str, str] = {
     "inventory.receive": "counter",
     "inventory.adjust": "manager",
     "analytics.read": "counter",
+    "compliance.export": "manager",
     "payments.create": "counter",
+    "payments.read": "counter",
     "shipping.create": "counter",
     "admin": "admin",
 }

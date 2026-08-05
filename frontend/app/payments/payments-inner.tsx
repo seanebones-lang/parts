@@ -48,6 +48,32 @@ export default function PaymentsInner() {
     })()
   }, [])
 
+  // Prefill amount from DMS order when order_id is in the query string
+  useEffect(() => {
+    const oid = params.get('order_id')
+    if (!oid || amount) return
+    ;(async () => {
+      try {
+        const base =
+          (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_API_URL) ||
+          API_BASE_URL
+        const res = await fetch(`${base}/api/v1/dms/orders/${encodeURIComponent(oid)}`)
+        if (!res.ok) return
+        const data = (await res.json()) as {
+          order?: { total?: number; customer_email?: string }
+          total?: number
+        }
+        const ord = data.order || data
+        const t = Number((ord as { total?: number }).total)
+        if (Number.isFinite(t) && t > 0) setAmount(String(t.toFixed(2)))
+        const em = (ord as { customer_email?: string }).customer_email
+        if (em && !email) setEmail(em)
+      } catch {
+        /* ignore — user can type amount */
+      }
+    })()
+  }, [params, amount, email])
+
   const live = configured
 
   const onCreate = async (e: React.FormEvent) => {

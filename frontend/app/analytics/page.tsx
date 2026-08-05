@@ -277,6 +277,85 @@ export default function AnalyticsPage() {
         </Card>
       </div>
 
+      <div className="grid gap-4 lg:grid-cols-3">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Fill rate (DMS proxy)</CardTitle>
+            <CardDescription>
+              {data?.fill_rate?.note || "invoiced|completed qty / ordered qty"}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span>Ordered units</span>
+              <span className="tabular-nums font-medium">
+                {data?.fill_rate?.ordered_units ?? "—"}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span>Fulfilled</span>
+              <span className="tabular-nums font-medium">
+                {data?.fill_rate?.fulfilled_units ?? "—"}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span>Ratio</span>
+              <span className="tabular-nums font-medium">
+                {data?.fill_rate?.fulfillment_ratio == null
+                  ? "—"
+                  : data.fill_rate.fulfillment_ratio}
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Dead stock sample</CardTitle>
+            <CardDescription>On-hand with zero order lines ever</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {!data?.dead_stock?.length ? (
+              <p className="text-sm text-muted-foreground">None flagged (or empty inventory).</p>
+            ) : (
+              <ul className="text-sm space-y-1">
+                {data.dead_stock.slice(0, 8).map((r) => (
+                  <li key={r.sku} className="flex justify-between font-mono text-xs">
+                    <span>{r.sku}</span>
+                    <span className="tabular-nums">{r.units}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Supersessions / payments</CardTitle>
+          </CardHeader>
+          <CardContent className="text-sm space-y-2">
+            <div className="flex justify-between">
+              <span>Supersession maps</span>
+              <span className="tabular-nums font-medium">
+                {data?.supersessions?.mapping_count ?? "—"}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span>Payment events</span>
+              <span className="tabular-nums font-medium">
+                {data?.payments?.event_count ?? "—"}
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              <Link href="/supersessions" className="underline">
+                Manage supersessions
+              </Link>
+              {" · "}
+              {data?.payments?.note || "ledger only — not bank settlement"}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
       <Card>
         <CardHeader>
           <CardTitle className="text-base">OEM feed</CardTitle>

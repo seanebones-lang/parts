@@ -754,6 +754,16 @@ export type DmsAnalytics = {
     note?: string;
   };
   top_inventory_skus?: Array<{ sku?: string; units?: number }>;
+  dead_stock?: Array<{ sku?: string; units?: number }>;
+  fill_rate?: {
+    ordered_units?: number;
+    fulfilled_units?: number;
+    cancelled_units?: number;
+    fulfillment_ratio?: number | null;
+    note?: string;
+  };
+  supersessions?: { mapping_count?: number };
+  payments?: { event_count?: number; note?: string };
   oem?: {
     feed_configured?: boolean;
     last_sync?: unknown;
@@ -797,6 +807,14 @@ export async function getDmsAnalytics(): Promise<DmsAnalytics> {
     const r = asRecord(item) ?? {};
     return { sku: str(r.sku), units: num(r.units) };
   });
+  const deadList = extractArray(o.dead_stock, ["dead_stock", "items"]);
+  const dead_stock = (deadList.length ? deadList : Array.isArray(o.dead_stock) ? (o.dead_stock as unknown[]) : []).map((item) => {
+    const r = asRecord(item) ?? {};
+    return { sku: str(r.sku), units: num(r.units) };
+  });
+  const fillRaw = asRecord(o.fill_rate) ?? {};
+  const ssRaw = asRecord(o.supersessions) ?? {};
+  const payRaw = asRecord(o.payments) ?? {};
   const revenueRaw = asRecord(o.revenue) ?? {};
   const oemRaw = asRecord(o.oem) ?? {};
   return {
@@ -817,12 +835,96 @@ export async function getDmsAnalytics(): Promise<DmsAnalytics> {
       note: str(revenueRaw.note),
     },
     top_inventory_skus,
+    dead_stock,
+    fill_rate: {
+      ordered_units: num(fillRaw.ordered_units),
+      fulfilled_units: num(fillRaw.fulfilled_units),
+      cancelled_units: num(fillRaw.cancelled_units),
+      fulfillment_ratio:
+        fillRaw.fulfillment_ratio === null || fillRaw.fulfillment_ratio === undefined
+          ? null
+          : num(fillRaw.fulfillment_ratio) ?? null,
+      note: str(fillRaw.note),
+    },
+    supersessions: { mapping_count: num(ssRaw.mapping_count) },
+    payments: {
+      event_count: num(payRaw.event_count),
+      note: str(payRaw.note),
+    },
     oem: {
       feed_configured: Boolean(oemRaw.feed_configured),
       last_sync: oemRaw.last_sync,
       recent_runs: Array.isArray(oemRaw.recent_runs) ? oemRaw.recent_runs : [],
     },
   };
+}
+
+export type DmsSupersession = {
+  id?: number;
+  old_sku?: string;
+  new_sku?: string;
+  notes?: string;
+  effective_from?: string;
+  created_at?: string;
+  actor?: string;
+};
+
+export async function listDmsSupersessions(limit = 100): Promise<{
+  supersessions: DmsSupersession[];
+  count: number;
+}> {
+  const raw = await dmsGet<unknown>(`/supersessions?limit=${limit}`);
+  const o = asRecord(raw) ?? {};
+  const list = extractArray(o.supersessions, ["supersessions", "items", "data"]);
+  const supersessions = (list.length ? list : []).map((item) => {
+    const r = asRecord(item) ?? {};
+    return {
+      id: num(r.id),
+      old_sku: str(r.old_sku),
+      new_sku: str(r.new_sku),
+      notes: str(r.notes),
+      effective_from: str(r.effective_from),
+      created_at: str(r.created_at),
+      actor: str(r.actor),
+    };
+  });
+  return { supersessions, count: num(o.count) ?? supersessions.length };
+}
+
+export async function createDmsSupersession(body: {
+  old_sku: string;
+  new_sku: string;
+  notes?: string;
+}): Promise<unknown> {
+  return dmsPost("/supersessions", body);
+}
+
+export async function resolveDmsSupersession(sku: string): Promise<{
+  ok?: boolean;
+  sku?: string;
+  current_sku?: string;
+  chain?: string[];
+  hops?: number;
+  superseded?: boolean;
+  error?: string;
+}> {
+  const raw = await dmsGet<unknown>(`/supersessions/resolve?sku=${encodeURIComponent(sku)}`);
+  const o = asRecord(raw) ?? {};
+  const chain = Array.isArray(o.chain) ? o.chain.map((x) => String(x)) : undefined;
+  return {
+    ok: typeof o.ok === "boolean" ? o.ok : Boolean(o.success),
+    sku: str(o.sku),
+    current_sku: str(o.current_sku),
+    chain,
+    hops: num(o.hops),
+    superseded: typeof o.superseded === "boolean" ? o.superseded : undefined,
+    error: str(o.error),
+  };
+}
+
+export async function exportDmsCompliance(days = 90): Promise<Record<string, unknown>> {
+  const raw = await dmsGet<unknown>(`/compliance/export?days=${days}`);
+  return (asRecord(raw) as Record<string, unknown>) ?? {};
 }
 
 export { API_BASE_URL, ApiError };
