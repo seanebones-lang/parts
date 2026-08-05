@@ -659,4 +659,63 @@ export async function cancelDmsTransfer(id: string | number): Promise<unknown> {
   return dmsPost(`/transfers/${id}/cancel`, {});
 }
 
+export type StockAdjustInput = {
+  sku: string;
+  location: string;
+  delta: number;
+  reason?: string;
+  notes?: string;
+  actor?: string;
+};
+
+export type DmsStockAdjustment = {
+  id?: number | string;
+  sku?: string;
+  location_code?: string;
+  location_name?: string;
+  delta?: number;
+  qty_before?: number;
+  qty_after?: number;
+  reason?: string;
+  notes?: string;
+  actor?: string;
+  created_at?: string;
+  [key: string]: unknown;
+};
+
+export async function adjustDmsInventory(input: StockAdjustInput): Promise<unknown> {
+  return dmsPost("/inventory/adjust", input);
+}
+
+export async function listDmsStockAdjustments(opts?: {
+  sku?: string;
+  location?: string;
+  limit?: number;
+}): Promise<{ adjustments: DmsStockAdjustment[]; raw: unknown }> {
+  const params = new URLSearchParams();
+  if (opts?.sku?.trim()) params.set("sku", opts.sku.trim());
+  if (opts?.location?.trim()) params.set("location", opts.location.trim());
+  if (opts?.limit) params.set("limit", String(opts.limit));
+  const qs = params.toString() ? `?${params.toString()}` : "";
+  const raw = await dmsGet<unknown>(`/inventory/adjustments${qs}`);
+  const adjustments = extractArray(raw, ["adjustments", "items", "results"]).map((item) => {
+    const r = asRecord(item) ?? {};
+    return {
+      ...r,
+      id: r.id as number | string | undefined,
+      sku: str(r.sku),
+      location_code: str(r.location_code),
+      location_name: str(r.location_name),
+      delta: num(r.delta),
+      qty_before: num(r.qty_before),
+      qty_after: num(r.qty_after),
+      reason: str(r.reason),
+      notes: str(r.notes),
+      actor: str(r.actor),
+      created_at: str(r.created_at),
+    } as DmsStockAdjustment;
+  });
+  return { adjustments, raw };
+}
+
 export { API_BASE_URL, ApiError };

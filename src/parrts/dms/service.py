@@ -86,6 +86,7 @@ class DmsService:
         customers = self.store.fetchone("SELECT COUNT(*) AS c FROM customers")
         orders = self.store.fetchone("SELECT COUNT(*) AS c FROM orders")
         locs = self.store.fetchone("SELECT COUNT(*) AS c FROM locations")
+        adjs = self.store.fetchone("SELECT COUNT(*) AS c FROM stock_adjustments")
         last_sync = self.store.fetchone(
             "SELECT id, source, started_at, finished_at, parts_upserted, status, message "
             "FROM oem_sync_runs ORDER BY id DESC LIMIT 1"
@@ -104,6 +105,7 @@ class DmsService:
             "inventory_units": int(inv["units"]) if inv else 0,
             "customers": int(customers["c"]) if customers else 0,
             "orders": int(orders["c"]) if orders else 0,
+            "stock_adjustments": int(adjs["c"]) if adjs else 0,
             "last_oem_sync": dict(last_sync) if last_sync else None,
             "oem_sync_runs": runs,
             "oem_feed_url_set": feed_url_set,
@@ -1184,4 +1186,176 @@ class DmsService:
                 """,
                 (lim,),
             )
+        return [dict(r) for r in rows]
+
+
+    # ------------------------------------------------------------------
+    # Stock receive / adjust (immutable audit trail)
+    # ------------------------------------------------------------------
+
+    ADJUST_REASONS = frozenset(
+        {"receive", "adjust", "cycle_count", "damage", "return", "write_off", "other"}
+    )
+
+    def adjust_stock(
+        self,
+        *,
+        sku: str,
+        location: str | int,
+        delta: int,
+        reason: str = "adjust",
+        notes: str = "",
+        actor: str = "",
+        role: str | None = None,
+    ) -> dict[str, Any]:
+        """Apply a signed qty delta at one location and write an audit row.
+
+        Rules:
+          - qty_after must be >= 0
+          - reason=receive requires delta > 0 and inventory.receive (counter+)
+          - negative delta / non-receive reasons require inventory.adjust (manager+)
+          - SKU must exist in catalog
+        """
+        from parrts.rbac import can, normalize_role
+
+        self.ensure_schema()
+        sku_s = str(sku or "").strip()
+        if not sku_s:
+            raise ValueError("sku is required")
+        try:
+            dlt = int(delta)
+        except (TypeError, ValueError) as exc:
+            raise ValueError("delta must be an integer") from exc
+        if dlt == 0:
+            raise ValueError("delta must be non-zero")
+
+        reason_s = (reason or "adjust").strip().lower() or "adjust"
+        if reason_s not in self.ADJUST_REASONS:
+            raise ValueError(
+                f"unknown reason {reason_s!r}; use one of {sorted(self.ADJUST_REASONS)}"
+            )
+
+        r = normalize_role(role)
+        if reason_s == "receive":
+            if dlt <= 0:
+                raise ValueError("receive requires a positive delta")
+            if not can(r, "inventory.receive"):
+                raise PermissionError(f"role {r!r} cannot inventory.receive")
+        else:
+            if not can(r, "inventory.adjust"):
+                raise PermissionError(f"role {r!r} cannot inventory.adjust")
+
+        cat = self.store.fetchone("SELECT sku FROM catalog_parts WHERE sku = ?", (sku_s,))
+        if cat is None:
+            raise ValueError(f"Unknown SKU (not in catalog): {sku_s}")
+
+        lid = self._location_id(location)
+        loc_row = self.store.fetchone("SELECT code, name FROM locations WHERE id = ?", (lid,))
+        loc_code = str(loc_row["code"]) if loc_row else str(location)
+
+        inv = self.store.fetchone(
+            "SELECT qty FROM inventory_levels WHERE sku = ? AND location_id = ?",
+            (sku_s, lid),
+        )
+        before = int(inv["qty"]) if inv is not None else 0
+        after = before + dlt
+        if after < 0:
+            raise InsufficientStockError(
+                f"adjust would make qty negative for {sku_s} @ {loc_code}: "
+                f"{before} + ({dlt}) = {after}"
+            )
+
+        if inv is None:
+            self.store.execute(
+                """
+                INSERT INTO inventory_levels (sku, location_id, qty, cost, price)
+                VALUES (?, ?, ?, 0, 0)
+                """,
+                (sku_s, lid, after),
+            )
+        else:
+            self.store.execute(
+                "UPDATE inventory_levels SET qty = ? WHERE sku = ? AND location_id = ?",
+                (after, sku_s, lid),
+            )
+
+        now = _utc_now()
+        cur = self.store.execute(
+            """
+            INSERT INTO stock_adjustments
+                (sku, location_id, delta, qty_before, qty_after, reason, notes, actor, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                sku_s,
+                lid,
+                dlt,
+                before,
+                after,
+                reason_s,
+                (notes or "").strip(),
+                (actor or "").strip(),
+                now,
+            ),
+        )
+        adj_id = int(getattr(cur, "lastrowid", 0) or 0)
+        self.store.commit()
+        if not adj_id:
+            row = self.store.fetchone(
+                "SELECT id FROM stock_adjustments WHERE sku = ? AND created_at = ? "
+                "ORDER BY id DESC LIMIT 1",
+                (sku_s, now),
+            )
+            adj_id = int(row["id"]) if row else 0
+
+        return {
+            "ok": True,
+            "adjustment": {
+                "id": adj_id,
+                "sku": sku_s,
+                "location_id": lid,
+                "location_code": loc_code,
+                "delta": dlt,
+                "qty_before": before,
+                "qty_after": after,
+                "reason": reason_s,
+                "notes": (notes or "").strip(),
+                "actor": (actor or "").strip(),
+                "created_at": now,
+            },
+        }
+
+    def list_stock_adjustments(
+        self,
+        *,
+        sku: str | None = None,
+        location: str | int | None = None,
+        limit: int = 50,
+    ) -> list[dict[str, Any]]:
+        """Recent stock adjustments (newest first)."""
+        self.ensure_schema()
+        lim = max(1, min(int(limit or 50), 200))
+        clauses: list[str] = []
+        params: list[Any] = []
+        if sku and str(sku).strip():
+            clauses.append("a.sku = ?")
+            params.append(str(sku).strip())
+        if location is not None and str(location).strip() != "":
+            lid = self._location_id(location)
+            clauses.append("a.location_id = ?")
+            params.append(lid)
+        where = ("WHERE " + " AND ".join(clauses)) if clauses else ""
+        params.append(lim)
+        rows = self.store.fetchall(
+            f"""
+            SELECT a.id, a.sku, a.location_id, l.code AS location_code, l.name AS location_name,
+                   a.delta, a.qty_before, a.qty_after, a.reason, a.notes, a.actor, a.created_at
+            FROM stock_adjustments a
+            JOIN locations l ON l.id = a.location_id
+            {where}
+            ORDER BY a.id DESC
+            LIMIT ?
+            """,
+            tuple(params),
+        )
         return [dict(r) for r in rows]

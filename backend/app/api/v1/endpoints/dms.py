@@ -766,6 +766,71 @@ async def dms_cancel_transfer(
         raise _http_exc_from_value_error(exc) from exc
 
 
+class StockAdjustBody(BaseModel):
+    sku: str
+    location: str
+    delta: int
+    reason: str = "adjust"
+    notes: str = ""
+    actor: str = ""
+
+
+@router.post("/inventory/adjust")
+async def dms_inventory_adjust(
+    body: StockAdjustBody,
+    current_user: Optional[User] = Depends(require_user_if_production),
+    x_parts_role: Optional[str] = Header(None, alias="X-Parts-Role"),
+):
+    """Receive or adjust on-hand qty with immutable audit trail.
+
+    reason=receive → counter+ and delta>0.
+    other reasons / negative delta → manager+ (inventory.adjust).
+    """
+    from app.api.deps import resolve_parts_role
+    from parrts.dms.service import InsufficientStockError
+    from parrts.rbac import can
+
+    role = resolve_parts_role(current_user, x_parts_role=x_parts_role)
+    reason = (body.reason or "adjust").strip().lower()
+    need = "inventory.receive" if reason == "receive" else "inventory.adjust"
+    if not can(role, need):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"role {role!r} cannot {need}",
+        )
+    try:
+        svc = get_dms_service()
+        result = svc.adjust_stock(
+            sku=body.sku,
+            location=body.location,
+            delta=body.delta,
+            reason=reason,
+            notes=body.notes,
+            actor=body.actor or (getattr(current_user, "username", None) or ""),
+            role=role,
+        )
+        return {"success": True, **result}
+    except InsufficientStockError as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+    except PermissionError as exc:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise _http_exc_from_value_error(exc) from exc
+
+
+@router.get("/inventory/adjustments")
+async def dms_list_inventory_adjustments(
+    sku: Optional[str] = Query(None),
+    location: Optional[str] = Query(None),
+    limit: int = Query(50, ge=1, le=200),
+    current_user: Optional[User] = Depends(require_permission("inventory.read")),
+):
+    _ = current_user
+    svc = get_dms_service()
+    rows = svc.list_stock_adjustments(sku=sku, location=location, limit=limit)
+    return {"success": True, "adjustments": rows, "count": len(rows)}
+
+
 @router.post("/orders")
 async def dms_create_order(
     body: OrderCreateBody,

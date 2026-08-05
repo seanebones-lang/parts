@@ -13,6 +13,7 @@
 | DMS status | `GET /api/v1/dms/status` | counts + `oem_sync_runs` |
 | OEM runs | `parrts dms oem-runs` | sync history |
 | Transfers | `GET /api/v1/dms/transfers` | status trail on rows |
+| Stock adjustments | `GET /api/v1/dms/inventory/adjustments` · `POST …/inventory/adjust` | immutable audit |
 | Email desk | `GET /api/v1/emails/status` | G/Y/R counts |
 | Integrations | `GET /api/v1/system/integrations` (if mounted) | key presence, no secrets |
 | CI | GitHub Actions `CI` | core + backend-smoke + FE build |

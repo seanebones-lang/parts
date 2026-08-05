@@ -106,12 +106,29 @@ CREATE TABLE IF NOT EXISTS stock_transfers (
     FOREIGN KEY (to_location_id) REFERENCES locations(id)
 );
 
+CREATE TABLE IF NOT EXISTS stock_adjustments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    sku TEXT NOT NULL,
+    location_id INTEGER NOT NULL,
+    delta INTEGER NOT NULL,
+    qty_before INTEGER NOT NULL,
+    qty_after INTEGER NOT NULL,
+    reason TEXT NOT NULL DEFAULT 'adjust',
+    notes TEXT DEFAULT '',
+    actor TEXT DEFAULT '',
+    created_at TEXT NOT NULL,
+    FOREIGN KEY (sku) REFERENCES catalog_parts(sku),
+    FOREIGN KEY (location_id) REFERENCES locations(id)
+);
+
 CREATE INDEX IF NOT EXISTS idx_inventory_sku ON inventory_levels(sku);
 CREATE INDEX IF NOT EXISTS idx_inventory_loc ON inventory_levels(location_id);
 CREATE INDEX IF NOT EXISTS idx_orders_customer ON orders(customer_id);
 CREATE INDEX IF NOT EXISTS idx_order_lines_order ON order_lines(order_id);
 CREATE INDEX IF NOT EXISTS idx_acl_user ON user_location_acl(user_key);
 CREATE INDEX IF NOT EXISTS idx_transfers_status ON stock_transfers(status);
+CREATE INDEX IF NOT EXISTS idx_adjustments_sku ON stock_adjustments(sku);
+CREATE INDEX IF NOT EXISTS idx_adjustments_created ON stock_adjustments(created_at);
 """
 
 

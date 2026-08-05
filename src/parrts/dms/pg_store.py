@@ -97,12 +97,27 @@ CREATE TABLE IF NOT EXISTS stock_transfers (
     updated_at TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS stock_adjustments (
+    id SERIAL PRIMARY KEY,
+    sku TEXT NOT NULL REFERENCES catalog_parts(sku),
+    location_id INTEGER NOT NULL REFERENCES locations(id),
+    delta INTEGER NOT NULL,
+    qty_before INTEGER NOT NULL,
+    qty_after INTEGER NOT NULL,
+    reason TEXT NOT NULL DEFAULT 'adjust',
+    notes TEXT DEFAULT '',
+    actor TEXT DEFAULT '',
+    created_at TEXT NOT NULL
+);
+
 CREATE INDEX IF NOT EXISTS idx_inventory_sku ON inventory_levels(sku);
 CREATE INDEX IF NOT EXISTS idx_inventory_loc ON inventory_levels(location_id);
 CREATE INDEX IF NOT EXISTS idx_orders_customer ON orders(customer_id);
 CREATE INDEX IF NOT EXISTS idx_order_lines_order ON order_lines(order_id);
 CREATE INDEX IF NOT EXISTS idx_acl_user ON user_location_acl(user_key);
 CREATE INDEX IF NOT EXISTS idx_transfers_status ON stock_transfers(status);
+CREATE INDEX IF NOT EXISTS idx_adjustments_sku ON stock_adjustments(sku);
+CREATE INDEX IF NOT EXISTS idx_adjustments_created ON stock_adjustments(created_at);
 """
 
 

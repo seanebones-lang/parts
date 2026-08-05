@@ -22,12 +22,15 @@ import {
 import {
   type DmsInventoryRow,
   type DmsStatus,
+  type DmsStockAdjustment,
   ApiError,
   isApiUnreachable,
   getDmsStatus,
   listDmsInventory,
   seedDms,
   syncOem,
+  adjustDmsInventory,
+  listDmsStockAdjustments,
 } from "@/lib/dms-api";
 
 function qtyOf(row: DmsInventoryRow): number {
@@ -51,6 +54,12 @@ export default function InventoryPage() {
   const [userKeyInput, setUserKeyInput] = useState("");
   const [activeUserKey, setActiveUserKey] = useState("");
   const [aclUser, setAclUser] = useState<string | null>(null);
+  const [adjSku, setAdjSku] = useState("");
+  const [adjLoc, setAdjLoc] = useState("");
+  const [adjDelta, setAdjDelta] = useState("1");
+  const [adjReason, setAdjReason] = useState("receive");
+  const [adjNotes, setAdjNotes] = useState("");
+  const [adjustments, setAdjustments] = useState<DmsStockAdjustment[]>([]);
 
   const load = useCallback(async (filterKey?: string) => {
     setLoading(true);
@@ -58,17 +67,20 @@ export default function InventoryPage() {
     setUnreachable(false);
     const key = (filterKey ?? activeUserKey).trim();
     try {
-      const [inv, st] = await Promise.all([
+      const [inv, st, adj] = await Promise.all([
         listDmsInventory(key ? { user_key: key } : undefined),
         getDmsStatus().catch(() => null),
+        listDmsStockAdjustments({ limit: 15 }).catch(() => ({ adjustments: [] as DmsStockAdjustment[] })),
       ]);
       setRows(inv.rows);
       setAclUser(inv.acl_user ?? (key || null));
       setStatus(st);
+      setAdjustments(adj.adjustments ?? []);
     } catch (e) {
       setRows([]);
       setStatus(null);
       setAclUser(null);
+      setAdjustments([]);
       if (isApiUnreachable(e) || (e instanceof ApiError && e.status === 404)) {
         setUnreachable(true);
         setError(
@@ -405,6 +417,139 @@ export default function InventoryPage() {
                 </tbody>
               </table>
             </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg">Receive / adjust stock</CardTitle>
+          <CardDescription>
+            Immutable audit trail. <code className="text-xs">receive</code> = counter+
+            (positive only). Other reasons / negative delta = manager+.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <form
+            className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6"
+            onSubmit={(e) => {
+              e.preventDefault();
+              const delta = Number(adjDelta);
+              if (!adjSku.trim() || !adjLoc.trim() || !Number.isFinite(delta) || delta === 0) {
+                setError("SKU, location, and non-zero delta required");
+                return;
+              }
+              void runAction(
+                "adjust",
+                () =>
+                  adjustDmsInventory({
+                    sku: adjSku.trim(),
+                    location: adjLoc.trim(),
+                    delta,
+                    reason: adjReason,
+                    notes: adjNotes.trim() || undefined,
+                  }),
+                `Adjusted ${adjSku.trim()} @ ${adjLoc.trim()} by ${delta}`
+              );
+            }}
+          >
+            <label className="text-sm space-y-1">
+              <span className="text-muted-foreground">SKU</span>
+              <input
+                className="w-full rounded-md border px-3 py-2 text-sm font-mono"
+                value={adjSku}
+                onChange={(e) => setAdjSku(e.target.value)}
+                placeholder="BP-HC19-L4"
+                disabled={!!actionBusy || unreachable}
+              />
+            </label>
+            <label className="text-sm space-y-1">
+              <span className="text-muted-foreground">Location code</span>
+              <input
+                className="w-full rounded-md border px-3 py-2 text-sm font-mono"
+                value={adjLoc}
+                onChange={(e) => setAdjLoc(e.target.value)}
+                placeholder="CHI-N"
+                disabled={!!actionBusy || unreachable}
+              />
+            </label>
+            <label className="text-sm space-y-1">
+              <span className="text-muted-foreground">Delta (+/−)</span>
+              <input
+                className="w-full rounded-md border px-3 py-2 text-sm"
+                value={adjDelta}
+                onChange={(e) => setAdjDelta(e.target.value)}
+                disabled={!!actionBusy || unreachable}
+              />
+            </label>
+            <label className="text-sm space-y-1">
+              <span className="text-muted-foreground">Reason</span>
+              <select
+                className="w-full rounded-md border px-3 py-2 text-sm"
+                value={adjReason}
+                onChange={(e) => setAdjReason(e.target.value)}
+                disabled={!!actionBusy || unreachable}
+              >
+                <option value="receive">receive</option>
+                <option value="adjust">adjust</option>
+                <option value="cycle_count">cycle_count</option>
+                <option value="damage">damage</option>
+                <option value="return">return</option>
+                <option value="write_off">write_off</option>
+                <option value="other">other</option>
+              </select>
+            </label>
+            <label className="text-sm space-y-1 sm:col-span-2 lg:col-span-2">
+              <span className="text-muted-foreground">Notes</span>
+              <input
+                className="w-full rounded-md border px-3 py-2 text-sm"
+                value={adjNotes}
+                onChange={(e) => setAdjNotes(e.target.value)}
+                placeholder="optional"
+                disabled={!!actionBusy || unreachable}
+              />
+            </label>
+            <div className="flex items-end">
+              <Button type="submit" size="sm" disabled={!!actionBusy || unreachable}>
+                {actionBusy === "adjust" ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                ) : null}
+                Apply
+              </Button>
+            </div>
+          </form>
+
+          {adjustments.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b text-left text-muted-foreground">
+                    <th className="py-2 pr-3 font-medium">When</th>
+                    <th className="py-2 pr-3 font-medium">SKU</th>
+                    <th className="py-2 pr-3 font-medium">Loc</th>
+                    <th className="py-2 pr-3 font-medium text-right">Δ</th>
+                    <th className="py-2 pr-3 font-medium text-right">After</th>
+                    <th className="py-2 font-medium">Reason</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {adjustments.map((a, i) => (
+                    <tr key={`${a.id ?? i}`} className="border-b last:border-0">
+                      <td className="py-2 pr-3 font-mono text-xs">{a.created_at || "—"}</td>
+                      <td className="py-2 pr-3 font-mono text-xs">{a.sku || "—"}</td>
+                      <td className="py-2 pr-3">{a.location_code || "—"}</td>
+                      <td className="py-2 pr-3 text-right tabular-nums">
+                        {typeof a.delta === "number" ? (a.delta > 0 ? `+${a.delta}` : a.delta) : "—"}
+                      </td>
+                      <td className="py-2 pr-3 text-right tabular-nums">{a.qty_after ?? "—"}</td>
+                      <td className="py-2 text-muted-foreground">{a.reason || "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground">No adjustments logged yet.</p>
           )}
         </CardContent>
       </Card>
