@@ -1,10 +1,11 @@
-# Swarm-45 progress
+# Swarm-45 progress — CLOSED
 
 | Slice | Status | Note |
 |------|--------|------|
-| 1–12 | done | schema + service supersession/ledger/export/analytics |
+| 1–12 | done | schema + service |
 | 13–22 | done | API/CLI/RBAC/tests |
-| 23–34 | done | FE supersessions + analytics + pay prefill |
-| 35–45 | in_progress | docs version ship |
+| 23–34 | done | FE |
+| 35–45 | done | docs v0.18.0 dual push |
 
-Core pytest 86 passed · dms api + boot smoke green · eval 100% hit@5 · verify_boot loaded_count 18
+**Tip:** `7562c77` · origin+legacy main  
+**Verify:** core 86 · dms/boot smoke · eval 100% · FE build · ruff clean
