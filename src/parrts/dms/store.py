@@ -149,6 +149,24 @@ CREATE TABLE IF NOT EXISTS payment_events (
     FOREIGN KEY (order_id) REFERENCES orders(id)
 );
 
+CREATE TABLE IF NOT EXISTS shipment_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    order_id INTEGER NOT NULL,
+    provider TEXT NOT NULL DEFAULT 'easypost',
+    external_id TEXT DEFAULT '',
+    tracking_code TEXT DEFAULT '',
+    label_url TEXT DEFAULT '',
+    carrier TEXT DEFAULT '',
+    service TEXT DEFAULT '',
+    rate REAL DEFAULT 0,
+    status TEXT NOT NULL DEFAULT 'rates',
+    configured INTEGER NOT NULL DEFAULT 0,
+    message TEXT DEFAULT '',
+    actor TEXT DEFAULT '',
+    created_at TEXT NOT NULL,
+    FOREIGN KEY (order_id) REFERENCES orders(id)
+);
+
 CREATE INDEX IF NOT EXISTS idx_inventory_sku ON inventory_levels(sku);
 CREATE INDEX IF NOT EXISTS idx_inventory_loc ON inventory_levels(location_id);
 CREATE INDEX IF NOT EXISTS idx_orders_customer ON orders(customer_id);
@@ -160,6 +178,7 @@ CREATE INDEX IF NOT EXISTS idx_adjustments_created ON stock_adjustments(created_
 CREATE INDEX IF NOT EXISTS idx_supersession_old ON part_supersessions(old_sku);
 CREATE INDEX IF NOT EXISTS idx_supersession_new ON part_supersessions(new_sku);
 CREATE INDEX IF NOT EXISTS idx_payment_events_order ON payment_events(order_id);
+CREATE INDEX IF NOT EXISTS idx_shipment_events_order ON shipment_events(order_id);
 """
 
 
@@ -198,6 +217,9 @@ class DmsStore:
             "ALTER TABLE orders ADD COLUMN payment_status TEXT DEFAULT ''",
             "ALTER TABLE orders ADD COLUMN last_payment_id TEXT DEFAULT ''",
             "ALTER TABLE orders ADD COLUMN paid_amount REAL DEFAULT 0",
+            "ALTER TABLE orders ADD COLUMN ship_status TEXT DEFAULT ''",
+            "ALTER TABLE orders ADD COLUMN tracking_code TEXT DEFAULT ''",
+            "ALTER TABLE orders ADD COLUMN last_shipment_id TEXT DEFAULT ''",
         ):
             try:
                 conn.execute(col_sql)

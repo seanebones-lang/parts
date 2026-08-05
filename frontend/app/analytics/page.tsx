@@ -345,6 +345,12 @@ export default function AnalyticsPage() {
                 {data?.payments?.event_count ?? "—"}
               </span>
             </div>
+            <div className="flex justify-between">
+              <span>Shipment events</span>
+              <span className="tabular-nums font-medium">
+                {data?.shipments?.event_count ?? "—"}
+              </span>
+            </div>
             <p className="text-xs text-muted-foreground">
               <Link href="/supersessions" className="underline">
                 Manage supersessions

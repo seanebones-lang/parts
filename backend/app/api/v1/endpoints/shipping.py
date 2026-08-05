@@ -76,7 +76,7 @@ async def shipping_rates(
     body: RatesRequest,
     current_user: Optional[User] = Depends(require_user_if_production),
 ) -> dict[str, Any]:
-    """Rate shop via EasyPost. 503 if key missing."""
+    """Rate shop via EasyPost. 503 if key missing. Records DMS shipment ledger when order_id int."""
     _ = current_user
     from parrts.commerce import get_shipping_rates
 
@@ -98,9 +98,23 @@ async def shipping_rates(
             if not result.get("configured", True)
             else status.HTTP_400_BAD_REQUEST
         )
+        _maybe_record_shipment(
+            body.order_id,
+            status="rates_failed",
+            configured=bool(result.get("configured")),
+            message=str(result.get("error") or "rates failed")[:500],
+            external_id="",
+        )
         raise HTTPException(status_code=code, detail=result.get("error") or "rates failed")
     if body.order_id is not None:
         result["order_id"] = body.order_id
+    _maybe_record_shipment(
+        body.order_id,
+        status="rates",
+        configured=True,
+        external_id=str(result.get("shipment_id") or ""),
+        message=f"rates={result.get('total_options') or len(result.get('rates') or [])}",
+    )
     return result
 
 
@@ -109,7 +123,7 @@ async def shipping_label(
     body: LabelRequest,
     current_user: Optional[User] = Depends(require_user_if_production),
 ) -> dict[str, Any]:
-    """Buy EasyPost label for shipment+rate. Fail closed without key."""
+    """Buy EasyPost label for shipment+rate. Fail closed without key. Ledger on success/fail."""
     _ = current_user
     from parrts.commerce import buy_shipping_label
 
@@ -120,7 +134,70 @@ async def shipping_label(
             if not result.get("configured", True)
             else status.HTTP_400_BAD_REQUEST
         )
+        _maybe_record_shipment(
+            body.order_id,
+            status="label_failed",
+            configured=bool(result.get("configured")),
+            external_id=str(body.shipment_id or ""),
+            message=str(result.get("error") or "label failed")[:500],
+        )
         raise HTTPException(status_code=code, detail=result.get("error") or "label failed")
     if body.order_id is not None:
         result["order_id"] = body.order_id
+    rate_val = 0.0
+    try:
+        rate_val = float(result.get("rate") or 0)
+    except (TypeError, ValueError):
+        rate_val = 0.0
+    _maybe_record_shipment(
+        body.order_id,
+        status="labeled",
+        configured=True,
+        external_id=str(result.get("shipment_id") or body.shipment_id or ""),
+        tracking_code=str(result.get("tracking_code") or ""),
+        label_url=str(result.get("label_url") or ""),
+        carrier=str(result.get("carrier") or ""),
+        service=str(result.get("service") or ""),
+        rate=rate_val,
+    )
     return result
+
+
+def _maybe_record_shipment(
+    order_id: str | int | None,
+    *,
+    status: str,
+    configured: bool = False,
+    external_id: str = "",
+    tracking_code: str = "",
+    label_url: str = "",
+    carrier: str = "",
+    service: str = "",
+    rate: float = 0.0,
+    message: str = "",
+) -> None:
+    if order_id is None:
+        return
+    try:
+        oid = int(order_id)
+    except (TypeError, ValueError):
+        return
+    try:
+        from app.api.v1.endpoints.dms import get_dms_service
+
+        svc = get_dms_service()
+        svc.record_shipment_event(
+            order_id=oid,
+            status=status,
+            configured=configured,
+            external_id=external_id,
+            tracking_code=tracking_code,
+            label_url=label_url,
+            carrier=carrier,
+            service=service,
+            rate=rate,
+            message=message,
+            actor="shipping.api",
+        )
+    except Exception:  # noqa: BLE001 — ledger secondary
+        pass

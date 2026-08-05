@@ -237,6 +237,7 @@ class DmsService:
 
         ss_count = self.store.fetchone("SELECT COUNT(*) AS c FROM part_supersessions")
         pay_count = self.store.fetchone("SELECT COUNT(*) AS c FROM payment_events")
+        ship_count = self.store.fetchone("SELECT COUNT(*) AS c FROM shipment_events")
 
         # created_at is ISO text from seed/service — prefix compare is enough offline
         recent_orders = self.store.fetchone(
@@ -297,6 +298,10 @@ class DmsService:
             "payments": {
                 "event_count": int(pay_count["c"]) if pay_count else 0,
                 "note": "Ledger of intents/events; not bank settlement",
+            },
+            "shipments": {
+                "event_count": int(ship_count["c"]) if ship_count else 0,
+                "note": "Ledger of rates/labels; not carrier SLA",
             },
             "oem": {
                 "feed_configured": bool(base.get("oem_configured")),
@@ -658,6 +663,7 @@ class DmsService:
             """
             SELECT o.id, o.customer_id, o.status, o.created_at, o.notes,
                    o.payment_status, o.last_payment_id, o.paid_amount,
+                   o.ship_status, o.tracking_code, o.last_shipment_id,
                    c.name AS customer_name
             FROM orders o
             LEFT JOIN customers c ON c.id = o.customer_id
@@ -935,6 +941,7 @@ class DmsService:
             """
             SELECT o.id, o.customer_id, o.status, o.created_at, o.notes,
                    o.payment_status, o.last_payment_id, o.paid_amount,
+                   o.ship_status, o.tracking_code, o.last_shipment_id,
                    c.name AS customer_name, c.email AS customer_email,
                    c.company AS customer_company
             FROM orders o
@@ -959,6 +966,9 @@ class DmsService:
         d["payment_status"] = str(d.get("payment_status") or "") or None
         d["last_payment_id"] = str(d.get("last_payment_id") or "") or None
         d["paid_amount"] = float(d.get("paid_amount") or 0)
+        d["ship_status"] = str(d.get("ship_status") or "") or None
+        d["tracking_code"] = str(d.get("tracking_code") or "") or None
+        d["last_shipment_id"] = str(d.get("last_shipment_id") or "") or None
         return d
 
     def set_order_status(self, order_id: int, status: str) -> dict[str, Any]:
@@ -1881,6 +1891,7 @@ class DmsService:
             )
         ]
         payment_events = _since("payment_events")
+        shipment_events = _since("shipment_events")
         part_supersessions = _since("part_supersessions")
         oem_sync_runs = [
             dict(r)
@@ -1899,6 +1910,7 @@ class DmsService:
             "stock_adjustments": stock_adjustments,
             "stock_transfers": stock_transfers,
             "payment_events": payment_events,
+            "shipment_events": shipment_events,
             "part_supersessions": part_supersessions,
             "oem_sync_runs": oem_sync_runs,
         }
@@ -1910,8 +1922,135 @@ class DmsService:
                 "stock_adjustments",
                 "stock_transfers",
                 "payment_events",
+                "shipment_events",
                 "part_supersessions",
                 "oem_sync_runs",
             )
         }
         return payload
+
+    # ----- Shipment ledger (EasyPost rates/labels — fail closed) ---------
+
+    def record_shipment_event(
+        self,
+        *,
+        order_id: int,
+        status: str = "rates",
+        provider: str = "easypost",
+        external_id: str = "",
+        tracking_code: str = "",
+        label_url: str = "",
+        carrier: str = "",
+        service: str = "",
+        rate: float = 0.0,
+        configured: bool = False,
+        message: str = "",
+        actor: str = "",
+        update_order: bool = True,
+    ) -> dict[str, Any]:
+        """Append shipment_events; stamp order ship fields on label purchase."""
+        self.ensure_schema()
+        self.get_order(int(order_id))
+        now = _utc_now()
+        st = str(status or "rates").strip().lower()
+        cur = self.store.execute(
+            """
+            INSERT INTO shipment_events
+                (order_id, provider, external_id, tracking_code, label_url,
+                 carrier, service, rate, status, configured, message, actor, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                int(order_id),
+                str(provider or "easypost"),
+                str(external_id or ""),
+                str(tracking_code or ""),
+                str(label_url or ""),
+                str(carrier or ""),
+                str(service or ""),
+                float(rate or 0),
+                st,
+                1 if configured else 0,
+                str(message or "")[:500],
+                str(actor or ""),
+                now,
+            ),
+        )
+        eid = int(getattr(cur, "lastrowid", 0) or 0)
+        if update_order:
+            self.store.execute(
+                """
+                UPDATE orders
+                SET ship_status = ?, tracking_code = ?, last_shipment_id = ?
+                WHERE id = ?
+                """,
+                (
+                    st,
+                    str(tracking_code or ""),
+                    str(external_id or ""),
+                    int(order_id),
+                ),
+            )
+        self.store.commit()
+        if not eid:
+            row = self.store.fetchone(
+                "SELECT id FROM shipment_events WHERE order_id = ? AND created_at = ? "
+                "ORDER BY id DESC LIMIT 1",
+                (int(order_id), now),
+            )
+            eid = int(row["id"]) if row else 0
+        return {
+            "ok": True,
+            "event": {
+                "id": eid,
+                "order_id": int(order_id),
+                "provider": str(provider or "easypost"),
+                "external_id": str(external_id or ""),
+                "tracking_code": str(tracking_code or ""),
+                "label_url": str(label_url or ""),
+                "carrier": str(carrier or ""),
+                "service": str(service or ""),
+                "rate": float(rate or 0),
+                "status": st,
+                "configured": bool(configured),
+                "message": str(message or "")[:500],
+                "actor": str(actor or ""),
+                "created_at": now,
+            },
+            "order": self.get_order(int(order_id)),
+        }
+
+    def list_shipment_events(
+        self, *, order_id: int | None = None, limit: int = 50
+    ) -> list[dict[str, Any]]:
+        self.ensure_schema()
+        lim = max(1, min(int(limit or 50), 200))
+        if order_id is not None:
+            rows = self.store.fetchall(
+                """
+                SELECT id, order_id, provider, external_id, tracking_code, label_url,
+                       carrier, service, rate, status, configured, message, actor, created_at
+                FROM shipment_events
+                WHERE order_id = ?
+                ORDER BY id DESC
+                LIMIT ?
+                """,
+                (int(order_id), lim),
+            )
+        else:
+            rows = self.store.fetchall(
+                """
+                SELECT id, order_id, provider, external_id, tracking_code, label_url,
+                       carrier, service, rate, status, configured, message, actor, created_at
+                FROM shipment_events
+                ORDER BY id DESC
+                LIMIT ?
+                """,
+                (lim,),
+            )
+        out = []
+        for r in rows:
+            d = dict(r)
+            d["configured"] = bool(int(d.get("configured") or 0))
+            out.append(d)
+        return out

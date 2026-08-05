@@ -84,6 +84,43 @@ export default function ShippingInner() {
     })()
   }, [])
 
+  // Prefill customer email/name notes from DMS order when order_id present
+  useEffect(() => {
+    const oid = params.get('order_id') || orderId
+    if (!oid) return
+    ;(async () => {
+      try {
+        const base =
+          (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_API_URL) ||
+          API_BASE_URL
+        const res = await fetch(`${base}/api/v1/dms/orders/${encodeURIComponent(oid)}`)
+        if (!res.ok) return
+        const data = (await res.json()) as {
+          order?: {
+            customer_name?: string
+            customer_email?: string
+            customer_company?: string
+            notes?: string
+          }
+        }
+        const ord = data.order || (data as { customer_name?: string })
+        const name =
+          (ord as { customer_name?: string }).customer_name ||
+          (ord as { customer_company?: string }).customer_company ||
+          ''
+        if (name) {
+          setTo((prev) => ({
+            ...prev,
+            name: prev.name && prev.name !== 'Customer' ? prev.name : name,
+          }))
+        }
+        // keep street empty — dealers type real ship-to; no invented address
+      } catch {
+        /* ignore */
+      }
+    })()
+  }, [params, orderId])
+
   const live = configured
 
   const onRates = async (e: React.FormEvent) => {
@@ -168,6 +205,7 @@ export default function ShippingInner() {
           <h1 className="text-3xl font-bold">Shipping</h1>
           <p className="text-muted-foreground">
             EasyPost rates + labels for fulfilled orders — live only with API key.
+            Order ID links a DMS shipment ledger (no fake labels).
           </p>
         </div>
         {loading ? (

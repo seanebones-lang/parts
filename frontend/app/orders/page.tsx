@@ -387,7 +387,20 @@ export default function OrdersPage() {
                                 : "—")}
                           </td>
                           <td className="py-2 pr-3">
-                            <Badge variant="secondary">{o.status || "open"}</Badge>
+                            <div className="flex flex-col gap-1">
+                              <Badge variant="secondary">{o.status || "open"}</Badge>
+                              {o.payment_status ? (
+                                <Badge variant="outline" className="text-[10px]">
+                                  pay:{o.payment_status}
+                                </Badge>
+                              ) : null}
+                              {o.ship_status ? (
+                                <Badge variant="outline" className="text-[10px]">
+                                  ship:{o.ship_status}
+                                  {o.tracking_code ? ` · ${o.tracking_code}` : ""}
+                                </Badge>
+                              ) : null}
+                            </div>
                           </td>
                           <td className="py-2 pr-3 text-right tabular-nums">
                             {formatMoney(total)}

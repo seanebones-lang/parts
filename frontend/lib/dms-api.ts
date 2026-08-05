@@ -126,7 +126,11 @@ export type DmsOrder = {
   order_number?: string;
   customer_id?: string | number;
   customer_name?: string;
+  customer_email?: string;
   status?: string;
+  payment_status?: string | null;
+  ship_status?: string | null;
+  tracking_code?: string | null;
   location_id?: string | number;
   location_code?: string;
   total?: number;
@@ -764,6 +768,7 @@ export type DmsAnalytics = {
   };
   supersessions?: { mapping_count?: number };
   payments?: { event_count?: number; note?: string };
+  shipments?: { event_count?: number; note?: string };
   oem?: {
     feed_configured?: boolean;
     last_sync?: unknown;
@@ -815,6 +820,7 @@ export async function getDmsAnalytics(): Promise<DmsAnalytics> {
   const fillRaw = asRecord(o.fill_rate) ?? {};
   const ssRaw = asRecord(o.supersessions) ?? {};
   const payRaw = asRecord(o.payments) ?? {};
+  const shipRaw = asRecord(o.shipments) ?? {};
   const revenueRaw = asRecord(o.revenue) ?? {};
   const oemRaw = asRecord(o.oem) ?? {};
   return {
@@ -850,6 +856,10 @@ export async function getDmsAnalytics(): Promise<DmsAnalytics> {
     payments: {
       event_count: num(payRaw.event_count),
       note: str(payRaw.note),
+    },
+    shipments: {
+      event_count: num(shipRaw.event_count),
+      note: str(shipRaw.note),
     },
     oem: {
       feed_configured: Boolean(oemRaw.feed_configured),

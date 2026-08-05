@@ -1,23 +1,19 @@
 # Parts — Session Handoff
 
-**Package:** parrts **v0.18.0**  
+**Package:** parrts **v0.19.0**  
 **SoT:** ~/Desktop/Parrts-Dist-RAG · ship seanebones-lang/parts
 
-## Done through Wave 29
-- Email desk, DMS, commerce key-gated, JWT mint, org FE, OEM beat, staging smoke
-- Transfers + stock receive/adjust audit
-- Live analytics (W28)
-- **Supersession chains** — `part_supersessions` · resolve chain · API/CLI/FE `/supersessions` · query meta redirects
-- **Payment ledger** — `payment_events` on orders · order-intent records DMS when order_id int · fail-closed
-- **Compliance export** — `GET /dms/compliance/export` · `parrts dms export-audit`
-- Analytics: dead_stock + fill_rate + supersession/payment counts
+## Done through Wave 30
+- Through W29: email, DMS, analytics, supersession, payment ledger, compliance
+- **Ship-from-order:** `shipment_events` · order ship_status/tracking · shipping rates/label ledger · FE order badges + ship name prefill
+- **Light PWA:** `manifest.webmanifest` + icons + layout metadata
 
-## Next (Wave 30+)
+## Next (Wave 31+)
 - Partner OEM only with real contract
 - Full multi-rooftop HA / RO-GL later
-- Optional: ship-from-order EasyPost UX, PWA
+- Optional: offline queue / install prompt polish
 
 ## Cont
-> Partner OEM / M3 only with credentials — else polish GA residuals (ship UX, PWA).
+> Partner OEM / M3 only with credentials — else GA residuals (offline queue, PWA polish).
 
-Tip: Wave 29 supersession + ledger v0.18.0
+Tip: Wave 30 ship ledger + PWA v0.19.0

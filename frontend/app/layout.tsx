@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import { Navigation } from './navigation'
@@ -9,6 +9,21 @@ export const metadata: Metadata = {
   title: 'Parts — Dealership Parts System | NextEleven',
   description:
     'Multi-location dealership parts system: AI search, DMS inventory/orders, OEM feed ingest.',
+  applicationName: 'Parts',
+  manifest: '/manifest.webmanifest',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Parts',
+  },
+}
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  themeColor: '#0f172a',
+  viewportFit: 'cover',
 }
 
 export default function RootLayout({

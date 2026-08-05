@@ -1069,6 +1069,24 @@ async def dms_record_payment_event(
         ) from exc
 
 
+@router.get("/shipments/events")
+async def dms_list_shipment_events(
+    order_id: Optional[int] = Query(None),
+    limit: int = Query(50, ge=1, le=200),
+):
+    try:
+        svc = get_dms_service()
+        rows = svc.list_shipment_events(order_id=order_id, limit=limit)
+        return {"success": True, "events": rows, "count": len(rows)}
+    except HTTPException:
+        raise
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"list shipment events failed: {exc}",
+        ) from exc
+
+
 @router.get("/compliance/export")
 async def dms_compliance_export(
     days: int = Query(90, ge=1, le=365),
