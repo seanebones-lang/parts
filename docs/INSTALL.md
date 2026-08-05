@@ -1,6 +1,8 @@
 # Parts — Production install & backup
 
-**Product:** Parts (`parrts`) · Repo: https://github.com/seanebones-lang/parts
+**Product:** Parts (`parrts` **v0.20.0**) · Repo: https://github.com/seanebones-lang/parts  
+**Surfaces:** email desk, search, DMS, analytics, supersessions, pay/ship (keyed), offline queue / PWA shell  
+**Also read:** `docs/SYSTEM.md` · `docs/DMS_OEM.md` · `docs/EMAIL_DESK.md`
 
 ## 1. Single-site embedded (laptop / one rooftop)
 
@@ -98,8 +100,8 @@ curl 'http://127.0.0.1:8000/api/v1/dms/rbac?role=manager'
 
 | Role | Can |
 |------|-----|
-| counter | search, orders write/status/invoice, pay/ship |
-| manager | + catalog write/import, cancel, reindex, OEM sync |
+| counter | search, orders write/status/invoice, pay/ship create, inventory receive, analytics read |
+| manager | + catalog write/import/supersession, cancel, reindex, OEM sync, inventory adjust, compliance export, transfers approve |
 | admin | + seed, orgs, ACL |
 
 Mutating DMS routes use `Depends(require_permission(...))`. Login/refresh use `AuthService.create_access_token_for_user`.

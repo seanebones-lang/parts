@@ -2,9 +2,10 @@
 
 **Repository:** https://github.com/seanebones-lang/parts  
 **Owner:** NextEleven LLC  
-**Package:** `parrts` v0.15.0  
+**Package:** `parrts` **v0.20.0**  
+**Tip track:** `git log -1` on `main` (ship remote `origin`)  
 **License:** Proprietary — NextEleven LLC (see `LICENSE`)  
-**Next session TODO:** [`docs/SESSION_HANDOFF_TODO.md`](docs/SESSION_HANDOFF_TODO.md)
+**Next session:** [`docs/SESSION_HANDOFF_TODO.md`](docs/SESSION_HANDOFF_TODO.md) · CTO: [`docs/CTO_BACKLOG.md`](docs/CTO_BACKLOG.md)
 
 ---
 
@@ -12,21 +13,24 @@
 
 **Parts** is NextEleven’s **dealership parts operating system**:
 
-1. **Email desk (selling point)** — inbound parts questions auto-answered by section specialists, graded green/yellow/red, full-text searchable for staff  
-2. **AI parts lookup** — hybrid dense + BM25 + RRF retrieval with green/yellow/red confidence  
-3. **DMS core** — multi-location catalog, inventory, customers, orders (embedded SQLite; Postgres for multi-node)  
-4. **OEM / distributor feeds** — pluggable ingest (`file` · `http` · synthetic for tests)  
-5. **Enterprise API** — FastAPI `/api/v1` + specialist agents  
-6. **Operator UI** — Next.js (email desk, search, inventory, orders, customers)  
-7. **Ops** — Docker Compose (dev + prod), CI, eval harness  
+1. **Email desk (selling point)** — inbound parts questions auto-answered by section specialists, graded green/yellow/red, human approve/send, IMAP/SMTP when keyed  
+2. **AI parts lookup** — hybrid dense + BM25 + RRF with green/yellow/red confidence + optional parent expand / supersession notes  
+3. **DMS core** — multi-location catalog, inventory, customers, orders, transfers, stock receive/adjust, supersessions  
+4. **OEM / distributor feeds** — pluggable ingest (`file` · `http` · synthetic for tests); Celery beat when URL set  
+5. **Commerce ledgers** — Stripe payment intents + EasyPost rates/labels **when keyed**; DMS `payment_events` / `shipment_events` (fail closed, no fake charges/labels)  
+6. **Operator UI** — Next.js (email, search, catalog, inventory, orders, customers, orgs, transfers, analytics, supersessions, payments, shipping)  
+7. **Counter resilience** — offline mutation queue (create order/customer) + light PWA shell (manifest + SW; never caches API JSON)  
+8. **Ops** — Docker Compose (dev + prod), CI, eval harness, backup scripts  
 
 ```bash
-python -m parrts email seed --clear
-python -m parrts email status
+python -m parrts email seed --clear && python -m parrts email status
+python -m parrts dms seed --reindex
 python -m parrts query "brake pads for 2019 Honda Civic" --no-llm
+python -m parrts dms analytics
 ```
 
-See `docs/EMAIL_DESK.md`.
+See `docs/EMAIL_DESK.md` · `docs/SYSTEM.md` · `docs/DMS_OEM.md`.
+
 ---
 
 ## System modes (all first-class)
@@ -34,10 +38,10 @@ See `docs/EMAIL_DESK.md`.
 | Mode | When | Storage |
 |------|------|---------|
 | **Embedded** | Single site / laptop / edge counter | SQLite `.parrts/dms.db` + local RAG index |
-| **Server** | Multi-user dealership / multi-rooftop | Postgres (+ optional pgvector) + Redis |
+| **Server** | Multi-user / multi-rooftop | Postgres (`DMS_BACKEND=postgres`) + Redis |
 | **OEM live** | `OEM_FEED_URL` (+ token) configured | HTTP adapter sync → DMS → reindex |
 
-`AUTH_MODE=demo` is for **local open dev only**. Production deployments use `AUTH_MODE=production`, strong `SECRET_KEY`, `DEBUG=false`.
+`AUTH_MODE=demo` is for **local open dev only**. Production: `AUTH_MODE=production`, strong `SECRET_KEY`, `DEBUG=false`.
 
 ---
 
@@ -48,8 +52,8 @@ See `docs/EMAIL_DESK.md`.
 ```bash
 git clone https://github.com/seanebones-lang/parts.git
 cd parts
-./scripts/demo_up.sh          # ingest + DMS seed/reindex + API :8000 + UI :3000
-# UI:  http://127.0.0.1:3000/parts
+./scripts/demo_up.sh          # ingest + DMS seed/reindex + email seed + API :8000 + UI :3000
+# UI:  http://127.0.0.1:3000/emails  (selling point)
 # API: http://127.0.0.1:8000/docs
 ./scripts/demo_smoke.sh
 ```
@@ -62,16 +66,16 @@ pip install -e ".[dev,api]"
 python -m parrts dms seed --reindex
 python -m parrts query "brake pads for 2019 Honda Civic" --no-llm
 parrts dms status
-parrts dms inventory
+parrts dms analytics
+parrts dms supersessions
+parrts dms export-audit --days 90 --out /tmp/parts-audit.json
 ```
 
 ### OEM feed (production path)
 
 ```bash
-# File drop from distributor export
 parrts dms sync-oem --source file --path /path/to/catalog.json --reindex
 
-# Live HTTP feed
 export OEM_FEED_URL="https://partner.example.com/v1/catalog"
 export OEM_FEED_TOKEN="Bearer …"
 parrts dms sync-oem --source http --reindex
@@ -93,36 +97,44 @@ docker compose -f docker-compose.prod.yml up -d --build
 ```
 ┌──────────────┐   ┌─────────────┐   ┌──────────────┐
 │ Operator UI  │   │  CLI parrts │   │ OEM / files  │
-│  Next.js     │   │  dms|query  │   │  HTTP feeds  │
+│  Next.js     │   │  dms|email  │   │  HTTP feeds  │
+│  + offline Q │   │  query|…    │   │              │
 └──────┬───────┘   └──────┬──────┘   └──────┬───────┘
        │                  │                 │
        ▼                  ▼                 ▼
 ┌───────────────────────────────────────────────────┐
-│ FastAPI  /query  /api/v1/*  /api/v1/dms/*           │
+│ FastAPI  /query  /api/v1/*  /api/v1/dms/*  /emails │
 └────────────┬───────────────────────┬──────────────┘
              ▼                       ▼
 ┌────────────────────┐   ┌──────────────────────────┐
-│ parrts core (RAG)  │   │ DMS core (SQLite/PG path) │
+│ parrts core (RAG)  │   │ DMS core (SQLite/PG)      │
 │ hybrid + traffic   │◄──│ catalog · stock · orders  │
-└────────────────────┘   └──────────────────────────┘
+│ supersession notes │   │ transfers · adjust · SS   │
+└────────────────────┘   │ pay/ship ledgers          │
+                         └──────────────────────────┘
 ```
 
 ---
 
-## Module status
+## Module status (honest)
 
 | Module | Status |
 |--------|--------|
+| Email desk | **Production-ready** (live mailbox when IMAP/SMTP set) |
 | Parts search (AI) | **Production path** |
-| DMS inventory / customers / orders | **Production path** (SQLite default; Postgres via `DMS_BACKEND=postgres` + migrate) |
-| OEM ingest adapters | **Production path** (configure feed) |
-| Auth JWT | **Production** when `AUTH_MODE=production` |
-| Payments (Stripe) | **Production path when keyed** — `/payments` + `/api/v1/payments/order-intent` |
-| Shipping (EasyPost) | **Production path when keyed** — `/shipping` + `/api/v1/shipping/rates|label` |
-| Analytics / agents UI | **In product** — deepens with telemetry wiring |
+| DMS inventory / customers / orders / transfers / adjust | **In system** |
+| Supersession chains | **In system** (`/supersessions`, CLI, query meta) |
+| Live DMS analytics | **In system** (`/analytics` — real tables only) |
+| OEM ingest adapters | **Production path** (configure feed; no scrape) |
+| Auth JWT + RBAC | **Production** when `AUTH_MODE=production` |
+| Payments (Stripe) | **When keyed** + DMS payment ledger |
+| Shipping (EasyPost) | **When keyed** + DMS shipment ledger |
+| Offline queue / light PWA | **In system** (orders/customers queue; shell SW) |
+| Partner OEM connector pack | **Contract only** — not claimed live without feed |
+| Full CDK/Reynolds parity | **No** |
 | Multi-tenant SaaS billing | Roadmap |
 
-Details: [`docs/SYSTEM.md`](docs/SYSTEM.md) · [`docs/DMS_OEM.md`](docs/DMS_OEM.md) · [`docs/ROADMAP_TO_COMPLETION.md`](docs/ROADMAP_TO_COMPLETION.md)
+Details: [`docs/SYSTEM.md`](docs/SYSTEM.md) · [`docs/DMS_OEM.md`](docs/DMS_OEM.md) · [`docs/ROADMAP_TO_COMPLETION.md`](docs/ROADMAP_TO_COMPLETION.md) · [`docs/ROADMAP.md`](docs/ROADMAP.md)
 
 ---
 
@@ -136,19 +148,31 @@ Copy `.env.example` → `.env`.
 | `AUTH_MODE` | `production` |
 | `SECRET_KEY` | strong random (required) |
 | `DEBUG` | `false` |
-| `POSTGRES_*` | required for multi-node |
-| `OEM_FEED_URL` / `OEM_FEED_TOKEN` | when live feed is online |
-| `STRIPE_*` / `EASYPOST_API_KEY` | when enabling pay/ship |
+| `POSTGRES_*` / `DMS_BACKEND` | multi-node |
+| `OEM_FEED_URL` / `OEM_FEED_TOKEN` | live feed |
+| `STRIPE_*` / `EASYPOST_API_KEY` | pay/ship |
+| `IMAP_*` / `EMAIL_*` | live mailbox |
 
 ---
 
 ## Testing
 
 ```bash
-pytest -q
+# from repo root
+ruff check src tests
+pytest -q --tb=short \
+  --ignore=tests/test_backend_boot.py \
+  --ignore=tests/test_auth_demo_mode.py \
+  --ignore=tests/test_agents_mocked.py \
+  --ignore=tests/test_langgraph_workflow.py \
+  --ignore=tests/test_pgvector_e2e.py \
+  --ignore=tests/test_dms_api.py \
+  --ignore=tests/test_email_api.py
 PYTHONPATH=backend:src python scripts/verify_boot.py
-python scripts/eval_retrieval.py -k 5
-cd frontend && npm run build
+PYTHONPATH=backend:src pytest -q tests/test_dms_api.py tests/test_email_api.py tests/test_backend_boot.py
+python scripts/eval_retrieval.py -k 5   # expect mode=parrts, high hit@5
+cd frontend && npm run type-check && npm run build
+gh run list -R seanebones-lang/parts -L 1   # presentable = success
 ```
 
 ---

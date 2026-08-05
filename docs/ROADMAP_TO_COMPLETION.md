@@ -3,10 +3,10 @@
 **Product:** Parts by NextEleven LLC  
 **Repo:** https://github.com/seanebones-lang/parts  
 **Local:** `~/Desktop/Parrts-Dist-RAG`  
-**Package:** `parrts` (current line: v0.13.0)  
+**Package:** `parrts` **v0.20.0** (trust `pyproject.toml` + `git log -1` over older section baselines)  
 **Document status:** Living roadmap — update checkboxes only after measured delivery  
-**Last updated:** 2026-08-04  
-**Session handoff:** [`SESSION_HANDOFF_TODO.md`](SESSION_HANDOFF_TODO.md)
+**Last updated:** 2026-08-05  
+**Session handoff:** [`SESSION_HANDOFF_TODO.md`](SESSION_HANDOFF_TODO.md) · short board: [`ROADMAP.md`](ROADMAP.md) · CTO: [`CTO_BACKLOG.md`](CTO_BACKLOG.md)
 
 ---
 
@@ -32,31 +32,36 @@ Parts is the **dealership parts operating system** for multi-location dealers:
 
 ---
 
-## 2. Current baseline (shipped)
+## 2. Current baseline (shipped) — v0.20.0
 
 ### Done — treat as the real product foundation
 
 | Area | What’s live |
 |------|-------------|
-| **AI core** | `src/parrts` hybrid dense + BM25 + RRF, traffic-light policy, parent expand, CLI/API query |
-| **Eval** | Offline harness; default dataset high hit@k |
-| **DMS core** | SQLite embedded (`.parrts/dms.db`): catalog, inventory, customers, orders, stock reserve |
-| **OEM adapters** | `synthetic` (bootstrap/tests), `file` (JSON/CSV), `http` (`OEM_FEED_URL` + token) |
-| **Bridge** | `parrts dms seed\|sync-oem --reindex` → rebuild RAG from DMS |
-| **API** | FastAPI `/`, `/health`, `/query`, `/demo/scenarios`, `/api/v1/*` (16+ routers incl. `dms`, `system`) |
-| **Auth** | `AUTH_MODE=demo\|production`; production secret guard; JWT on mutating routes in production |
-| **UI** | Next.js: Parts Search, Inventory, Orders, Customers; Payments/Shipping key-gated modules |
-| **Ops** | `system_up/down/smoke`, prod compose, CI matrix, honest docs (`SYSTEM.md`, `DMS_OEM.md`) |
+| **AI core** | Hybrid dense + BM25 + RRF, traffic-light, parent expand, supersession meta on query when DMS present |
+| **Eval** | Offline harness; default dataset high hit@k (`mode=parrts`) |
+| **Email desk** | SQLite FTS + specialists G/Y/R + human workflow + IMAP/SMTP when keyed |
+| **DMS core** | SQLite default / Postgres dual-mode: catalog, inventory, customers, orders, reserves, transfers, stock adjust |
+| **Supersession** | `part_supersessions` + resolve chains + FE `/supersessions` |
+| **Analytics** | `analytics_summary` from real DMS tables (not mock charts) |
+| **Commerce ledgers** | `payment_events` / `shipment_events`; Stripe/EasyPost when keyed (fail closed) |
+| **OEM adapters** | synthetic / file / http + Celery beat when URL set |
+| **Bridge** | `parrts dms seed\|sync-oem --reindex` → RAG |
+| **API** | FastAPI `/`, `/health`, `/query`, `/api/v1/*` soft-loaded (dms, emails, …) |
+| **Auth** | demo \| production; secret guard; JWT + RBAC |
+| **UI** | Next.js live modules listed in `SYSTEM.md` |
+| **Offline / PWA** | Order/customer mutation queue; shell SW + install prompt |
+| **Ops** | demo/system scripts, prod compose, CI matrix, backup scripts |
 
-### Partial / integration-gated
+### Partial / gated
 
 | Area | Gap |
 |------|-----|
-| Payments | Service code exists; UI reports key status; end-to-end pay-from-order UX incomplete |
-| Shipping | Same — EasyPost when keyed; label-from-order UX incomplete |
-| Agents UI | LangGraph specialists exist offline; not full SLA/ops console |
-| Analytics | Module shell; not bound to full telemetry warehouse |
-| Postgres DMS | Enterprise models/services exist; **DMS SoT today is SQLite embedded** |
+| Live OEM partner pack | Needs contracted feed / connector |
+| Live Stripe/EasyPost settlement | Needs keys; ledger ≠ bank/carrier settlement |
+| Agents UI | LangGraph offline specialists; not full SLA console |
+| Multi-rooftop HA / RO-GL | Later |
+| Full offline edge DMS | Queue is mutation-only (not full catalog offline) |
 
 ---
 
@@ -200,32 +205,37 @@ Do **not** block A on full OEM partner deals — file/HTTP adapters already carr
 - [x] CI required green  
 
 ### M2 — Multi-rooftop enterprise
-- [x] Org model + location ACL (**foundation** v0.13 — FE UI next)  
-- [x] RBAC JWT/header enforcement on DMS mutations (v0.13)  
-- [x] OEM schedule task helper (v0.13; beat wiring next)  
-- [ ] Org/ACL operator UI  
-- [ ] Celery beat entry in compose  
-- [ ] JWT role claim mint on login E2E  
-- [ ] Transfers + approvals  
-- [ ] Observability + load baseline  
+- [x] Org model + location ACL foundation  
+- [x] RBAC JWT/header enforcement on DMS mutations  
+- [x] OEM schedule task + Celery beat entry (skips without URL)  
+- [x] Org/ACL operator UI `/orgs`  
+- [x] JWT role claim mint on login/refresh  
+- [x] Transfers + manager approvals  
+- [x] Observability doc baseline (`OBSERVABILITY.md`)  
+- [ ] Load baseline numbers checked in  
+- [ ] Multi-site HA / RO-GL  
 
 ### M3 — Live supply network
-- [~] Scheduled feeds (task exists; beat + watermark next)  
+- [x] Scheduled feeds task + beat (gated on OEM_FEED_URL)  
+- [x] Supersession / mapping (W29)  
 - [ ] One contracted connector in prod  
-- [ ] Supersession / mapping  
+- [ ] Delta sync + watermark polish  
 
 ### M4 — Commerce complete
-- [ ] Stripe order pay + webhooks  
-- [ ] EasyPost labels  
-- [ ] Customer email notifications  
-- [ ] Real analytics  
+- [x] Stripe order-intent path + DMS payment ledger (keyed)  
+- [x] EasyPost rates/labels + DMS shipment ledger (keyed)  
+- [x] Real DMS analytics (not mock charts)  
+- [~] Webhooks / refunds / full settlement UX  
+- [ ] Customer email notifications for pay/ship  
 
 ### M5 — Scale complete
-- [ ] PWA counter  
-- [ ] Compliance export  
+- [x] Light PWA counter shell + install prompt (W30–31)  
+- [x] Offline mutation queue for order/customer (W31)  
+- [x] Compliance export (W29)  
+- [ ] Full offline catalog edge queue  
 - [ ] Support/SLA packaging  
 
-**“Roadmap complete”** = M1–M4 shipped and verified for at least one production dealer; M5 as growth.
+**“Roadmap complete”** = M1–M4 verified for at least one production dealer; M5 as growth. Partner OEM remains contract-gated.
 
 ---
 

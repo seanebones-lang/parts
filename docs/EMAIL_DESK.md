@@ -1,5 +1,7 @@
 # Email Desk — selling point (production)
 
+**Package:** `parrts` v0.20.0 · Still the primary selling surface.
+
 Inbound customer parts email is classified, answered by **section specialists**, graded **green / yellow / red**, stored in a **searchable** employee archive, and optionally synced via **IMAP/SMTP** when credentials are set.
 
 ## Grades

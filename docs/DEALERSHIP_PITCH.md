@@ -1,13 +1,14 @@
 # Parts — operator brief (dealership)
 
 **Product:** Parts by NextEleven LLC — dealership parts system  
+**Package:** `parrts` v0.20.0  
 **Repo:** https://github.com/seanebones-lang/parts
 
 ---
 
 ## One sentence
 
-Counter staff type what the customer says; Parts returns ranked parts across locations with confidence lights, backed by your DMS catalog and OEM/distributor feeds.
+Counter staff type what the customer says; Parts returns ranked parts across locations with confidence lights, backed by your DMS catalog, email desk, and OEM/distributor feeds when configured.
 
 ---
 
@@ -15,10 +16,12 @@ Counter staff type what the customer says; Parts returns ranked parts across loc
 
 ```bash
 ./scripts/demo_up.sh
+# Email desk: http://127.0.0.1:3000/emails   ← selling point
 # Counter:    http://127.0.0.1:3000/parts
 # Inventory:  http://127.0.0.1:3000/inventory
 # Orders:     http://127.0.0.1:3000/orders
-# Customers:  http://127.0.0.1:3000/customers
+# Analytics:  http://127.0.0.1:3000/analytics
+# Supersessions: http://127.0.0.1:3000/supersessions
 # API docs:   http://127.0.0.1:8000/docs
 ```
 
@@ -33,6 +36,24 @@ parrts dms sync-oem --source http --reindex
 
 ---
 
+## What you can show today (honest)
+
+| Live | Needs keys / contract |
+|------|------------------------|
+| Email desk G/Y/R + search + human approve | Live IMAP/SMTP |
+| Multi-location search + traffic light | — |
+| DMS inventory / orders / customers / transfers / adjust | — |
+| Analytics from real DMS events | — |
+| Supersession maps | — |
+| Offline queue for order/customer creates | — |
+| Light installable PWA shell | — |
+| Stripe pay / EasyPost ship | Live keys (else fail closed) |
+| Live OEM feed | Feed URL/token or partner contract |
+
+**Do not claim:** full CDK/Reynolds replacement, live OEM without credentials, fake payment/shipping success.
+
+---
+
 ## Production posture
 
 | Setting | Value |
@@ -42,16 +63,5 @@ parrts dms sync-oem --source http --reindex
 | `DEBUG` | `false` |
 | `SECRET_KEY` | long random |
 | Compose | `docker-compose.prod.yml` |
-
----
-
-## Objections
-
-| Question | Answer |
-|----------|--------|
-| Is this the real system? | Yes — Parts is the product: search + DMS + feeds + API + UI. |
-| Where does catalog come from? | Your DMS export or live OEM/distributor HTTP feed. |
-| Hallucinations? | Traffic-light ranking; human confirms. LLM synthesis optional/off by default. |
-| Payments/shipping? | Integrated modules; go live when Stripe/EasyPost keys are configured. |
 
 See `docs/SYSTEM.md` and `docs/DMS_OEM.md`.
