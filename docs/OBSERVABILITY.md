@@ -1,6 +1,7 @@
 # Observability baseline (Parts)
 
-**Package:** `parrts` v0.20.0 · updated Wave 31
+**Package:** `parrts` **v0.22.0** · updated through Wave 33  
+**Contact:** hello@mothership-ai.com
 
 ## What exists today
 
@@ -19,11 +20,14 @@
 | Supersessions | `GET /dms/supersessions` | mapping list |
 | Payment ledger | `GET /dms/payments/events` | intents/events — not bank settlement |
 | Shipment ledger | `GET /dms/shipments/events` | rates/labels — not carrier SLA |
+| Notification ledger | `GET /dms/notifications` · `parrts dms notifications` | drafts/sends — not delivery guarantee without SMTP |
 | Compliance export | `GET /dms/compliance/export` · `parrts dms export-audit` | manager+ |
 | Email desk | `GET /api/v1/emails/status` | G/Y/R counts |
+| Automation | `GET /api/v1/automation/status\|results` · `parrts automation *` | runs + HIL alerts |
 | Integrations | system integrations endpoint when mounted | key presence, no secrets |
 | CI | GitHub Actions `CI` | core + backend-smoke + FE build |
 | FE offline queue | browser localStorage | order/customer mutations only |
+| Load baseline | `docs/LOAD_BASELINE.md` · `scripts/load_baseline.py` | offline laptop timings — **not** prod multi-user SLA |
 
 ## Structured request logging (baseline)
 
@@ -36,8 +40,9 @@ Module loggers (`logging.getLogger(__name__)`). Recommended on mutating DMS/comm
 
 Not a full OpenTelemetry/APM stack — do not claim APM.
 
-## p95 / load (later)
+## p95 / load
 
+Offline baseline checked in (`docs/LOAD_BASELINE.md`).  
 Optional k6/vegeta against `/query` and `/api/v1/dms/inventory` in staging.  
 Draft target (not enforced): p95 `/query` no-LLM &lt; 300ms with hash embedder.
 
@@ -47,6 +52,9 @@ Draft target (not enforced): p95 `/query` no-LLM &lt; 300ms with hash embedder.
 curl -s http://127.0.0.1:8000/health | jq .
 curl -s http://127.0.0.1:8000/api/v1/dms/status | jq '{catalog_parts, backend}'
 curl -s http://127.0.0.1:8000/api/v1/dms/analytics | jq '{counts, revenue}'
+curl -s http://127.0.0.1:8000/api/v1/automation/results | jq .
+curl -s http://127.0.0.1:8000/api/v1/dms/notifications | jq .
 PYTHONPATH=backend:src python scripts/verify_boot.py
+python scripts/load_baseline.py
 gh run list -R seanebones-lang/parts -L 1
 ```

@@ -1,7 +1,8 @@
 # Parts — Load baseline (offline)
 
+**Package:** `parrts` **v0.22.0** · Wave 33  
 **Measured:** `2026-08-06T19:13:39+00:00`  
-**Note:** local offline baseline — not production SLA
+**Note:** local offline baseline — **not** production multi-user SLA  
 
 Re-run:
 ```bash
@@ -46,4 +47,5 @@ python scripts/load_baseline.py
 }
 ```
 
-Not a multi-user load test. Partner OEM / HA still gated.
+Not a multi-user load test. Partner OEM / HA still gated.  
+Contact: hello@mothership-ai.com · mothership-ai.com

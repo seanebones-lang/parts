@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>NextEleven Parts Inventory System — Product Pitch</title>
+<meta name="description" content="NextEleven Parts Inventory System: multi-location dealership parts OS — email desk, AI search, DMS, OEM feeds, transfers, and key-gated commerce." />
+<style>
+:root {
+  --ivory: #FAF9F5;
+  --white: #FFFFFF;
+  --slate: #141413;
+  --clay: #D97757;
+  --olive: #788C5D;
+  --rust: #B04A3F;
+  --oat: #E3DACC;
+  --gray-150: #F0EEE6;
+  --gray-300: #D1CFC5;
+  --gray-500: #87867F;
+  --gray-700: #3D3D3A;
+  --navy: #0B1F33;
+  --border: 1.5px solid var(--gray-300);
+  --radius-panel: 12px;
+  --radius-row: 8px;
+  --radius-pill: 999px;
+  --serif: ui-serif, Georgia, "Times New Roman", serif;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--ivory);
+  color: var(--gray-700);
+  font-family: var(--sans);
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+  padding: 0 0 100px;
+}
+a { color: var(--navy); }
+.topbar {
+  background: var(--navy);
+  color: #E8E6DF;
+  padding: 14px 24px;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 28px;
+  justify-content: space-between;
+  align-items: center;
+}
+.topbar strong { color: #fff; font-weight: 500; }
+.topbar a { color: var(--oat); text-decoration: none; }
+.hero {
+  background: linear-gradient(165deg, var(--navy) 0%, #16324f 55%, #1b4d3e 120%);
+  color: #F5F3EC;
+  padding: 64px 24px 72px;
+}
+.hero-inner { max-width: 980px; margin: 0 auto; }
+.eyebrow {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(232,230,223,0.7);
+  margin-bottom: 16px;
+}
+h1 {
+  font-family: var(--serif);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  font-size: clamp(2rem, 4.5vw, 3.1rem);
+  line-height: 1.15;
+  color: #fff;
+  max-width: 16ch;
+  margin-bottom: 18px;
+}
+.lede {
+  font-size: 1.15rem;
+  max-width: 62ch;
+  color: rgba(245,243,236,0.9);
+  margin-bottom: 28px;
+}
+.hero-ctas { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 36px; }
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: var(--radius-pill);
+  padding: 12px 20px;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  border: 1.5px solid transparent;
+  cursor: default;
+}
+.btn-primary { background: var(--clay); color: #fff; }
+.btn-ghost { background: transparent; color: #fff; border-color: rgba(255,255,255,0.35); }
+.hero-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+.stat {
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: var(--radius-row);
+  padding: 14px 16px;
+}
+.stat b {
+  display: block;
+  font-family: var(--serif);
+  font-size: 1.55rem;
+  font-weight: 500;
+  color: #fff;
+  letter-spacing: -0.02em;
+}
+.stat span {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(232,230,223,0.65);
+}
+.page { max-width: 980px; margin: 0 auto; padding: 48px 24px 0; }
+.layout {
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr);
+  gap: 40px;
+  align-items: start;
+}
+aside {
+  position: sticky;
+  top: 24px;
+  font-family: var(--mono);
+  font-size: 11px;
+}
+aside .toc-title {
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gray-500);
+  margin-bottom: 12px;
+}
+aside a {
+  display: block;
+  color: var(--gray-700);
+  text-decoration: none;
+  padding: 6px 0;
+  border-left: 2px solid var(--gray-300);
+  padding-left: 10px;
+}
+aside a:hover { border-left-color: var(--clay); color: var(--slate); }
+main section { margin-bottom: 56px; scroll-margin-top: 24px; }
+h2 {
+  font-family: var(--serif);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  font-size: 1.75rem;
+  color: var(--slate);
+  margin-bottom: 14px;
+}
+h3 {
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: 1.2rem;
+  color: var(--slate);
+  margin: 28px 0 10px;
+}
+p { margin-bottom: 14px; max-width: 68ch; }
+.pull {
+  font-family: var(--serif);
+  font-size: 1.35rem;
+  line-height: 1.4;
+  color: var(--slate);
+  border-left: 4px solid var(--clay);
+  padding: 8px 0 8px 18px;
+  margin: 22px 0 24px;
+  max-width: 40ch;
+}
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 20px 0;
+}
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin: 20px 0;
+}
+.card {
+  background: var(--white);
+  border: var(--border);
+  border-radius: var(--radius-panel);
+  padding: 20px;
+}
+.card.warn { border-left: 4px solid var(--clay); }
+.card.ok { border-left: 4px solid var(--olive); }
+.card h4 {
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: 1.05rem;
+  color: var(--slate);
+  margin-bottom: 8px;
+}
+.pill {
+  display: inline-block;
+  border-radius: var(--radius-pill);
+  padding: 2px 10px;
+  font-family: var(--mono);
+  font-size: 11px;
+  background: var(--oat);
+  color: var(--gray-700);
+  margin: 0 4px 4px 0;
+}
+.pill.g { background: rgba(120,140,93,0.2); color: var(--olive); }
+.pill.y { background: rgba(217,119,87,0.18); color: #a85a3a; }
+.pill.r { background: rgba(176,74,63,0.16); color: var(--rust); }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--white);
+  border: var(--border);
+  border-radius: var(--radius-panel);
+  overflow: hidden;
+  margin: 16px 0 22px;
+  font-size: 0.92rem;
+}
+thead { background: var(--gray-150); }
+th {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--gray-500);
+  text-align: left;
+  padding: 12px 14px;
+  font-weight: 500;
+}
+td {
+  padding: 12px 14px;
+  border-top: 1px solid var(--gray-300);
+  vertical-align: top;
+}
+.chart-card {
+  background: var(--white);
+  border: var(--border);
+  border-radius: var(--radius-panel);
+  padding: 18px 18px 12px;
+  margin: 16px 0;
+}
+.chart-card .caption {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--gray-500);
+  margin-bottom: 8px;
+}
+.chart-card .note {
+  font-size: 12px;
+  color: var(--gray-500);
+  margin-top: 8px;
+}
+.bar-row {
+  display: grid;
+  grid-template-columns: 120px 1fr 48px;
+  gap: 10px;
+  align-items: center;
+  margin: 8px 0;
+  font-size: 13px;
+}
+.bar-track {
+  height: 14px;
+  background: var(--gray-150);
+  border-radius: 7px;
+  overflow: hidden;
+}
+.bar-fill {
+  height: 100%;
+  border-radius: 7px;
+}
+.bar-fill.g { background: var(--olive); }
+.bar-fill.y { background: var(--clay); }
+.bar-fill.r { background: var(--rust); }
+.bar-fill.n { background: var(--navy); }
+.bar-fill.o { background: #3d6b8f; }
+.mono { font-family: var(--mono); font-size: 12px; }
+.callout {
+  background: rgba(217,119,87,0.06);
+  border-left: 3px solid var(--clay);
+  border-radius: var(--radius-row);
+  padding: 14px 16px;
+  margin: 18px 0;
+}
+.callout.ok {
+  background: rgba(120,140,93,0.08);
+  border-left-color: var(--olive);
+}
+.stack-layer {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 12px;
+  padding: 12px 14px;
+  border: var(--border);
+  border-radius: var(--radius-row);
+  background: var(--white);
+  margin-bottom: 8px;
+  align-items: center;
+}
+.stack-layer .tag {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--clay);
+}
+.flow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin: 16px 0;
+}
+.flow .step {
+  background: var(--white);
+  border: var(--border);
+  border-radius: var(--radius-row);
+  padding: 10px 12px;
+  font-size: 13px;
+  min-width: 110px;
+}
+.flow .arrow { color: var(--gray-500); font-family: var(--mono); }
+.footer {
+  max-width: 980px;
+  margin: 48px auto 0;
+  padding: 28px 24px;
+  border-top: var(--border);
+  font-size: 13px;
+  color: var(--gray-500);
+}
+.footer strong { color: var(--slate); }
+.dark-panel {
+  background: var(--slate);
+  color: #E8E6DF;
+  border-radius: var(--radius-panel);
+  padding: 22px;
+  margin: 20px 0;
+}
+.dark-panel h3 { color: #fff; margin-top: 0; }
+.dark-panel .mono { color: var(--gray-500); }
+@media (max-width: 860px) {
+  .layout { grid-template-columns: 1fr; }
+  aside { display: none; }
+  .hero-stats { grid-template-columns: 1fr 1fr; }
+  .grid-2, .grid-3 { grid-template-columns: 1fr; }
+}
+@media print {
+  .topbar, aside { display: none; }
+  .hero { padding: 32px 0; }
+  body { padding-bottom: 24px; }
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div><strong>NextEleven Parts Inventory System</strong> · Product pitch article</div>
+  <div>
+    <a href="https://github.com/seanebones-lang/parts">github.com/seanebones-lang/parts</a>
+    · v0.15.0 · NextEleven LLC
+  </div>
+</div>
+
+<header class="hero">
+  <div class="hero-inner">
+    <div class="eyebrow">LinkedIn-ready long-form · Dealership fixed ops · Multi-rooftop ready</div>
+    <h1>Stop losing parts revenue to slow answers and blind inventory.</h1>
+    <p class="lede">
+      <strong style="color:#fff">NextEleven Parts Inventory System</strong> is the dealership parts operating system:
+      AI multi-location lookup, an email desk that drafts answers with green/yellow/red control,
+      real DMS inventory &amp; orders, inter-store transfers, OEM feed sync, and commerce modules that go live only when you connect real keys.
+    </p>
+    <div class="hero-ctas">
+      <span class="btn btn-primary">Built for parts counters &amp; fixed ops leaders</span>
+      <span class="btn btn-ghost">Retrieval-first · human-in-the-loop · fail closed</span>
+    </div>
+    <div class="hero-stats">
+      <div class="stat"><b>7+</b><span>Modules in one system</span></div>
+      <div class="stat"><b>G / Y / R</b><span>Confidence &amp; desk grades</span></div>
+      <div class="stat"><b>N rooftops</b><span>Shared catalog model</span></div>
+      <div class="stat"><b>Fail closed</b><span>No fake pay / ship / OEM</span></div>
+    </div>
+  </div>
+</header>
+
+<div class="page">
+  <div class="layout">
+    <aside>
+      <div class="toc-title">On this page</div>
+      <a href="#problem">The problem</a>
+      <a href="#product">The product</a>
+      <a href="#desk">Email desk</a>
+      <a href="#search">AI parts search</a>
+      <a href="#dms">DMS &amp; transfers</a>
+      <a href="#oem">OEM feeds</a>
+      <a href="#stack">System architecture</a>
+      <a href="#roi">Impact model</a>
+      <a href="#honest">Honest scope</a>
+      <a href="#pilot">Pilot path</a>
+      <a href="#cta">Next step</a>
+    </aside>
+
+    <main>
+
+      <section id="problem">
+        <h2>The problem every multi-store parts department already feels</h2>
+        <p>
+          Customers don’t speak SKU. They speak cars, symptoms, and urgency.
+          Your team answers the same questions by phone, email, and counter — while stock lives
+          across rooftops, DMS screens, and tribal memory.
+        </p>
+        <div class="pull">
+          “Do you have brake pads for a 2019 Civic?” should not require three people and twenty minutes.
+        </div>
+        <div class="grid-2">
+          <div class="card warn">
+            <h4>Where time disappears</h4>
+            <p style="margin:0;font-size:0.95rem">
+              Email backlog · “let me call the other store” · wrong promise on stock ·
+              re-keying the same request into DMS · managers stuck approving every small move.
+            </p>
+          </div>
+          <div class="card warn">
+            <h4>Where money leaks</h4>
+            <p style="margin:0;font-size:0.95rem">
+              Lost walk-ins · delayed RO parts · customers who buy online after a slow reply ·
+              oversell risk when visibility is incomplete · staff burnout on repetitive quotes.
+            </p>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <div class="caption">Illustrative · Where a typical multi-store parts request burns minutes</div>
+          <div class="bar-row"><span>Find part language</span><div class="bar-track"><div class="bar-fill n" style="width:55%"></div></div><span class="mono">5–8m</span></div>
+          <div class="bar-row"><span>Check other stores</span><div class="bar-track"><div class="bar-fill o" style="width:70%"></div></div><span class="mono">6–12m</span></div>
+          <div class="bar-row"><span>Email draft / reply</span><div class="bar-track"><div class="bar-fill y" style="width:45%"></div></div><span class="mono">4–10m</span></div>
+          <div class="bar-row"><span>Confirm / reserve</span><div class="bar-track"><div class="bar-fill g" style="width:30%"></div></div><span class="mono">2–5m</span></div>
+          <p class="note">Not a customer benchmark — a teaching model of friction Parts is designed to compress. Your pilot measures real before/after on your top queries.</p>
+        </div>
+      </section>
+
+      <section id="product">
+        <h2>What NextEleven Parts Inventory System is</h2>
+        <p>
+          One product surface for the work parts people already do — search, email, stock, orders,
+          transfers, feeds, and (when you’re ready) payments and shipping.
+        </p>
+        <div class="grid-3">
+          <div class="card ok"><h4>1. Email desk</h4><p style="margin:0;font-size:0.92rem">Specialists draft replies. Green / yellow / red decides auto vs human. Searchable archive for staff.</p></div>
+          <div class="card ok"><h4>2. AI parts lookup</h4><p style="margin:0;font-size:0.92rem">Hybrid dense + keyword retrieval with traffic-light confidence across locations.</p></div>
+          <div class="card ok"><h4>3. DMS core</h4><p style="margin:0;font-size:0.92rem">Catalog, inventory, customers, orders — embedded SQLite or Postgres multi-user.</p></div>
+          <div class="card"><h4>4. Transfers</h4><p style="margin:0;font-size:0.92rem">Inter-store moves with stock conservation and manager approval thresholds.</p></div>
+          <div class="card"><h4>5. OEM / distributor feeds</h4><p style="margin:0;font-size:0.92rem">File drop or HTTP feed → DMS → reindex. Nightly beat when configured.</p></div>
+          <div class="card"><h4>6. Commerce modules</h4><p style="margin:0;font-size:0.92rem">Stripe / EasyPost paths that stay dark until real keys — never fake charges or labels.</p></div>
+        </div>
+        <p>
+          Operator UI (Next.js) + FastAPI enterprise surface + CLI for ops.
+          Demo stack: one command. Production compose with secrets, workers, and beat.
+        </p>
+      </section>
+
+      <section id="desk">
+        <h2>Selling point: the parts email desk</h2>
+        <p>
+          Inbound customer email is classified, routed to section specialists
+          (quote, order, inventory, shipping, payment, complaint, CS, general),
+          graded, and stored in a full-text searchable employee archive.
+        </p>
+        <div class="flow">
+          <div class="step"><strong>Classify</strong><br/><span class="mono">intent + dept</span></div>
+          <span class="arrow">→</span>
+          <div class="step"><strong>Specialist</strong><br/><span class="mono">draft + parts context</span></div>
+          <span class="arrow">→</span>
+          <div class="step"><strong>Grade</strong><br/><span class="mono">G / Y / R</span></div>
+          <span class="arrow">→</span>
+          <div class="step"><strong>Human desk</strong><br/><span class="mono">approve · override · edit</span></div>
+          <span class="arrow">→</span>
+          <div class="step"><strong>Send</strong><br/><span class="mono">dry-run or SMTP</span></div>
+        </div>
+
+        <div class="chart-card">
+          <div class="caption">Traffic-light control model (desk + search)</div>
+          <svg viewBox="0 0 640 220" width="100%" height="220" role="img" aria-label="Traffic light distribution chart">
+            <rect x="0" y="0" width="640" height="220" fill="#fff"/>
+            <!-- Green bar -->
+            <rect x="60" y="40" width="48" height="140" rx="6" fill="#788C5D"/>
+            <text x="84" y="30" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#788C5D">GREEN</text>
+            <text x="84" y="200" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#87867F">auto-ready</text>
+            <!-- Yellow -->
+            <rect x="160" y="70" width="48" height="110" rx="6" fill="#D97757"/>
+            <text x="184" y="60" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#D97757">YELLOW</text>
+            <text x="184" y="200" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#87867F">review</text>
+            <!-- Red -->
+            <rect x="260" y="110" width="48" height="70" rx="6" fill="#B04A3F"/>
+            <text x="284" y="100" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#B04A3F">RED</text>
+            <text x="284" y="200" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#87867F">urgent human</text>
+            <!-- Callouts -->
+            <text x="360" y="70" font-family="Georgia,serif" font-size="15" fill="#141413">Green = handled path</text>
+            <text x="360" y="94" font-family="system-ui,sans-serif" font-size="13" fill="#3D3D3A">Strong match + workable stock → draft OK to send</text>
+            <text x="360" y="128" font-family="Georgia,serif" font-size="15" fill="#141413">Yellow = human gate</text>
+            <text x="360" y="152" font-family="system-ui,sans-serif" font-size="13" fill="#3D3D3A">Ambiguous fit or thin stock → counter confirms</text>
+            <text x="360" y="186" font-family="Georgia,serif" font-size="15" fill="#141413">Red = escalate</text>
+            <text x="360" y="210" font-family="system-ui,sans-serif" font-size="13" fill="#3D3D3A">Complaint / failure / critical stock → never auto-fire</text>
+          </svg>
+          <p class="note">Policy is product, not decoration. Auto-SMTP only when credentials are set and grade is green (and auto-send enabled).</p>
+        </div>
+
+        <p>
+          <span class="pill g">Green</span>
+          <span class="pill y">Yellow</span>
+          <span class="pill r">Red</span>
+          Live IMAP/SMTP when you configure mailbox credentials. Without keys the desk still runs offline for training and process design — and fails closed on real send.
+        </p>
+      </section>
+
+      <section id="search">
+        <h2>AI parts search that dealers can defend</h2>
+        <p>
+          Hybrid retrieval combines dense semantic matching with BM25 keyword search (RRF fusion),
+          optional parent expansion across locations for the same base SKU, and a traffic-light policy
+          driven by similarity × stock — not vibes.
+        </p>
+        <div class="dark-panel">
+          <h3>Counter language → ranked availability</h3>
+          <p class="mono" style="margin-bottom:10px">query · no unsupervised “hallucinated SKU” as truth</p>
+          <p style="margin:0;font-size:0.95rem;color:#E8E6DF">
+            “Brake pads for 2019 Honda Civic” → ranked hits with location, stock posture, price signals,
+            and green/yellow/red so the advisor knows whether to quote, confirm, or escalate.
+            LLM phrasing is optional and off by default for pure retrieval demos.
+          </p>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <h4>Why hybrid matters for parts</h4>
+            <p style="margin:0;font-size:0.92rem">
+              Parts language mixes OEM numbers, aftermarket slang, vehicle fitment, and typos.
+              Pure keyword misses meaning; pure vector misses exact SKU discipline. Fusion keeps both.
+            </p>
+          </div>
+          <div class="card">
+            <h4>Multi-location without the phone tree</h4>
+            <p style="margin:0;font-size:0.92rem">
+              Same catalog model across stores. Expand siblings by base SKU so “we’re out here”
+              can become “we have two at Logan” in one response path.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section id="dms">
+        <h2>DMS core operators actually use</h2>
+        <p>
+          Not a mock dashboard. Catalog, multi-location inventory, customers, orders, invoices,
+          org/location ACL, and inter-store transfers with <strong>stock conservation</strong>.
+        </p>
+        <table>
+          <thead>
+            <tr><th>Capability</th><th>What it does</th><th>Control</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Inventory</strong></td>
+              <td>On-hand by location; filter by user ACL key</td>
+              <td>Empty ACL = unrestricted</td>
+            </tr>
+            <tr>
+              <td><strong>Orders</strong></td>
+              <td>Create, lifecycle (open→picking→invoiced→completed), cancel restores stock</td>
+              <td>RBAC on mutating routes</td>
+            </tr>
+            <tr>
+              <td><strong>Transfers</strong></td>
+              <td>Move SKU between stores; total qty conserved</td>
+              <td>Qty ≥ threshold needs manager approve</td>
+            </tr>
+            <tr>
+              <td><strong>Orgs / ACL</strong></td>
+              <td>Org codes, location assignment, user location scopes</td>
+              <td>Admin-managed</td>
+            </tr>
+            <tr>
+              <td><strong>Deploy modes</strong></td>
+              <td>Embedded SQLite (single site) or Postgres multi-user</td>
+              <td>Alembic migrate path</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="chart-card">
+          <div class="caption">Transfer control · threshold behavior (default qty ≥ 10 → manager)</div>
+          <div class="grid-2">
+            <div class="card ok">
+              <h4>Path A — small transfer</h4>
+              <p style="margin:0;font-size:0.92rem">Counter submits qty below threshold → status <span class="pill g">completed</span> immediately. Total SKU quantity across stores unchanged.</p>
+            </div>
+            <div class="card warn">
+              <h4>Path B — large transfer</h4>
+              <p style="margin:0;font-size:0.92rem">Qty at/above <span class="mono">PARRTS_TRANSFER_APPROVAL_QTY</span> → <span class="pill y">pending_approval</span> until manager. No stock move until approved.</p>
+            </div>
+          </div>
+          <p class="note">Configurable threshold. Counter cannot self-approve large moves. Cancel leaves stock untouched.</p>
+        </div>
+      </section>
+
+      <section id="oem">
+        <h2>OEM &amp; distributor feeds — adapters, not scraping</h2>
+        <p>
+          Catalog truth comes from <em>your</em> export or a contracted HTTP feed —
+          never unauthorized portal scraping, never invented partner APIs.
+        </p>
+        <div class="grid-3">
+          <div class="card"><h4>file</h4><p style="margin:0;font-size:0.92rem">JSON/CSV drop from distributor or DMS export → sync → reindex.</p></div>
+          <div class="card"><h4>http</h4><p style="margin:0;font-size:0.92rem">OEM_FEED_URL + optional token. Fail closed if unset.</p></div>
+          <div class="card"><h4>nightly beat</h4><p style="margin:0;font-size:0.92rem">Celery <span class="mono">oem.scheduled_sync</span> (default 06:00 UTC). Skips clean without URL.</p></div>
+        </div>
+        <div class="callout ok">
+          <strong>Ops visibility:</strong> every sync writes <span class="mono">oem_sync_runs</span> —
+          last run on DMS status, full list via API/CLI. You can prove what ran and when.
+        </div>
+      </section>
+
+      <section id="stack">
+        <h2>Architecture buyers can follow</h2>
+        <div class="stack-layer"><div class="tag">UI</div><div>Next.js operator desk — emails, parts search, inventory, orders, customers, orgs/ACL, transfers, pay/ship when keyed</div></div>
+        <div class="stack-layer"><div class="tag">API</div><div>FastAPI <span class="mono">/api/v1</span> · soft-loaded routers · demo vs production auth · RBAC permissions</div></div>
+        <div class="stack-layer"><div class="tag">Agents</div><div>Specialists for email + LangGraph enterprise path · parts lookup bridges to retrieval core</div></div>
+        <div class="stack-layer"><div class="tag">Core</div><div><span class="mono">parrts</span> hybrid RAG · policy traffic lights · DMS service · commerce fail-closed helpers</div></div>
+        <div class="stack-layer"><div class="tag">Data</div><div>SQLite embedded · Postgres dual-mode · FTS email archive · OEM run log · Redis for workers</div></div>
+        <div class="stack-layer"><div class="tag">Ops</div><div>demo_up / smoke · staging commerce smoke · prod compose · Celery worker + beat · CI</div></div>
+
+        <div class="chart-card">
+          <div class="caption">Module readiness map (product truth)</div>
+          <div class="bar-row"><span>Email desk</span><div class="bar-track"><div class="bar-fill g" style="width:100%"></div></div><span class="mono">live</span></div>
+          <div class="bar-row"><span>AI counter search</span><div class="bar-track"><div class="bar-fill g" style="width:100%"></div></div><span class="mono">live</span></div>
+          <div class="bar-row"><span>DMS + transfers</span><div class="bar-track"><div class="bar-fill g" style="width:95%"></div></div><span class="mono">live</span></div>
+          <div class="bar-row"><span>OEM adapters</span><div class="bar-track"><div class="bar-fill y" style="width:80%"></div></div><span class="mono">ready*</span></div>
+          <div class="bar-row"><span>Pay / ship</span><div class="bar-track"><div class="bar-fill y" style="width:70%"></div></div><span class="mono">keyed</span></div>
+          <div class="bar-row"><span>Full DMS parity</span><div class="bar-track"><div class="bar-fill r" style="width:25%"></div></div><span class="mono">no</span></div>
+          <p class="note">*OEM “ready” means adapters + schedule exist; live catalog still requires your feed URL/token. Pay/ship require Stripe/EasyPost test or prod keys.</p>
+        </div>
+      </section>
+
+      <section id="roi">
+        <h2>Impact model (illustrative — measure on your pilot)</h2>
+        <p>
+          We don’t invent your P&amp;L. We give a transparent model so leadership can plug in
+          their own volumes. Pilot success = measured minutes saved and fewer wrong promises on <em>your</em> top 20 questions.
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th>Lever</th>
+              <th>Conservative</th>
+              <th>Base</th>
+              <th>Stretch</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Parts emails / day / rooftop</td>
+              <td>25</td>
+              <td>40</td>
+              <td>70</td>
+            </tr>
+            <tr>
+              <td>Minutes saved / email (desk + search)</td>
+              <td>3</td>
+              <td>6</td>
+              <td>10</td>
+            </tr>
+            <tr>
+              <td>Staff hours recovered / day (1 store)</td>
+              <td>1.3</td>
+              <td>4.0</td>
+              <td>11.7</td>
+            </tr>
+            <tr>
+              <td>@ $45 fully loaded / hour</td>
+              <td>~$58 / day</td>
+              <td>~$180 / day</td>
+              <td>~$525 / day</td>
+            </tr>
+            <tr>
+              <td>3-rooftop group (base case)</td>
+              <td colspan="3"><strong>~$540 / day time capacity</strong> before counting retained parts sales</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="chart-card">
+          <div class="caption">Illustrative daily capacity recovery · hours (1 rooftop)</div>
+          <div class="bar-row"><span>Conservative</span><div class="bar-track"><div class="bar-fill n" style="width:18%"></div></div><span class="mono">1.3h</span></div>
+          <div class="bar-row"><span>Base</span><div class="bar-track"><div class="bar-fill o" style="width:45%"></div></div><span class="mono">4.0h</span></div>
+          <div class="bar-row"><span>Stretch</span><div class="bar-track"><div class="bar-fill g" style="width:100%"></div></div><span class="mono">11.7h</span></div>
+          <p class="note">Teaching model only. Your pilot instruments real email volume, handle time, and conversion — not this chart.</p>
+        </div>
+
+        <div class="grid-2">
+          <div class="card ok">
+            <h4>Soft revenue upside (not promised)</h4>
+            <p style="margin:0;font-size:0.92rem">
+              Faster green-path quotes · fewer “I’ll call you back” exits · sister-store transfer before the customer leaves ·
+              managers only on large moves and reds.
+            </p>
+          </div>
+          <div class="card">
+            <h4>Risk reduction</h4>
+            <p style="margin:0;font-size:0.92rem">
+              Traffic lights reduce confident wrong answers. Fail-closed commerce avoids phantom payments/labels.
+              Audit trails on OEM runs and transfers.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section id="honest">
+        <h2>What we will not pretend</h2>
+        <div class="callout">
+          Trust is the product. Overclaiming kills dealership deals faster than a missing feature.
+        </div>
+        <table>
+          <thead><tr><th>Claim</th><th>Truth</th></tr></thead>
+          <tbody>
+            <tr><td>Full CDK / Reynolds replacement</td><td><strong>No.</strong> Parts is a modern parts OS layer — not parity with every DMS module.</td></tr>
+            <tr><td>“Live OEM” out of the box</td><td><strong>No without credentials.</strong> Adapters + beat exist; your feed URL/token required.</td></tr>
+            <tr><td>Live payments / labels in demo</td><td><strong>Only with Stripe / EasyPost keys.</strong> Otherwise HTTP 503, never fake success.</td></tr>
+            <tr><td>Unsupervised auto-send everything</td><td><strong>No.</strong> Green-only auto path; yellow/red require humans; red SMTP needs force.</td></tr>
+            <tr><td>Invented partner scrapers</td><td><strong>Never.</strong> Contracted feeds and file drops only.</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="pilot">
+        <h2>Pilot path that respects how dealers buy</h2>
+        <div class="grid-3">
+          <div class="card">
+            <h4>Days 1–3 · Stand up</h4>
+            <p style="margin:0;font-size:0.92rem">Deploy embedded or server profile. Seed or load catalog export. Walk email desk + counter search with staff.</p>
+          </div>
+          <div class="card">
+            <h4>Days 4–14 · Measure</h4>
+            <p style="margin:0;font-size:0.92rem">Instrument top 20 “do you have” queries + inbound email samples. Tune policy thresholds. Optional OEM file sync.</p>
+          </div>
+          <div class="card">
+            <h4>Days 15–30 · Decide</h4>
+            <p style="margin:0;font-size:0.92rem">Review hit quality, desk grade mix, transfer approval load. Connect mailbox / pay / ship only when ready.</p>
+          </div>
+        </div>
+        <h3>Who owns what in a pilot</h3>
+        <table>
+          <thead><tr><th>Role</th><th>NextEleven</th><th>Dealer</th></tr></thead>
+          <tbody>
+            <tr><td>System</td><td>Install, config, training, eval harness</td><td>Environment access, sample catalog/emails</td></tr>
+            <tr><td>Truth data</td><td>Adapters, mapping help</td><td>OEM/DMS export or feed credentials</td></tr>
+            <tr><td>Policy</td><td>Default G/Y/R + transfer threshold</td><td>Final say on auto-send and approval qty</td></tr>
+            <tr><td>Go-live</td><td>Prod compose, auth, backups</td><td>SSO/users, network, change management</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="cta">
+        <h2>Next step</h2>
+        <div class="dark-panel">
+          <h3>30-day measured pilot · 1–3 rooftops</h3>
+          <p style="margin-bottom:14px">
+            Bring your top 20 counter questions and a week of parts email.
+            We’ll stand up <strong>NextEleven Parts Inventory System</strong>, measure retrieval quality and desk handle time,
+            and leave you with a clear expand / don’t expand decision — not a slide deck full of vapor.
+          </p>
+          <p class="mono" style="margin-bottom:8px">Product · NextEleven LLC</p>
+          <p style="margin:0">
+            Ship repository: <a style="color:var(--clay)" href="https://github.com/seanebones-lang/parts">github.com/seanebones-lang/parts</a><br/>
+            Local demo path: <span class="mono">./scripts/demo_up.sh</span> · Email desk <span class="mono">/emails</span> · Search <span class="mono">/parts</span><br/>
+            Prepared by <strong style="color:#fff">Sean McDonnell</strong> · Founder &amp; CTO · NextEleven Studios / NextEleven LLC
+          </p>
+        </div>
+        <p style="font-size:0.9rem;color:var(--gray-500)">
+          © 2026 NextEleven LLC. Proprietary software. This article is educational product marketing, not a guarantee of financial results.
+          Charts marked illustrative are models for discussion; production claims require your pilot measurements and configured integrations.
+        </p>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<footer class="footer">
+  <strong>NextEleven Parts Inventory System</strong> · Multi-location dealership parts OS ·
+  Email desk · AI search · DMS · Transfers · OEM feeds · Key-gated commerce ·
+  v0.15.0 · Confidential when shared under NDA
+</footer>
+
+</body>
+</html>

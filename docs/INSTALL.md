@@ -1,8 +1,10 @@
 # Parts — Production install & backup
 
-**Product:** Parts (`parrts` **v0.20.0**) · Repo: https://github.com/seanebones-lang/parts  
-**Surfaces:** email desk, search, DMS, analytics, supersessions, pay/ship (keyed), offline queue / PWA shell  
-**Also read:** `docs/SYSTEM.md` · `docs/DMS_OEM.md` · `docs/EMAIL_DESK.md`
+**Product:** Parts (`parrts` **v0.22.0**) · Repo: https://github.com/seanebones-lang/parts  
+**Surfaces:** email desk, search, DMS, analytics, supersessions, automation `/results`, customer notify, pay/ship (keyed), offline queue / PWA shell  
+**Also read:** `docs/SYSTEM.md` · `docs/DMS_OEM.md` · `docs/EMAIL_DESK.md` · `docs/AUTOMATION.md` · `docs/LOAD_BASELINE.md`  
+**Contact:** hello@mothership-ai.com · mothership-ai.com  
+**Brand:** NextEleven Parts white-label only
 
 ## 1. Single-site embedded (laptop / one rooftop)
 
@@ -20,7 +22,7 @@ cp .env.example .env   # set SECRET_KEY for any non-demo deploy
 ./scripts/demo_smoke.sh
 ```
 
-Storage: `.parrts/dms.db`, `.parrts/emails.db`, `.parrts/index/`.
+Storage: `.parrts/dms.db`, `.parrts/emails.db`, `.parrts/automation.db`, `.parrts/index/`.
 
 ## 2. Server profile (Postgres DMS)
 
@@ -43,8 +45,10 @@ docker compose -f docker-compose.prod.yml up -d --build
 |-----|--------|
 | `STRIPE_SECRET_KEY` | Payments `/payments` |
 | `EASYPOST_API_KEY` | Shipping `/shipping` |
-| `IMAP_*` / `EMAIL_*` | Email desk live mailbox |
+| `IMAP_*` / `EMAIL_*` | Email desk live mailbox + customer notify SMTP |
 | `OEM_FEED_URL` (+ token) | Live OEM sync |
+| `PARRTS_NOTIFY_ON_STATUS` | Default on — dry-run customer notify on status change when email present |
+| `PARRTS_AUTO_NOTIFY` | Live SMTP notify only when true **and** SMTP configured |
 
 Fail closed without keys — no fake charges/labels/mail.
 
@@ -195,6 +199,29 @@ Invoice PDF: `parrts dms invoice ID` or Orders UI / `GET /api/v1/dms/orders/{id}
 - CLI `parrts dms import-csv --path file.csv --reindex`  
 - API `POST /api/v1/dms/catalog` · `POST /api/v1/dms/catalog/import-csv`
 
-## 9. SSL / reverse proxy notes
+## 9. Automation + customer notify (W32–W33)
+
+```bash
+# Automation results desk
+parrts automation status
+parrts automation results
+# FE: http://127.0.0.1:3000/results
+
+# Customer notify (needs order with customer email)
+parrts dms notify ORDER_ID --kind order_status --dry-run
+parrts dms notifications
+# FE: Orders page → Notify (dry-run)
+# Live SMTP: same EMAIL_* as desk + explicit send / PARRTS_AUTO_NOTIFY=true
+```
+
+## 10. Load baseline (offline)
+
+```bash
+python scripts/load_baseline.py   # refreshes docs/LOAD_BASELINE.md
+```
+
+Laptop timings only — not a multi-user production SLA.
+
+## 11. SSL / reverse proxy notes
 
 Terminate TLS at nginx/Caddy; proxy `:8000` API and `:3000` UI (or FE `npm start` behind same host). Set `NEXT_PUBLIC_API_URL` to public API origin. Restrict CORS to dealer hostnames in production settings.

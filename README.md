@@ -29,9 +29,12 @@ python -m parrts dms seed --reindex
 python -m parrts query "brake pads for 2019 Honda Civic" --no-llm
 python -m parrts dms analytics
 python -m parrts automation results
+python -m parrts dms notify 1 --kind order_status --dry-run   # needs customer email on order
+python -m parrts dms notifications --limit 20
+python scripts/load_baseline.py   # writes docs/LOAD_BASELINE.md
 ```
 
-See `docs/EMAIL_DESK.md` · `docs/SYSTEM.md` · `docs/DMS_OEM.md` · `docs/AUTOMATION.md`.
+See `docs/EMAIL_DESK.md` · `docs/SYSTEM.md` · `docs/DMS_OEM.md` · `docs/AUTOMATION.md` · `docs/LOAD_BASELINE.md`.
 
 ---
 
@@ -71,6 +74,10 @@ parrts dms status
 parrts dms analytics
 parrts dms supersessions
 parrts dms export-audit --days 90 --out /tmp/parts-audit.json
+parrts automation status
+parrts automation results
+parrts dms notify ORDER_ID --kind order_status --dry-run
+parrts dms notifications
 ```
 
 ### OEM feed (production path)
@@ -97,23 +104,22 @@ docker compose -f docker-compose.prod.yml up -d --build
 ## Architecture
 
 ```
-┌──────────────┐   ┌─────────────┐   ┌──────────────┐
-│ Operator UI  │   │  CLI parrts │   │ OEM / files  │
-│  Next.js     │   │  dms|email  │   │  HTTP feeds  │
-│  + offline Q │   │  query|…    │   │              │
-└──────┬───────┘   └──────┬──────┘   └──────┬───────┘
-       │                  │                 │
-       ▼                  ▼                 ▼
-┌───────────────────────────────────────────────────┐
-│ FastAPI  /query  /api/v1/*  /api/v1/dms/*  /emails │
-└────────────┬───────────────────────┬──────────────┘
-             ▼                       ▼
-┌────────────────────┐   ┌──────────────────────────┐
-│ parrts core (RAG)  │   │ DMS core (SQLite/PG)      │
-│ hybrid + traffic   │◄──│ catalog · stock · orders  │
-│ supersession notes │   │ transfers · adjust · SS   │
-└────────────────────┘   │ pay/ship ledgers          │
-                         └──────────────────────────┘
+┌──────────────┐   ┌──────────────────┐   ┌──────────────┐
+│ Operator UI  │   │  CLI parrts      │   │ OEM / files  │
+│  Next.js     │   │  dms|email|auto  │   │  HTTP feeds  │
+│  + offline Q │   │  query|notify…  │   │              │
+└──────┬───────┘   └────────┬─────────┘   └──────┬───────┘
+       │                    │                    │
+       ▼                    ▼                    ▼
+┌──────────────────────────────────────────────────────────┐
+│ FastAPI  /query  /api/v1/{dms,emails,automation}/*       │
+└────────────┬───────────────────────────┬─────────────────┘
+             ▼                           ▼
+┌────────────────────┐   ┌─────────────────────────────────┐
+│ parrts core (RAG)  │   │ DMS + notify + automation        │
+│ hybrid + traffic   │◄──│ catalog · stock · orders · SS    │
+│ supersession notes │   │ pay/ship/notify ledgers · HIL    │
+└────────────────────┘   └─────────────────────────────────┘
 ```
 
 ---
@@ -131,12 +137,17 @@ docker compose -f docker-compose.prod.yml up -d --build
 | Auth JWT + RBAC | **Production** when `AUTH_MODE=production` |
 | Payments (Stripe) | **When keyed** + DMS payment ledger |
 | Shipping (EasyPost) | **When keyed** + DMS shipment ledger |
-| Offline queue / light PWA | **In system** (orders/customers queue; shell SW) |
+| Offline queue / light PWA | **In system** (W31 — orders/customers queue; shell SW) |
+| AI workflow automation | **In system** (W32 — runs · HIL · email→order · `/results`) |
+| Customer notify | **In system** (W33 — `notification_events` · dry-run default · SMTP when keyed) |
+| Load baseline | **Measured offline** (`docs/LOAD_BASELINE.md` — not prod SLA) |
 | Partner OEM connector pack | **Contract only** — not claimed live without feed |
 | Full CDK/Reynolds parity | **No** |
 | Multi-tenant SaaS billing | Roadmap |
 
-Details: [`docs/SYSTEM.md`](docs/SYSTEM.md) · [`docs/DMS_OEM.md`](docs/DMS_OEM.md) · [`docs/ROADMAP_TO_COMPLETION.md`](docs/ROADMAP_TO_COMPLETION.md) · [`docs/ROADMAP.md`](docs/ROADMAP.md)
+Contact: **hello@mothership-ai.com** · [mothership-ai.com](https://mothership-ai.com)
+
+Details: [`docs/SYSTEM.md`](docs/SYSTEM.md) · [`docs/DMS_OEM.md`](docs/DMS_OEM.md) · [`docs/AUTOMATION.md`](docs/AUTOMATION.md) · [`docs/ROADMAP_TO_COMPLETION.md`](docs/ROADMAP_TO_COMPLETION.md) · [`docs/ROADMAP.md`](docs/ROADMAP.md)
 
 ---
 
@@ -153,7 +164,9 @@ Copy `.env.example` → `.env`.
 | `POSTGRES_*` / `DMS_BACKEND` | multi-node |
 | `OEM_FEED_URL` / `OEM_FEED_TOKEN` | live feed |
 | `STRIPE_*` / `EASYPOST_API_KEY` | pay/ship |
-| `IMAP_*` / `EMAIL_*` | live mailbox |
+| `IMAP_*` / `EMAIL_*` | live mailbox + customer notify SMTP |
+| `PARRTS_NOTIFY_ON_STATUS` | default on — dry-run notify on status change when email present |
+| `PARRTS_AUTO_NOTIFY` | live SMTP notify only when true **and** SMTP configured |
 
 ---
 

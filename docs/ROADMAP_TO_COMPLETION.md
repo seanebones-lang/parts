@@ -5,7 +5,8 @@
 **Local:** `~/Desktop/Parrts-Dist-RAG`  
 **Package:** `parrts` **v0.22.0** (trust `pyproject.toml` + `git log -1` over older section baselines)  
 **Document status:** Living roadmap — update checkboxes only after measured delivery  
-**Last updated:** 2026-08-05  
+**Last updated:** 2026-08-06 · honesty sync W31–W33  
+**Brand:** NextEleven Parts white-label only  
 **Session handoff:** [`SESSION_HANDOFF_TODO.md`](SESSION_HANDOFF_TODO.md) · short board: [`ROADMAP.md`](ROADMAP.md) · CTO: [`CTO_BACKLOG.md`](CTO_BACKLOG.md)
 
 ---
@@ -50,9 +51,10 @@ Parts is the **dealership parts operating system** for multi-location dealers:
 | **API** | FastAPI `/`, `/health`, `/query`, `/api/v1/*` soft-loaded (dms, emails, …) |
 | **Auth** | demo \| production; secret guard; JWT + RBAC |
 | **UI** | Next.js live modules listed in `SYSTEM.md` |
-| **Offline / PWA** | Order/customer mutation queue; shell SW + install prompt |
-| **Automation** | Runs + HIL alerts + email→order + `/results` |
-| **Customer notify** | `notification_events` + dry-run/SMTP fail-closed |
+| **Offline / PWA (W31)** | Order/customer mutation queue; shell SW + install prompt (never caches API JSON) |
+| **Automation (W32)** | `src/parrts/automation` · runs + HIL alerts + email→order + `/results` · CLI `parrts automation *` |
+| **Customer notify (W33)** | `notification_events` · `NotifyService` · `parrts dms notify\|notifications` · Orders **Notify** · dry-run/SMTP fail-closed |
+| **Load baseline (W33)** | `scripts/load_baseline.py` → `docs/LOAD_BASELINE.md` (offline timings; not prod SLA) |
 | **Ops** | demo/system scripts, prod compose, CI matrix, backup scripts |
 
 ### Partial / gated
@@ -107,13 +109,15 @@ Parts is the **dealership parts operating system** for multi-location dealers:
 | B4 | Central catalog + local overrides (price/qty) | Override wins at location |
 | B5 | Replication / HA Postgres notes (or managed PG) | Runbook |
 | B6 | Observability — structured logs, metrics, error tracking | Dashboards or documented stack |
-| B7 | Performance — p95 search & order under load target | Load test numbers checked in |
+| B7 | Performance — p95 search & order under load target | Offline load baseline checked in (`docs/LOAD_BASELINE.md`); multi-user SLA later |
 | B8 | SSO optional (OIDC) | Login with dealer IdP |
 
 **Exit criteria Phase B**
 
-- [ ] 3+ locations, 5+ users, role isolation proven  
-- [ ] Load test baseline published in `docs/`  
+- [x] Org + location ACL foundation + transfers/approvals (M2)  
+- [x] Offline load baseline published in `docs/LOAD_BASELINE.md` (not multi-user prod SLA)  
+- [ ] 3+ locations, 5+ users, role isolation proven in a live dealer deploy  
+- [ ] Multi-user load / HA numbers  
 
 ---
 
@@ -142,15 +146,17 @@ Parts is the **dealership parts operating system** for multi-location dealers:
 | D1 | Pay invoice from order (Stripe) | Real test-mode charge; webhook updates status |
 | D2 | Refund / partial refund | Ledger consistent |
 | D3 | Ship order (EasyPost) rates + label | Label PDF; tracking stored |
-| D4 | Email: quote / invoice / ship notice | Delivered via configured SMTP/provider |
-| D5 | Agents console — invoke specialists with audit | Correlation ID per run |
+| D4 | Email: quote / invoice / ship notice | Desk + customer notify ledger; SMTP when keyed |
+| D5 | Agents console — invoke specialists with audit | Automation runs + `/results` MIN; full SLA console later |
 | D6 | Analytics warehouse (orders, fill rate, dead stock) | Dashboard from real DMS events |
 | D7 | Barcode / serialized (existing modules) wired to DMS stock | Scan adjust qty |
 
 **Exit criteria Phase D**
 
-- [ ] Order → pay → ship → email happy path in staging with test keys  
-- [ ] Analytics from real events not mock charts  
+- [x] Analytics from real events not mock charts (W28)  
+- [x] Customer notify ledger + dry-run path (W33); live SMTP when keyed  
+- [x] Automation MIN runs/HIL/email→order/`/results` (W32)  
+- [~] Order → pay → ship → email happy path in staging with test keys (fail-closed smoke exists; live keys optional)  
 
 ---
 
@@ -158,10 +164,10 @@ Parts is the **dealership parts operating system** for multi-location dealers:
 
 | ID | Work | Acceptance |
 |----|------|------------|
-| E1 | Mobile-responsive counter PWA | Usable on tablet at parts counter |
-| E2 | Offline queue queue (edge) | Queue orders when API brief outage |
+| E1 | Mobile-responsive counter PWA | Light PWA shell + install prompt shipped (W30–31); deeper polish later |
+| E2 | Offline queue (edge) | Order/customer mutation queue shipped (W31); full catalog offline later |
 | E3 | Multi-currency / tax hooks | Configurable |
-| E4 | Compliance pack — audit export, retention | Export last 90 days |
+| E4 | Compliance pack — audit export, retention | Export last 90 days (W29) |
 | E5 | App marketplace / plugins (optional) | Documented extension points |
 | E6 | SLA, support tiers, status page | Business ops |
 
@@ -214,13 +220,14 @@ Do **not** block A on full OEM partner deals — file/HTTP adapters already carr
 - [x] JWT role claim mint on login/refresh  
 - [x] Transfers + manager approvals  
 - [x] Observability doc baseline (`OBSERVABILITY.md`)  
-- [x] Load baseline numbers checked in (`docs/LOAD_BASELINE.md`)  
+- [x] Load baseline numbers checked in (`docs/LOAD_BASELINE.md`) — offline measured, not multi-user SLA  
 - [ ] Multi-site HA / RO-GL  
+- [ ] SSO (OIDC)  
 
 ### M3 — Live supply network
 - [x] Scheduled feeds task + beat (gated on OEM_FEED_URL)  
 - [x] Supersession / mapping (W29)  
-- [ ] One contracted connector in prod  
+- [ ] One contracted connector in prod  ← **partner OEM unchecked until contract**  
 - [ ] Delta sync + watermark polish  
 
 ### M4 — Commerce complete
@@ -228,7 +235,8 @@ Do **not** block A on full OEM partner deals — file/HTTP adapters already carr
 - [x] EasyPost rates/labels + DMS shipment ledger (keyed)  
 - [x] Real DMS analytics (not mock charts)  
 - [~] Webhooks / refunds / full settlement UX  
-- [x] Customer email notifications for pay/ship (dry-run ledger; SMTP when keyed)  
+- [x] Customer email notifications for order/pay/ship (W33 — dry-run ledger; SMTP when keyed)  
+- [x] AI workflow automation MIN (W32 — runs · HIL · email→order · `/results`)  
 
 ### M5 — Scale complete
 - [x] Light PWA counter shell + install prompt (W30–31)  
@@ -237,7 +245,7 @@ Do **not** block A on full OEM partner deals — file/HTTP adapters already carr
 - [ ] Full offline catalog edge queue  
 - [ ] Support/SLA packaging  
 
-**“Roadmap complete”** = M1–M4 verified for at least one production dealer; M5 as growth. Partner OEM remains contract-gated.
+**“Roadmap complete”** = M1–M4 verified for at least one production dealer; M5 as growth. Partner OEM remains contract-gated (leave unchecked).
 
 ---
 
@@ -294,14 +302,12 @@ CI: `gh run list -R seanebones-lang/parts -L 1` must be **success** before calli
 
 **Full ordered TODO:** [`SESSION_HANDOFF_TODO.md`](SESSION_HANDOFF_TODO.md)
 
-Shipped through **v0.13.0** (M1 closed + M2 foundation).
+Shipped through **v0.22.0** (W31 offline/PWA · W32 automation MIN · W33 notify + load baseline).
 
-Next session:
+Next session (Wave 34+):
 1. Confirm CI green; dual-push `parts` + legacy mirror if needed  
-2. Wave 22 — JWT role mint on login E2E  
-3. Wave 23 — Org/ACL FE  
-4. Wave 24 — OEM beat in compose  
-5. Wave 25 — staging commerce with test keys only  
+2. Partner OEM connector **only with real contract** — do not invent feeds  
+3. Else multi-tenant residuals / SSO / HA notes — no fake CRM/GL  
 
 ---
 
@@ -310,7 +316,10 @@ Next session:
 | Doc | Purpose |
 |-----|---------|
 | `docs/SYSTEM.md` | Product definition |
-| `docs/DMS_OEM.md` | DMS + feed ops |
+| `docs/DMS_OEM.md` | DMS + feed ops + notify surfaces |
+| `docs/AUTOMATION.md` | AI workflow MIN contract |
+| `docs/LOAD_BASELINE.md` | Offline measured timings |
+| `docs/EMAIL_DESK.md` | Selling-point desk |
 | `docs/DEALERSHIP_PITCH.md` | Operator brief |
 | `docs/CTO_BACKLOG.md` | Execution checkboxes (short) |
 | `docs/DEMO_WALKTHROUGH.md` | Bring-up commands |
@@ -318,4 +327,4 @@ Next session:
 
 ---
 
-*NextEleven LLC — Parts roadmap. Update only with measured ships to `origin/main`.*
+*NextEleven LLC — Parts roadmap. Update only with measured ships to `origin/main`. Contact: hello@mothership-ai.com · mothership-ai.com*

@@ -1,14 +1,16 @@
 # Parts — operator brief (dealership)
 
 **Product:** Parts by NextEleven LLC — dealership parts system  
-**Package:** `parrts` v0.20.0  
-**Repo:** https://github.com/seanebones-lang/parts
+**Package:** `parrts` **v0.22.0**  
+**Repo:** https://github.com/seanebones-lang/parts  
+**Brand:** NextEleven Parts white-label only  
+**Contact:** hello@mothership-ai.com · mothership-ai.com
 
 ---
 
 ## One sentence
 
-Counter staff type what the customer says; Parts returns ranked parts across locations with confidence lights, backed by your DMS catalog, email desk, and OEM/distributor feeds when configured.
+Counter staff type what the customer says; Parts returns ranked parts across locations with confidence lights, backed by your DMS catalog, email desk, automation results, and OEM/distributor feeds when configured.
 
 ---
 
@@ -19,7 +21,8 @@ Counter staff type what the customer says; Parts returns ranked parts across loc
 # Email desk: http://127.0.0.1:3000/emails   ← selling point
 # Counter:    http://127.0.0.1:3000/parts
 # Inventory:  http://127.0.0.1:3000/inventory
-# Orders:     http://127.0.0.1:3000/orders
+# Orders:     http://127.0.0.1:3000/orders    (+ Notify dry-run)
+# Results:    http://127.0.0.1:3000/results   (automation HIL)
 # Analytics:  http://127.0.0.1:3000/analytics
 # Supersessions: http://127.0.0.1:3000/supersessions
 # API docs:   http://127.0.0.1:8000/docs
@@ -45,12 +48,15 @@ parrts dms sync-oem --source http --reindex
 | DMS inventory / orders / customers / transfers / adjust | — |
 | Analytics from real DMS events | — |
 | Supersession maps | — |
+| Automation runs + HIL + email→order (`/results`) | — |
+| Customer notify dry-run ledger (Orders **Notify**) | Live SMTP for real send |
 | Offline queue for order/customer creates | — |
 | Light installable PWA shell | — |
+| Offline load baseline numbers | — (laptop timings only) |
 | Stripe pay / EasyPost ship | Live keys (else fail closed) |
 | Live OEM feed | Feed URL/token or partner contract |
 
-**Do not claim:** full CDK/Reynolds replacement, live OEM without credentials, fake payment/shipping success.
+**Do not claim:** full CDK/Reynolds replacement, live OEM without credentials, fake payment/shipping success, silent email delivery without SMTP, dealer co-brand.
 
 ---
 
@@ -64,4 +70,4 @@ parrts dms sync-oem --source http --reindex
 | `SECRET_KEY` | long random |
 | Compose | `docker-compose.prod.yml` |
 
-See `docs/SYSTEM.md` and `docs/DMS_OEM.md`.
+See `docs/SYSTEM.md`, `docs/DMS_OEM.md`, `docs/AUTOMATION.md`.

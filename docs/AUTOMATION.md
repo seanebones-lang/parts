@@ -1,8 +1,9 @@
 # AI Workflow Automation — MIN bar (white-label)
 
 **Product:** Parts by NextEleven LLC  
-**Package:** `parrts` · this doc is the eng contract for the workflow MIN surface  
-**No dealer co-branding** in product UI/docs — generic white-label only.
+**Package:** `parrts` **v0.22.0** · Wave **32** shipped  
+**Contact:** hello@mothership-ai.com · mothership-ai.com  
+**No dealer co-branding** in product UI/docs — generic NextEleven Parts white-label only.
 
 ## What MIN means
 
@@ -27,6 +28,7 @@ A dealer can run **AI agent workflow automation** for parts ops:
 - Invented CRM/ERP/accounting API calls without credentials  
 - Silent auto-order without HIL when `require_human_confirm=true`  
 - CDK/Reynolds parity claims  
+- Full 13-agent unattended SLA console  
 
 ## Surfaces
 
@@ -39,6 +41,17 @@ A dealer can run **AI agent workflow automation** for parts ops:
 | CLI | `parrts automation status\|results\|runs\|alerts\|resolve\|rulesets\|email-to-order` |
 | Tests | `tests/test_automation.py` |
 
+### API routes
+
+- `GET /status` · `GET /results` · `GET /runs` · `GET /alerts`  
+- `POST /alerts/{id}/resolve`  
+- `GET|PUT /rulesets`  
+- `POST /email/{email_id}/to-order`  
+
+## Related (W33)
+
+Customer order/pay/ship notices are **not** the automation results desk — use `parrts dms notify` / Orders **Notify** / `notification_events`. See `docs/DMS_OEM.md`.
+
 ## Verify
 
 ```bash
@@ -46,5 +59,6 @@ cd ~/Desktop/Parrts-Dist-RAG
 PYTHONPATH=src pytest -q tests/test_automation.py
 PYTHONPATH=src python -m parrts email seed --clear
 PYTHONPATH=src python -m parrts automation results
+PYTHONPATH=src python -m parrts automation status
 PYTHONPATH=backend:src python scripts/verify_boot.py   # automation in loaded
 ```
