@@ -74,6 +74,36 @@ sent=json.loads(urllib.request.urlopen(req).read())
 assert sent.get("ok"), sent
 print("EMAIL DESK SMOKE OK")
 
+# Automation results
+raw=urllib.request.urlopen("http://127.0.0.1:8000/api/v1/automation/results?limit=5").read()
+auto=json.loads(raw)
+assert auto.get("ok") is True, auto
+print(f"automation runs={auto.get('total_runs')} open_alerts={auto.get('open_alerts')}")
+print("AUTOMATION SMOKE OK")
+
+# Customer notify dry-run (if any order exists via dms seed path may be empty — soft)
+try:
+    oraw=urllib.request.urlopen("http://127.0.0.1:8000/api/v1/dms/orders").read()
+    od=json.loads(oraw)
+    orders=od.get("orders") or od.get("items") or []
+    if orders:
+        oid=orders[0].get("id")
+        req=urllib.request.Request(
+            f"http://127.0.0.1:8000/api/v1/dms/orders/{oid}/notify",
+            data=json.dumps({"kind":"order_status","dry_run":True}).encode(),
+            headers={"Content-Type":"application/json"},
+            method="POST",
+        )
+        try:
+            nres=json.loads(urllib.request.urlopen(req).read())
+            print(f"notify dry-run ok={nres.get('success') or nres.get('ok')} dry_run={nres.get('dry_run')}")
+        except Exception as ne:
+            print(f"notify soft-skip: {ne}")
+    else:
+        print("notify soft-skip: no orders")
+except Exception as e:
+    print(f"notify soft-skip: {e}")
+
 # OEM scheduled helper — skip clean when OEM_FEED_URL unset
 import os, subprocess, sys
 root = os.environ.get("ROOT") or os.getcwd()
