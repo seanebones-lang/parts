@@ -30,6 +30,7 @@ import {
   sendEmail,
   trafficColor,
 } from "@/lib/email-api";
+import { emailToOrder } from "@/lib/automation-api";
 
 function tlBadge(
   color: string
@@ -149,6 +150,26 @@ export default function EmailsPage() {
     try {
       const res = await overrideEmail(Number(selected.id), color);
       setSelected(res.email);
+      await load();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : String(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onEmailToOrder = async (confirm: boolean) => {
+    if (!selected?.id) return;
+    setLoading(true);
+    setErr(null);
+    try {
+      const res = await emailToOrder(Number(selected.id), confirm);
+      const msg = confirm
+        ? String(res.message || `Order created`)
+        : String(res.message || "Draft preview ready — confirm to reserve stock");
+      setErr(null);
+      // surface result in err slot as info when not error — use alert-like via status
+      window.alert(msg + (res.order ? ` #${(res.order as { id?: number }).id}` : ""));
       await load();
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e));
@@ -386,6 +407,22 @@ export default function EmailsPage() {
                     disabled={loading}
                   >
                     Send via SMTP
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => void onEmailToOrder(false)}
+                    disabled={loading}
+                  >
+                    Draft order (HIL)
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="default"
+                    onClick={() => void onEmailToOrder(true)}
+                    disabled={loading}
+                  >
+                    Confirm → order
                   </Button>
                   <Button size="sm" variant="secondary" onClick={() => void onOverride("green")} disabled={loading}>
                     Override green

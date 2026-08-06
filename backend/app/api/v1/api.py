@@ -49,6 +49,7 @@ _include("deployment", "app.api.v1.endpoints.deployment", "/deployment", ["deplo
 _include("rollout", "app.api.v1.endpoints.rollout", "/rollout", ["rollout"])
 _include("dms", "app.api.v1.endpoints.dms", "/dms", ["dms"])
 _include("system", "app.api.v1.endpoints.system", "/system", ["system"])
+_include("automation", "app.api.v1.endpoints.automation", "/automation", ["automation"])
 
 
 def router_status() -> dict:

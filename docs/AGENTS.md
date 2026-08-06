@@ -4,7 +4,7 @@
 **Ship:** `origin` → `https://github.com/seanebones-lang/parts`  
 **Legacy mirror:** `legacy` → `https://github.com/seanebones-lang/Parrts-Dist-RAG`  
 **Handoff:** `docs/SESSION_HANDOFF_TODO.md` · **CTO SoT:** `docs/CTO_BACKLOG.md`  
-**Package:** `parrts` v0.20.0  
+**Package:** `parrts` v0.21.0  
 **Children do not commit.** Orchestrator integrates, verifies, dual-pushes.
 
 ## Stable lanes
@@ -19,6 +19,9 @@
 | **DMS-FE** | `frontend/app/{inventory,orders,customers,transfers,analytics,supersessions,catalog,orgs}/**`, `lib/dms-api.ts`, nav | backend models |
 | **COMMERCE-FE** | `frontend/app/{payments,shipping}/**`, `lib/commerce-api.ts` | invent charges/labels |
 | **PWA-FE** | `frontend/public/{sw.js,manifest.webmanifest,icon-*}`, `components/{offline-queue-banner,pwa-register}.tsx`, `lib/offline-queue.ts` | cache API JSON in SW |
+| **AUTO-CORE** | `src/parrts/automation/**`, CLI `automation.*`, `tests/test_automation.py` | FE deep |
+| **AUTO-BE** | `backend/app/api/v1/endpoints/automation.py` | rewrite automation schema from BE |
+| **AUTO-FE** | `frontend/app/results/**`, `lib/automation-api.ts`, email desk order bridge buttons | backend models |
 | **DOCS** | `README.md`, `docs/**` (honesty only after measured ship) | checkbox lies |
 | **ORCH** | integrate, pytest/eval/verify_boot, commit, push origin+legacy | — |
 

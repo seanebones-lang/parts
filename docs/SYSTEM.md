@@ -1,7 +1,7 @@
 # Parts — the system
 
 **Parts** by NextEleven LLC — dealership parts operating system.  
-**Package:** `parrts` **v0.20.0** · Ship: https://github.com/seanebones-lang/parts  
+**Package:** `parrts` **v0.21.0** · Ship: https://github.com/seanebones-lang/parts  
 **SoT clone:** `~/Desktop/Parrts-Dist-RAG` · Handoff: `docs/SESSION_HANDOFF_TODO.md`
 
 ## Product surfaces
@@ -13,6 +13,7 @@
 | DMS | Catalog, multi-location stock, customers, orders, transfers, receive/adjust | In system |
 | Supersessions | Old SKU → current chain; FE `/supersessions` | In system |
 | Analytics | Real DMS counts, order-book $, dead stock, fill-rate proxy | In system (not mock charts) |
+| **Automation** | Runs ledger · HIL alerts · email→order · rulesets · `/results` | **Wave 32** |
 | OEM feeds | File / HTTP ingest → DMS → reindex; nightly beat when URL set | Adapters ready; live needs credentials |
 | Commerce | Stripe intents + EasyPost rates/labels when keyed; DMS pay/ship ledgers | Fail closed without keys |
 | Offline / PWA | Queue create order/customer offline; installable shell SW | In system |
@@ -64,6 +65,7 @@ parrts dms supersessions
 | `/transfers` | Inter-store transfers |
 | `/analytics` | Live DMS analytics |
 | `/supersessions` | SKU supersession maps |
+| `/results` | Automation results (runs · HIL alerts) |
 | `/payments` | Stripe (keyed) + order prefill |
 | `/shipping` | EasyPost (keyed) + order prefill |
 

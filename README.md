@@ -2,7 +2,7 @@
 
 **Repository:** https://github.com/seanebones-lang/parts  
 **Owner:** NextEleven LLC  
-**Package:** `parrts` **v0.20.0**  
+**Package:** `parrts` **v0.21.0**  
 **Tip track:** `git log -1` on `main` (ship remote `origin`)  
 **License:** Proprietary — NextEleven LLC (see `LICENSE`)  
 **Next session:** [`docs/SESSION_HANDOFF_TODO.md`](docs/SESSION_HANDOFF_TODO.md) · CTO: [`docs/CTO_BACKLOG.md`](docs/CTO_BACKLOG.md)
@@ -16,20 +16,22 @@
 1. **Email desk (selling point)** — inbound parts questions auto-answered by section specialists, graded green/yellow/red, human approve/send, IMAP/SMTP when keyed  
 2. **AI parts lookup** — hybrid dense + BM25 + RRF with green/yellow/red confidence + optional parent expand / supersession notes  
 3. **DMS core** — multi-location catalog, inventory, customers, orders, transfers, stock receive/adjust, supersessions  
-4. **OEM / distributor feeds** — pluggable ingest (`file` · `http` · synthetic for tests); Celery beat when URL set  
-5. **Commerce ledgers** — Stripe payment intents + EasyPost rates/labels **when keyed**; DMS `payment_events` / `shipment_events` (fail closed, no fake charges/labels)  
-6. **Operator UI** — Next.js (email, search, catalog, inventory, orders, customers, orgs, transfers, analytics, supersessions, payments, shipping)  
-7. **Counter resilience** — offline mutation queue (create order/customer) + light PWA shell (manifest + SW; never caches API JSON)  
-8. **Ops** — Docker Compose (dev + prod), CI, eval harness, backup scripts  
+4. **AI workflow automation** — run ledger, HIL alerts, email→order bridge, results desk (`/results`)  
+5. **OEM / distributor feeds** — pluggable ingest (`file` · `http` · synthetic for tests); Celery beat when URL set  
+6. **Commerce ledgers** — Stripe payment intents + EasyPost rates/labels **when keyed**; DMS `payment_events` / `shipment_events` (fail closed, no fake charges/labels)  
+7. **Operator UI** — Next.js (email, search, catalog, inventory, orders, customers, orgs, transfers, analytics, supersessions, automation results, payments, shipping)  
+8. **Counter resilience** — offline mutation queue (create order/customer) + light PWA shell (manifest + SW; never caches API JSON)  
+9. **Ops** — Docker Compose (dev + prod), CI, eval harness, backup scripts  
 
 ```bash
 python -m parrts email seed --clear && python -m parrts email status
 python -m parrts dms seed --reindex
 python -m parrts query "brake pads for 2019 Honda Civic" --no-llm
 python -m parrts dms analytics
+python -m parrts automation results
 ```
 
-See `docs/EMAIL_DESK.md` · `docs/SYSTEM.md` · `docs/DMS_OEM.md`.
+See `docs/EMAIL_DESK.md` · `docs/SYSTEM.md` · `docs/DMS_OEM.md` · `docs/AUTOMATION.md`.
 
 ---
 

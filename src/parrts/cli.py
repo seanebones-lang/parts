@@ -402,6 +402,71 @@ def cmd_email_override(args: argparse.Namespace) -> int:
     return 0
 
 
+def _automation_service(args: argparse.Namespace):
+    from parrts.automation import AutomationService
+
+    return AutomationService(root=_root_from_args(args))
+
+
+def cmd_auto_status(args: argparse.Namespace) -> int:
+    svc = _automation_service(args)
+    print(json.dumps(svc.status(), indent=2))
+    return 0
+
+
+def cmd_auto_results(args: argparse.Namespace) -> int:
+    svc = _automation_service(args)
+    print(json.dumps(svc.results_summary(limit_runs=int(args.limit)), indent=2, default=str))
+    return 0
+
+
+def cmd_auto_runs(args: argparse.Namespace) -> int:
+    svc = _automation_service(args)
+    runs = svc.list_runs(
+        kind=args.kind,
+        status=args.status,
+        requires_human=bool(args.requires_human) if args.requires_human else None,
+        limit=int(args.limit),
+    )
+    print(json.dumps({"ok": True, "count": len(runs), "runs": runs}, indent=2, default=str))
+    return 0
+
+
+def cmd_auto_alerts(args: argparse.Namespace) -> int:
+    svc = _automation_service(args)
+    alerts = svc.list_alerts(unresolved_only=not bool(args.all), limit=int(args.limit))
+    print(json.dumps({"ok": True, "count": len(alerts), "alerts": alerts}, indent=2, default=str))
+    return 0
+
+
+def cmd_auto_resolve(args: argparse.Namespace) -> int:
+    svc = _automation_service(args)
+    try:
+        row = svc.resolve_alert(int(args.id))
+    except KeyError as exc:
+        print(json.dumps({"ok": False, "error": str(exc)}, indent=2))
+        return 1
+    print(json.dumps({"ok": True, "action": "automation.resolve", "alert": row}, indent=2))
+    return 0
+
+
+def cmd_auto_rulesets(args: argparse.Namespace) -> int:
+    svc = _automation_service(args)
+    print(json.dumps({"ok": True, "rulesets": svc.get_rulesets()}, indent=2))
+    return 0
+
+
+def cmd_auto_to_order(args: argparse.Namespace) -> int:
+    svc = _automation_service(args)
+    try:
+        result = svc.email_to_order(int(args.email_id), confirm=bool(args.confirm))
+    except Exception as exc:
+        print(json.dumps({"ok": False, "error": str(exc)}, indent=2))
+        return 1
+    print(json.dumps({"ok": True, "action": "automation.email-to-order", **result}, indent=2, default=str))
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="parrts",
@@ -640,6 +705,45 @@ def build_parser() -> argparse.ArgumentParser:
     p_email_ov.add_argument("--color", required=True, choices=["green", "yellow", "red"])
     p_email_ov.add_argument("--notes", default=None)
     p_email_ov.set_defaults(func=cmd_email_override)
+
+    # --- Automation (workflow results / HIL / email→order) ---
+    p_auto = sub.add_parser("automation", help="AI workflow runs, alerts, email→order bridge")
+    auto_sub = p_auto.add_subparsers(dest="auto_command", required=True)
+
+    p_auto_st = auto_sub.add_parser("status", help="Automation DB status")
+    p_auto_st.set_defaults(func=cmd_auto_status)
+
+    p_auto_res = auto_sub.add_parser("results", help="Results summary (daily/always)")
+    p_auto_res.add_argument("--limit", type=int, default=50)
+    p_auto_res.set_defaults(func=cmd_auto_results)
+
+    p_auto_runs = auto_sub.add_parser("runs", help="List automation runs")
+    p_auto_runs.add_argument("--kind", default=None)
+    p_auto_runs.add_argument("--status", default=None)
+    p_auto_runs.add_argument("--requires-human", action="store_true")
+    p_auto_runs.add_argument("--limit", type=int, default=100)
+    p_auto_runs.set_defaults(func=cmd_auto_runs)
+
+    p_auto_al = auto_sub.add_parser("alerts", help="List automation alerts")
+    p_auto_al.add_argument("--all", action="store_true", help="Include resolved")
+    p_auto_al.add_argument("--limit", type=int, default=100)
+    p_auto_al.set_defaults(func=cmd_auto_alerts)
+
+    p_auto_rv = auto_sub.add_parser("resolve", help="Resolve an alert by id")
+    p_auto_rv.add_argument("id", type=int)
+    p_auto_rv.set_defaults(func=cmd_auto_resolve)
+
+    p_auto_rs = auto_sub.add_parser("rulesets", help="Show automation rulesets JSON")
+    p_auto_rs.set_defaults(func=cmd_auto_rulesets)
+
+    p_auto_eo = auto_sub.add_parser("email-to-order", help="Draft/create DMS order from email (HIL)")
+    p_auto_eo.add_argument("email_id", type=int)
+    p_auto_eo.add_argument(
+        "--confirm",
+        action="store_true",
+        help="Actually create order (default: preview only)",
+    )
+    p_auto_eo.set_defaults(func=cmd_auto_to_order)
 
     return parser
 

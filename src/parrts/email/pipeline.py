@@ -298,6 +298,15 @@ class EmailPipeline:
 
         out = self.get(email_id) or {}
         out["pipeline_error"] = err
+        # Automation ledger + missing-field alerts (workflow MIN bar)
+        try:
+            from parrts.automation.service import AutomationService
+
+            root = getattr(self.store, "root", None)
+            if root is not None:
+                AutomationService(root).record_email_processed(out)
+        except Exception:
+            pass
         return out
 
     def update_draft(self, email_id: int, suggested_response: str) -> dict[str, Any]:
