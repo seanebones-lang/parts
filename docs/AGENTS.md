@@ -4,7 +4,7 @@
 **Ship:** `origin` → `https://github.com/seanebones-lang/parts`  
 **Legacy mirror:** `legacy` → `https://github.com/seanebones-lang/Parrts-Dist-RAG`  
 **Handoff:** `docs/SESSION_HANDOFF_TODO.md` · **CTO SoT:** `docs/CTO_BACKLOG.md`  
-**Package:** `parrts` v0.21.0  
+**Package:** `parrts` v0.22.0  
 **Children do not commit.** Orchestrator integrates, verifies, dual-pushes.
 
 ## Stable lanes

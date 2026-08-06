@@ -164,6 +164,24 @@ CREATE INDEX IF NOT EXISTS idx_supersession_old ON part_supersessions(old_sku);
 CREATE INDEX IF NOT EXISTS idx_supersession_new ON part_supersessions(new_sku);
 CREATE INDEX IF NOT EXISTS idx_payment_events_order ON payment_events(order_id);
 CREATE INDEX IF NOT EXISTS idx_shipment_events_order ON shipment_events(order_id);
+
+CREATE TABLE IF NOT EXISTS notification_events (
+    id SERIAL PRIMARY KEY,
+    order_id INTEGER REFERENCES orders(id),
+    kind TEXT NOT NULL DEFAULT 'order_status',
+    channel TEXT NOT NULL DEFAULT 'email',
+    to_address TEXT NOT NULL DEFAULT '',
+    subject TEXT NOT NULL DEFAULT '',
+    body TEXT NOT NULL DEFAULT '',
+    status TEXT NOT NULL DEFAULT 'drafted',
+    dry_run INTEGER NOT NULL DEFAULT 1,
+    configured INTEGER NOT NULL DEFAULT 0,
+    message TEXT DEFAULT '',
+    actor TEXT DEFAULT '',
+    created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_notification_events_order ON notification_events(order_id);
+CREATE INDEX IF NOT EXISTS idx_notification_events_created ON notification_events(created_at);
 """
 
 

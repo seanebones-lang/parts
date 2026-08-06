@@ -1,24 +1,24 @@
 # Parts — Session Handoff
 
-**Package:** parrts **v0.21.0**  
+**Package:** parrts **v0.22.0**  
 **SoT:** ~/Desktop/Parrts-Dist-RAG · ship seanebones-lang/parts
 
-## Done through Wave 32
-- Through W31: DMS, analytics, supersession, pay/ship ledgers, offline queue, PWA
-- **W32 AI workflow automation MIN (white-label):**
-  - `.parrts/automation.db` runs + alerts ledger
-  - Missing-field / error / red-grade alerts on email process
-  - Email → DMS order bridge (HIL preview default; confirm reserves stock)
-  - Rulesets JSON (`.parrts/rulesets.json`)
-  - API `/api/v1/automation/*` · FE `/results` · CLI `parrts automation *`
-  - Email desk Draft order / Confirm → order actions
+## Done through Wave 33
+- W32 automation MIN (runs · HIL · email→order · `/results`)
+- **W33 customer notifications + load baseline:**
+  - `notification_events` ledger (sqlite+pg)
+  - `NotifyService` order/pay/ship/invoice templates; dry-run default; SMTP fail-closed
+  - Status hook dry-run notify when customer email present (`PARRTS_NOTIFY_ON_STATUS`)
+  - API `POST /dms/orders/{id}/notify` · `GET /dms/notifications`
+  - CLI `parrts dms notify|notifications` · Orders UI **Notify**
+  - `scripts/load_baseline.py` → `docs/LOAD_BASELINE.md`
 
-## Next (Wave 33+)
+## Next (Wave 34+)
 - Partner OEM only with real contract
-- CRM/accounting connectors only with dealer credentials
-- HA / RO-GL / load baseline later
+- CRM/accounting only with dealer credentials
+- HA / RO-GL later
 
 ## Cont
-> Partner OEM only with credentials — else multi-tenant/load residuals.
+> Partner OEM only with credentials — else multi-tenant residuals.
 
-Tip: Wave 32 automation MIN v0.21.0 — white-label only (no dealer co-brand in product)
+Tip: Wave 33 notify + load baseline v0.22.0

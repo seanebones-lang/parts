@@ -221,6 +221,35 @@ def cmd_dms_invoice(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_dms_notify(args: argparse.Namespace) -> int:
+    from parrts.notify import NotifyService
+
+    svc = _dms_service(args)
+    n = NotifyService(root=_root_from_args(args), dms=svc)
+    try:
+        result = n.notify_order(
+            int(args.order_id),
+            kind=str(args.kind),
+            dry_run=bool(args.dry_run) if args.dry_run else (False if args.send else None),
+            actor="cli",
+        )
+    except Exception as exc:
+        print(json.dumps({"ok": False, "error": str(exc)}, indent=2))
+        return 1
+    print(json.dumps({"ok": True, "action": "dms.notify", **result}, indent=2, default=str))
+    return 0
+
+
+def cmd_dms_notifications(args: argparse.Namespace) -> int:
+    svc = _dms_service(args)
+    events = svc.list_notification_events(
+        order_id=int(args.order_id) if args.order_id else None,
+        limit=int(args.limit),
+    )
+    print(json.dumps({"ok": True, "count": len(events), "notifications": events}, indent=2, default=str))
+    return 0
+
+
 def cmd_dms_supersede(args: argparse.Namespace) -> int:
     svc = _dms_service(args)
     try:
@@ -619,6 +648,32 @@ def build_parser() -> argparse.ArgumentParser:
     p_dms_inv.add_argument("order_id", type=int)
     p_dms_inv.add_argument("--out", default=None, help="Output PDF path")
     p_dms_inv.set_defaults(func=cmd_dms_invoice)
+
+    p_dms_notify = dms_sub.add_parser(
+        "notify", help="Draft/send customer email for order (fail closed)"
+    )
+    p_dms_notify.add_argument("order_id", type=int)
+    p_dms_notify.add_argument(
+        "--kind",
+        default="order_status",
+        choices=["order_status", "payment", "shipment", "invoice"],
+    )
+    p_dms_notify.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Force draft only (default without SMTP)",
+    )
+    p_dms_notify.add_argument(
+        "--send",
+        action="store_true",
+        help="Attempt SMTP send (requires EMAIL_* credentials)",
+    )
+    p_dms_notify.set_defaults(func=cmd_dms_notify)
+
+    p_dms_notes = dms_sub.add_parser("notifications", help="List customer notification ledger")
+    p_dms_notes.add_argument("--order-id", type=int, default=None)
+    p_dms_notes.add_argument("--limit", type=int, default=50)
+    p_dms_notes.set_defaults(func=cmd_dms_notifications)
 
     p_dms_ss = dms_sub.add_parser("supersede", help="Map old SKU → new SKU (supersession)")
     p_dms_ss.add_argument("old_sku")

@@ -167,6 +167,23 @@ CREATE TABLE IF NOT EXISTS shipment_events (
     FOREIGN KEY (order_id) REFERENCES orders(id)
 );
 
+CREATE TABLE IF NOT EXISTS notification_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    order_id INTEGER,
+    kind TEXT NOT NULL DEFAULT 'order_status',
+    channel TEXT NOT NULL DEFAULT 'email',
+    to_address TEXT NOT NULL DEFAULT '',
+    subject TEXT NOT NULL DEFAULT '',
+    body TEXT NOT NULL DEFAULT '',
+    status TEXT NOT NULL DEFAULT 'drafted',
+    dry_run INTEGER NOT NULL DEFAULT 1,
+    configured INTEGER NOT NULL DEFAULT 0,
+    message TEXT DEFAULT '',
+    actor TEXT DEFAULT '',
+    created_at TEXT NOT NULL,
+    FOREIGN KEY (order_id) REFERENCES orders(id)
+);
+
 CREATE INDEX IF NOT EXISTS idx_inventory_sku ON inventory_levels(sku);
 CREATE INDEX IF NOT EXISTS idx_inventory_loc ON inventory_levels(location_id);
 CREATE INDEX IF NOT EXISTS idx_orders_customer ON orders(customer_id);
@@ -179,6 +196,8 @@ CREATE INDEX IF NOT EXISTS idx_supersession_old ON part_supersessions(old_sku);
 CREATE INDEX IF NOT EXISTS idx_supersession_new ON part_supersessions(new_sku);
 CREATE INDEX IF NOT EXISTS idx_payment_events_order ON payment_events(order_id);
 CREATE INDEX IF NOT EXISTS idx_shipment_events_order ON shipment_events(order_id);
+CREATE INDEX IF NOT EXISTS idx_notification_events_order ON notification_events(order_id);
+CREATE INDEX IF NOT EXISTS idx_notification_events_created ON notification_events(created_at);
 """
 
 

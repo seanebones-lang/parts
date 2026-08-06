@@ -578,6 +578,71 @@ async def dms_order_invoice_pdf(order_id: int):
         ) from exc
 
 
+class NotifyBody(BaseModel):
+    kind: str = "order_status"
+    dry_run: Optional[bool] = None
+    amount: Optional[float] = None
+    tracking_code: Optional[str] = None
+    carrier: Optional[str] = None
+    status: Optional[str] = None
+
+
+@router.post("/orders/{order_id}/notify")
+async def dms_order_notify(
+    order_id: int,
+    body: NotifyBody | None = None,
+    current_user: Optional[User] = Depends(require_user_if_production),
+):
+    """Draft or send customer email for order status/pay/ship (fail closed)."""
+    _ = current_user
+    from parrts.notify import NotifyService
+
+    body = body or NotifyBody()
+    try:
+        root = resolve_monorepo_root()
+        svc = get_dms_service()
+        n = NotifyService(root=root, dms=svc)
+        extra: dict = {}
+        if body.amount is not None:
+            extra["amount"] = body.amount
+        if body.tracking_code:
+            extra["tracking_code"] = body.tracking_code
+        if body.carrier:
+            extra["carrier"] = body.carrier
+        if body.status:
+            extra["status"] = body.status
+        result = n.notify_order(
+            int(order_id),
+            kind=body.kind,
+            dry_run=body.dry_run,
+            actor="api",
+            extra=extra or None,
+        )
+        return {"success": True, **result}
+    except ValueError as exc:
+        raise _http_exc_from_value_error(exc) from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc)) from exc
+    except HTTPException:
+        raise
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Notify failed: {exc}",
+        ) from exc
+
+
+@router.get("/notifications")
+async def dms_list_notifications(
+    order_id: Optional[int] = None,
+    limit: int = Query(50, ge=1, le=200),
+    current_user: Optional[User] = Depends(require_user_if_production),
+):
+    _ = current_user
+    events = get_dms_service().list_notification_events(order_id=order_id, limit=limit)
+    return {"success": True, "count": len(events), "notifications": events}
+
+
 @router.get("/rbac")
 async def dms_rbac(
     role: Optional[str] = Query(None),

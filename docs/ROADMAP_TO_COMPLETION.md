@@ -3,7 +3,7 @@
 **Product:** Parts by NextEleven LLC  
 **Repo:** https://github.com/seanebones-lang/parts  
 **Local:** `~/Desktop/Parrts-Dist-RAG`  
-**Package:** `parrts` **v0.20.0** (trust `pyproject.toml` + `git log -1` over older section baselines)  
+**Package:** `parrts` **v0.22.0** (trust `pyproject.toml` + `git log -1` over older section baselines)  
 **Document status:** Living roadmap — update checkboxes only after measured delivery  
 **Last updated:** 2026-08-05  
 **Session handoff:** [`SESSION_HANDOFF_TODO.md`](SESSION_HANDOFF_TODO.md) · short board: [`ROADMAP.md`](ROADMAP.md) · CTO: [`CTO_BACKLOG.md`](CTO_BACKLOG.md)
@@ -32,7 +32,7 @@ Parts is the **dealership parts operating system** for multi-location dealers:
 
 ---
 
-## 2. Current baseline (shipped) — v0.20.0
+## 2. Current baseline (shipped) — v0.22.0
 
 ### Done — treat as the real product foundation
 
@@ -51,6 +51,8 @@ Parts is the **dealership parts operating system** for multi-location dealers:
 | **Auth** | demo \| production; secret guard; JWT + RBAC |
 | **UI** | Next.js live modules listed in `SYSTEM.md` |
 | **Offline / PWA** | Order/customer mutation queue; shell SW + install prompt |
+| **Automation** | Runs + HIL alerts + email→order + `/results` |
+| **Customer notify** | `notification_events` + dry-run/SMTP fail-closed |
 | **Ops** | demo/system scripts, prod compose, CI matrix, backup scripts |
 
 ### Partial / gated
@@ -212,7 +214,7 @@ Do **not** block A on full OEM partner deals — file/HTTP adapters already carr
 - [x] JWT role claim mint on login/refresh  
 - [x] Transfers + manager approvals  
 - [x] Observability doc baseline (`OBSERVABILITY.md`)  
-- [ ] Load baseline numbers checked in  
+- [x] Load baseline numbers checked in (`docs/LOAD_BASELINE.md`)  
 - [ ] Multi-site HA / RO-GL  
 
 ### M3 — Live supply network
@@ -226,7 +228,7 @@ Do **not** block A on full OEM partner deals — file/HTTP adapters already carr
 - [x] EasyPost rates/labels + DMS shipment ledger (keyed)  
 - [x] Real DMS analytics (not mock charts)  
 - [~] Webhooks / refunds / full settlement UX  
-- [ ] Customer email notifications for pay/ship  
+- [x] Customer email notifications for pay/ship (dry-run ledger; SMTP when keyed)  
 
 ### M5 — Scale complete
 - [x] Light PWA counter shell + install prompt (W30–31)  

@@ -431,6 +431,33 @@ export async function createDmsInvoice(orderId: string | number): Promise<unknow
   return dmsPost(`/orders/${orderId}/invoice`, {});
 }
 
+export async function notifyDmsOrder(
+  orderId: string | number,
+  opts?: { kind?: string; dry_run?: boolean }
+): Promise<unknown> {
+  return dmsPost(`/orders/${orderId}/notify`, {
+    kind: opts?.kind || "order_status",
+    dry_run: opts?.dry_run ?? true,
+  });
+}
+
+export async function listDmsNotifications(opts?: {
+  order_id?: number;
+  limit?: number;
+}): Promise<{ notifications: unknown[]; count?: number; raw: unknown }> {
+  const q = new URLSearchParams();
+  if (opts?.order_id != null) q.set("order_id", String(opts.order_id));
+  if (opts?.limit != null) q.set("limit", String(opts.limit));
+  const qs = q.toString() ? `?${q.toString()}` : "";
+  const raw = await dmsGet<Record<string, unknown>>(`/notifications${qs}`);
+  const notifications = extractArray(raw, ["notifications", "items", "results", "data"]);
+  return {
+    notifications,
+    count: typeof raw?.count === "number" ? raw.count : notifications.length,
+    raw,
+  };
+}
+
 export function dmsInvoicePdfUrl(orderId: string | number): string {
   return `${API_BASE_URL}/api/v1/dms/orders/${orderId}/invoice.pdf`;
 }

@@ -198,6 +198,30 @@ def send_smtp_reply(
 ) -> dict[str, Any]:
     """Send a plain-text reply via SMTP. Raises RuntimeError if not configured."""
     cfg = cfg or MailboxConfig.from_env()
+    subj = subject or "(no subject)"
+    if not re.match(r"(?i)^re:", subj.strip()):
+        subj = f"Re: {subj}"
+    return send_smtp_message(
+        to_address=to_address,
+        subject=subj,
+        body=body,
+        cfg=cfg,
+        in_reply_to=in_reply_to,
+        references=references,
+    )
+
+
+def send_smtp_message(
+    *,
+    to_address: str,
+    subject: str,
+    body: str,
+    cfg: MailboxConfig | None = None,
+    in_reply_to: str | None = None,
+    references: str | None = None,
+) -> dict[str, Any]:
+    """Send plain-text email via SMTP (no automatic Re: prefix). Fail closed if unconfigured."""
+    cfg = cfg or MailboxConfig.from_env()
     if not cfg.smtp_configured():
         raise RuntimeError(
             "SMTP not configured — set EMAIL_USER + EMAIL_PASSWORD (and optional EMAIL_HOST)"
@@ -208,10 +232,7 @@ def send_smtp_reply(
     msg = EmailMessage()
     msg["From"] = cfg.from_address
     msg["To"] = to_address
-    subj = subject or "(no subject)"
-    if not re.match(r"(?i)^re:", subj.strip()):
-        subj = f"Re: {subj}"
-    msg["Subject"] = subj
+    msg["Subject"] = subject or "(no subject)"
     if in_reply_to:
         msg["In-Reply-To"] = in_reply_to
         msg["References"] = references or in_reply_to
@@ -235,7 +256,7 @@ def send_smtp_reply(
         "ok": True,
         "to": to_address,
         "from": cfg.from_address,
-        "subject": subj,
+        "subject": subject or "(no subject)",
         "transport": "smtp",
     }
 

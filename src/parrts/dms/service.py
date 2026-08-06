@@ -996,7 +996,32 @@ class DmsService:
             (new_status, int(order_id)),
         )
         self.store.commit()
-        return {"ok": True, "order": self.get_order(order_id), "from": cur, "to": new_status}
+        result = {"ok": True, "order": self.get_order(order_id), "from": cur, "to": new_status}
+        # Optional customer notify (dry-run unless PARRTS_AUTO_NOTIFY + SMTP)
+        try:
+            import os
+
+            if os.environ.get("PARRTS_NOTIFY_ON_STATUS", "1").strip().lower() not in {
+                "0",
+                "false",
+                "no",
+                "off",
+            }:
+                from parrts.notify import NotifyService
+
+                n = NotifyService(root=self.root, dms=self)
+                email = (result["order"].get("customer_email") or "").strip()
+                if email and "@" in email:
+                    note = n.notify_order(int(order_id), kind="order_status", dry_run=None, actor="status_hook")
+                    result["notification"] = {
+                        "ok": note.get("ok"),
+                        "dry_run": note.get("dry_run"),
+                        "sent": note.get("sent"),
+                        "event_id": (note.get("event") or {}).get("id"),
+                    }
+        except Exception as exc:  # noqa: BLE001 — never block status on notify
+            result["notification"] = {"ok": False, "error": str(exc)[:200]}
+        return result
 
     def write_invoice_pdf(self, order_id: int, path: Path | str | None = None) -> dict[str, Any]:
         """Generate a simple PDF invoice for an order (auto-marks invoiced if open/picking)."""
@@ -2051,6 +2076,109 @@ class DmsService:
         out = []
         for r in rows:
             d = dict(r)
+            d["configured"] = bool(int(d.get("configured") or 0))
+            out.append(d)
+        return out
+
+    # ----- Customer notifications (email ledger — fail closed) ------------
+
+    def record_notification_event(
+        self,
+        *,
+        order_id: int | None,
+        kind: str = "order_status",
+        channel: str = "email",
+        to_address: str = "",
+        subject: str = "",
+        body: str = "",
+        status: str = "drafted",
+        dry_run: bool = True,
+        configured: bool = False,
+        message: str = "",
+        actor: str = "",
+    ) -> dict[str, Any]:
+        self.ensure_schema()
+        now = _utc_now()
+        cur = self.store.execute(
+            """
+            INSERT INTO notification_events
+                (order_id, kind, channel, to_address, subject, body,
+                 status, dry_run, configured, message, actor, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                int(order_id) if order_id is not None else None,
+                str(kind or "order_status"),
+                str(channel or "email"),
+                str(to_address or ""),
+                str(subject or "")[:300],
+                str(body or "")[:8000],
+                str(status or "drafted"),
+                1 if dry_run else 0,
+                1 if configured else 0,
+                str(message or "")[:500],
+                str(actor or ""),
+                now,
+            ),
+        )
+        eid = int(getattr(cur, "lastrowid", 0) or 0)
+        self.store.commit()
+        if not eid:
+            row = self.store.fetchone(
+                "SELECT id FROM notification_events ORDER BY id DESC LIMIT 1"
+            )
+            eid = int(row["id"]) if row else 0
+        return {
+            "ok": True,
+            "event": {
+                "id": eid,
+                "order_id": int(order_id) if order_id is not None else None,
+                "kind": str(kind or "order_status"),
+                "channel": str(channel or "email"),
+                "to_address": str(to_address or ""),
+                "subject": str(subject or "")[:300],
+                "body": str(body or "")[:8000],
+                "status": str(status or "drafted"),
+                "dry_run": bool(dry_run),
+                "configured": bool(configured),
+                "message": str(message or "")[:500],
+                "actor": str(actor or ""),
+                "created_at": now,
+            },
+        }
+
+    def list_notification_events(
+        self, *, order_id: int | None = None, limit: int = 50
+    ) -> list[dict[str, Any]]:
+        self.ensure_schema()
+        lim = max(1, min(int(limit or 50), 200))
+        if order_id is not None:
+            rows = self.store.fetchall(
+                """
+                SELECT id, order_id, kind, channel, to_address, subject, body,
+                       status, dry_run, configured, message, actor, created_at
+                FROM notification_events
+                WHERE order_id = ?
+                ORDER BY id DESC
+                LIMIT ?
+                """,
+                (int(order_id), lim),
+            )
+        else:
+            rows = self.store.fetchall(
+                """
+                SELECT id, order_id, kind, channel, to_address, subject, body,
+                       status, dry_run, configured, message, actor, created_at
+                FROM notification_events
+                ORDER BY id DESC
+                LIMIT ?
+                """,
+                (lim,),
+            )
+        out: list[dict[str, Any]] = []
+        for r in rows:
+            d = dict(r)
+            d["dry_run"] = bool(int(d.get("dry_run") or 0))
             d["configured"] = bool(int(d.get("configured") or 0))
             out.append(d)
         return out

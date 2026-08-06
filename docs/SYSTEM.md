@@ -1,7 +1,7 @@
 # Parts — the system
 
 **Parts** by NextEleven LLC — dealership parts operating system.  
-**Package:** `parrts` **v0.21.0** · Ship: https://github.com/seanebones-lang/parts  
+**Package:** `parrts` **v0.22.0** · Ship: https://github.com/seanebones-lang/parts  
 **SoT clone:** `~/Desktop/Parrts-Dist-RAG` · Handoff: `docs/SESSION_HANDOFF_TODO.md`
 
 ## Product surfaces
@@ -14,6 +14,7 @@
 | Supersessions | Old SKU → current chain; FE `/supersessions` | In system |
 | Analytics | Real DMS counts, order-book $, dead stock, fill-rate proxy | In system (not mock charts) |
 | **Automation** | Runs ledger · HIL alerts · email→order · rulesets · `/results` | **Wave 32** |
+| **Customer notify** | Order/pay/ship email drafts + ledger; SMTP when keyed | Wave 33 |
 | OEM feeds | File / HTTP ingest → DMS → reindex; nightly beat when URL set | Adapters ready; live needs credentials |
 | Commerce | Stripe intents + EasyPost rates/labels when keyed; DMS pay/ship ledgers | Fail closed without keys |
 | Offline / PWA | Queue create order/customer offline; installable shell SW | In system |

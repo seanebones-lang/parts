@@ -27,6 +27,7 @@ import {
   listDmsCustomers,
   listDmsOrders,
   createDmsOrder,
+  notifyDmsOrder,
   setDmsOrderStatus,
 } from "@/lib/dms-api";
 
@@ -440,6 +441,31 @@ export default function OrdersPage() {
                                   }
                                 >
                                   Invoice
+                                </Button>
+                              )}
+                              {oid != null && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() =>
+                                    void notifyDmsOrder(String(oid), { dry_run: true })
+                                      .then((r) => {
+                                        const msg =
+                                          (r as { subject?: string; dry_run?: boolean })?.subject ||
+                                          "Notification drafted";
+                                        window.alert(
+                                          `Customer notify (dry-run): ${msg}. SMTP send only with credentials + --send.`
+                                        );
+                                        return load();
+                                      })
+                                      .catch((e) =>
+                                        window.alert(
+                                          e instanceof Error ? e.message : "Notify failed"
+                                        )
+                                      )
+                                  }
+                                >
+                                  Notify
                                 </Button>
                               )}
                               {o.status === "invoiced" && (
