@@ -134,6 +134,7 @@ def test_email_to_order_preview_and_confirm(root: Path) -> None:
 
 def test_automation_api_offline(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     pytest.importorskip("fastapi")
+    pytest.importorskip("sqlalchemy")
     from fastapi import FastAPI
     from fastapi.testclient import TestClient
 
