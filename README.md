@@ -2,7 +2,7 @@
 
 **Repository:** https://github.com/seanebones-lang/parts  
 **Owner:** NextEleven LLC  
-**Package:** `parrts` **v0.22.0**  
+**Package:** `parrts` **v0.22.0** (Jev shadow mode added)  
 **Tip track:** `git log -1` on `main` (ship remote `origin`)  
 **License:** Proprietary — NextEleven LLC (see `LICENSE`)  
 **Next session:** [`docs/SESSION_HANDOFF_TODO.md`](docs/SESSION_HANDOFF_TODO.md) · CTO: [`docs/CTO_BACKLOG.md`](docs/CTO_BACKLOG.md)
@@ -13,7 +13,7 @@
 
 **Parts** is NextEleven’s **dealership parts operating system**:
 
-1. **Email desk (selling point)** — inbound parts questions auto-answered by section specialists, graded green/yellow/red, human approve/send, IMAP/SMTP when keyed  
+1. **Email desk (selling point)** — inbound parts questions auto-answered by section specialists, graded green/yellow/red, human approve/send, IMAP/SMTP when keyed. **Jev shadow mode** (experimental, disabled by default) runs the official TypeSafe Jev model in parallel for evaluation only — production classification and routing are never changed.  
 2. **AI parts lookup** — hybrid dense + BM25 + RRF with green/yellow/red confidence + optional parent expand / supersession notes  
 3. **DMS core** — multi-location catalog, inventory, customers, orders, transfers, stock receive/adjust, supersessions  
 4. **AI workflow automation** — run ledger, HIL alerts, email→order bridge, results desk (`/results`)  

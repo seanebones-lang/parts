@@ -123,6 +123,32 @@ class EmailPipeline:
             )
             clf_d = clf.to_dict()
             agents.append(clf.specialist)
+
+            # === Jev Shadow Mode (read-only) ===
+            try:
+                from parrts.email.jev_shadow import classify_shadow, is_shadow_enabled
+                if is_shadow_enabled():
+                    jev_result = classify_shadow(
+                        subject=d.get("subject") or "",
+                        body=d.get("body_text") or "",
+                        sender_email=d.get("sender_email") or "",
+                    )
+                    if jev_result is not None:
+                        # Store shadow result for later analysis (never used for production decisions)
+                        d["_jev_shadow"] = jev_result
+                        # Persist immediately (shadow only)
+                        try:
+                            self.store.execute(
+                                "UPDATE emails SET jev_shadow_json = ? WHERE id = ?",
+                                (json.dumps(jev_result), email_id),
+                            )
+                            self.store.commit()
+                        except Exception:
+                            pass
+            except Exception:
+                # Never let shadow mode affect production
+                pass
+            # === End Jev Shadow ===
             spec = run_specialist(
                 clf.specialist,
                 subject=d.get("subject") or "",

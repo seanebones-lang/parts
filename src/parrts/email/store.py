@@ -136,6 +136,7 @@ class EmailStore:
             "ALTER TABLE emails ADD COLUMN response_sent_at TEXT",
             "ALTER TABLE emails ADD COLUMN last_send_error TEXT",
             "ALTER TABLE emails ADD COLUMN polished INTEGER NOT NULL DEFAULT 0",
+            "ALTER TABLE emails ADD COLUMN jev_shadow_json TEXT",
         ):
             try:
                 conn.execute(col_sql)
