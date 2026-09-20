@@ -1202,15 +1202,15 @@ class TransmissionInquiryResponse(BaseModel):
 
 
 @router.post("/transmission/inquiry", response_model=TransmissionInquiryResponse)
-async def transmission_inquiry(req: TransmissionInquiryRequest):
+async def transmission_inquiry(
+    req: TransmissionInquiryRequest,
+    dms: DmsService = Depends(get_dms_service)
+):
     """Read-only transmission inquiry endpoint.
 
     Delegates entirely to the accepted service layer.
     """
     try:
-        # Use the monorepo root + existing DmsService pattern already present in this file
-        root = resolve_monorepo_root()
-        dms = DmsService(str(root))
         answer = answer_transmission_inquiry(req.query, dms)
         return TransmissionInquiryResponse(
             query=answer.query,
