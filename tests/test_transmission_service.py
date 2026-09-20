@@ -87,5 +87,47 @@ def test_isolated_ambiguity_fixture():
         assert answer.sku is None
 
 
+def test_isolated_zero_stock_fixture():
+    """Test-only fixture proving known part with zero inventory returns resolved + zero stock."""
+    with TemporaryDirectory() as tmp:
+        dms = DmsService(Path(tmp))
+        dms.ensure_schema()
+
+        # Create canonical part
+        dms.store.execute(
+            "INSERT INTO catalog_parts (sku, name, transmission_family, verification_status) VALUES (?, ?, ?, ?)",
+            ("ZERO-STOCK-TEST-01", "Zero Stock Test Pump", "TEST-FAM", "unverified"),
+        )
+
+        # Unique identifier for this part only
+        dms.store.execute(
+            "INSERT INTO part_identifiers (sku, identifier_type, identifier_value, created_at) VALUES (?, ?, ?, ?)",
+            ("ZERO-STOCK-TEST-01", "test", "ZERO-STOCK-ID-001", "2026-01-01"),
+        )
+
+        # Location and zero-stock inventory
+        dms.store.execute(
+            "INSERT INTO locations (code, name) VALUES (?, ?)",
+            ("TEST-ZERO-LOC", "Test Zero Stock Location"),
+        )
+        loc_row = dms.store.fetchone("SELECT id FROM locations WHERE code = ?", ("TEST-ZERO-LOC",))
+        assert loc_row is not None
+        loc_id = loc_row["id"]
+
+        dms.store.execute(
+            "INSERT INTO inventory_levels (sku, location_id, qty, condition, bin) VALUES (?, ?, ?, ?, ?)",
+            ("ZERO-STOCK-TEST-01", loc_id, 0, "new", "Z-01"),
+        )
+        dms.store.commit()
+
+        # Query using the unique identifier
+        answer = answer_transmission_inquiry("Do you have ZERO-STOCK-ID-001?", dms)
+
+        assert answer.status == "resolved"
+        assert answer.sku == "ZERO-STOCK-TEST-01"
+        assert answer.aggregate_available == 0
+        assert answer.inventory_available is False
+
+
 # Zero-stock isolated fixture test removed for this micro-fix due to resolver family+type matching constraints.
 # The service structure correctly supports the semantic; a future micro-fix can add a more robust fixture.
