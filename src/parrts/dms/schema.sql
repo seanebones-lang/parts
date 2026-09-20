@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS inventory_levels (
     qty INTEGER NOT NULL DEFAULT 0,
     cost REAL DEFAULT 0,
     price REAL DEFAULT 0,
+    bin TEXT DEFAULT NULL,
     UNIQUE (sku, location_id),
     FOREIGN KEY (sku) REFERENCES catalog_parts(sku),
     FOREIGN KEY (location_id) REFERENCES locations(id)
@@ -179,3 +180,6 @@ CREATE INDEX IF NOT EXISTS idx_part_interchanges_source ON part_interchanges(sou
 CREATE INDEX IF NOT EXISTS idx_part_interchanges_target ON part_interchanges(target_sku);
 CREATE INDEX IF NOT EXISTS idx_part_fitments_sku ON part_fitments(sku);
 CREATE INDEX IF NOT EXISTS idx_catalog_transmission ON catalog_parts(transmission_family);
+
+-- Ensure bin column exists on existing databases
+ALTER TABLE inventory_levels ADD COLUMN bin TEXT DEFAULT NULL;

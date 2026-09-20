@@ -33,6 +33,7 @@ CREATE TABLE IF NOT EXISTS inventory_levels (
     qty INTEGER NOT NULL DEFAULT 0,
     cost REAL DEFAULT 0,
     price REAL DEFAULT 0,
+    bin TEXT DEFAULT NULL,
     UNIQUE (sku, location_id),
     FOREIGN KEY (sku) REFERENCES catalog_parts(sku),
     FOREIGN KEY (location_id) REFERENCES locations(id)
@@ -253,6 +254,8 @@ ALTER TABLE catalog_parts ADD COLUMN transmission_family TEXT DEFAULT '';
 ALTER TABLE catalog_parts ADD COLUMN transmission_variant TEXT DEFAULT '';
 ALTER TABLE catalog_parts ADD COLUMN verification_status TEXT DEFAULT 'unverified';
 ALTER TABLE inventory_levels ADD COLUMN condition TEXT DEFAULT 'new';
+-- Add bin column if it does not exist (SQLite has no IF NOT EXISTS for ALTER COLUMN)
+PRAGMA table_info(inventory_levels); -- placeholder; real check done in ensure_schema if needed
 
 CREATE INDEX IF NOT EXISTS idx_part_identifiers_sku ON part_identifiers(sku);
 CREATE INDEX IF NOT EXISTS idx_part_interchanges_source ON part_interchanges(source_sku);

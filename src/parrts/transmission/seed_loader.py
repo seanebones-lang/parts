@@ -153,9 +153,9 @@ def load_demo_seed(dms: DmsService, *, force: bool = False) -> dict[str, int]:
         )
         if existing is None:
             dms.store.execute(
-                """INSERT INTO inventory_levels (sku, location_id, qty, condition)
-                   VALUES (?, ?, ?, ?)""",
-                (inv["sku"], loc_id, inv["qty"], inv.get("condition", "new")),
+                """INSERT INTO inventory_levels (sku, location_id, qty, condition, bin)
+                   VALUES (?, ?, ?, ?, ?)""",
+                (inv["sku"], loc_id, inv["qty"], inv.get("condition", "new"), inv.get("bin")),
             )
             counts["inventory"] += 1
 

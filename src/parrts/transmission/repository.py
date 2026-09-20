@@ -44,7 +44,7 @@ class TransmissionRepository:
 
     def get_inventory(self, sku: str) -> list[dict]:
         sql = """
-            SELECT i.sku, i.qty, i.condition, l.code as location, l.name as location_name
+            SELECT i.sku, i.qty, i.condition, l.code as location, l.name as location_name, i.bin
             FROM inventory_levels i
             JOIN locations l ON l.id = i.location_id
             WHERE i.sku = ?
