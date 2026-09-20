@@ -1,4 +1,4 @@
-"""Deterministic transmission inquiry resolver (Demo 1).
+"""Deterministic transmission inquiry resolver (Demo 1) — PARTS project.
 
 This resolver extracts structured information from natural language
 inquiries without using an LLM. It is intentionally conservative.

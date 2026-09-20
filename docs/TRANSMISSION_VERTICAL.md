@@ -1,4 +1,7 @@
-# Transmission Hard-Parts Vertical — Phase 1 Architecture
+# PARTS Transmission Hard-Parts Vertical — Phase 1 Architecture
+
+**Project:** PARTS (NextEleven Parts)  
+**Note:** The Python package remains `parrts` during this phase. A controlled rename will occur later.
 
 ## Canonical Separation of Concerns
 

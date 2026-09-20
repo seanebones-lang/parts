@@ -1,4 +1,4 @@
-"""Synthetic demo seed data for 6L80 / 6L90 transmission hard parts.
+"""Synthetic demo seed data for 6L80 / 6L90 transmission hard parts (PARTS project).
 
 All records are clearly marked as demo / unverified.
 This is not an authoritative interchange catalog.

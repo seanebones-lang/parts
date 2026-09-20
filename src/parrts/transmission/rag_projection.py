@@ -1,4 +1,4 @@
-"""RAG projection for transmission hard parts.
+"""RAG projection for transmission hard parts (PARTS project).
 
 Converts canonical catalog + inventory + transmission data into
 searchable document text. This is a derived view, not a source of truth.

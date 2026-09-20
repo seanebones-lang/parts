@@ -1,4 +1,4 @@
-"""Domain models for transmission hard-parts vertical.
+"""Domain models for transmission hard-parts vertical (PARTS project).
 
 These are lightweight, typed representations used by the transmission
 intelligence layer. They are not a second source of truth.

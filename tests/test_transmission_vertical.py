@@ -1,4 +1,4 @@
-"""Tests for the transmission hard-parts vertical (Phase 1)."""
+"""Tests for the transmission hard-parts vertical (PARTS project, Phase 1)."""
 import pytest
 
 from parrts.transmission.models import TransmissionInquiryResult
