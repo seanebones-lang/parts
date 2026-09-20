@@ -5,6 +5,8 @@
 
 Inbound customer parts email is classified, answered by **section specialists**, graded **green / yellow / red**, stored in a **searchable** employee archive, and optionally synced via **IMAP/SMTP** when credentials are set.
 
+**Jev shadow mode** (experimental, disabled by default) runs the official TypeSafe Jev model (`jev-latest`) in parallel for evaluation. Production classification, specialist routing, and traffic-light grading are never affected. Enable with `JEV_SHADOW_ENABLED=1`.
+
 Automation hook (W32): each process writes a run to `.parrts/automation.db` and may open HIL alerts / email→order draft — see `docs/AUTOMATION.md` and `/results`.
 
 ## Grades
