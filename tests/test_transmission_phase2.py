@@ -101,7 +101,7 @@ def test_ambiguous_request_exposes_uncertainty(seeded_dms):
 def test_pump_tahoe_6l80_returns_real_sku_and_inventory(seeded_dms):
     result = resolve_inquiry("Do you have a pump for a 2011 Tahoe 6L80?", seeded_dms)
     assert "6L80-PUMP-01" in result.matched_skus
-    assert result.inventory_available is False  # demo has stock but resolver logic marks it
+    assert result.inventory_available is True  # inventory now seeds correctly
 
 
 def test_rag_projection_can_be_built(seeded_dms):

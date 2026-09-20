@@ -91,8 +91,8 @@ DEMO_FITMENTS = [
 ]
 
 DEMO_INVENTORY = [
-    {"sku": "6L80-PUMP-01", "location": "Chicago-01", "qty": 3, "condition": "new"},
-    {"sku": "6L80-PUMP-01", "location": "Dallas-02", "qty": 0, "condition": "new"},
-    {"sku": "6L80-VB-01", "location": "Chicago-01", "qty": 1, "condition": "rebuilt"},
-    {"sku": "6L90-PUMP-01", "location": "Dallas-02", "qty": 2, "condition": "new"},
+    {"sku": "6L80-PUMP-01", "location": "CHI-N", "qty": 3, "condition": "new"},
+    {"sku": "6L80-PUMP-01", "location": "OHARE", "qty": 0, "condition": "new"},
+    {"sku": "6L80-VB-01", "location": "CHI-N", "qty": 1, "condition": "rebuilt"},
+    {"sku": "6L90-PUMP-01", "location": "OHARE", "qty": 2, "condition": "new"},
 ]
