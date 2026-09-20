@@ -46,24 +46,30 @@ def resolve_inquiry(query: str, dms: DmsService) -> TransmissionInquiryResult:
         for token in identifier_tokens:
             ident_matches = repo.find_by_identifier(token)
             if ident_matches:
-                result.matched_skus = [m["sku"] for m in ident_matches]
-                result.fitment_status = "compatible"
-                first_sku = result.matched_skus[0]
-                inv = repo.get_inventory(first_sku)
-                available = [i for i in inv if i.get("qty", 0) > 0]
-                result.inventory_available = len(available) > 0
-                result.aliases_found = [
-                    f"{i['identifier_type']}:{i['identifier_value']}"
-                    for i in repo.get_identifiers(first_sku)
-                ]
-                inter = repo.get_interchanges(first_sku)
-                result.interchange_candidates = [
-                    f"{i['target_sku']} ({i['relationship_type']}, {i['verification_status']})"
-                    for i in inter
-                ]
-                if available:
-                    result.notes = f"Found {len(available)} locations with stock"
-                return result
+                unique_skus = list({m["sku"] for m in ident_matches})
+                if len(unique_skus) == 1:
+                    result.matched_skus = unique_skus
+                    result.fitment_status = "compatible"
+                    first_sku = result.matched_skus[0]
+                    inv = repo.get_inventory(first_sku)
+                    available = [i for i in inv if i.get("qty", 0) > 0]
+                    result.inventory_available = len(available) > 0
+                    result.aliases_found = [
+                        f"{i['identifier_type']}:{i['identifier_value']}"
+                        for i in repo.get_identifiers(first_sku)
+                    ]
+                    inter = repo.get_interchanges(first_sku)
+                    result.interchange_candidates = [
+                        f"{i['target_sku']} ({i['relationship_type']}, {i['verification_status']})"
+                        for i in inter
+                    ]
+                    if available:
+                        result.notes = f"Found {len(available)} locations with stock"
+                    return result
+                else:
+                    # Multiple canonical parts share the identifier → let service handle as ambiguous
+                    result.matched_skus = unique_skus
+                    return result
 
     if not result.transmission_family or not result.part_type:
         result.fitment_status = "insufficient"
