@@ -51,7 +51,16 @@ def answer_transmission_inquiry(query: str, dms: DmsService) -> TransmissionInqu
             human_readable=_build_no_match_summary(query, low_level)
         )
 
-    # Take first match (future ambiguity handling can expand this)
+    # Ambiguity: multiple canonical candidates
+    if len(low_level.matched_skus) > 1:
+        return TransmissionInquiryAnswer(
+            query=query,
+            status="ambiguous",
+            uncertainty=["multiple canonical parts match the inquiry"],
+            human_readable="Multiple parts match. Please provide more detail.",
+        )
+
+    # Single canonical match
     sku = low_level.matched_skus[0]
 
     # Fetch canonical details
