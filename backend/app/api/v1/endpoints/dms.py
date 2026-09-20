@@ -16,6 +16,10 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
+# Transmission inquiry (Phase 4)
+from parrts.dms.service import DmsService
+from parrts.transmission.service import answer_transmission_inquiry
+
 from app.api.deps import require_permission, require_user_if_production
 from app.models.user import User
 
@@ -1169,6 +1173,64 @@ async def dms_compliance_export(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"compliance export failed: {exc}",
+        ) from exc
+
+
+# ---------------------------------------------------------------------------
+# Transmission Inquiry API (Phase 4)
+# ---------------------------------------------------------------------------
+
+class TransmissionInquiryRequest(BaseModel):
+    query: str = Field(..., min_length=3, description="Natural language or identifier inquiry")
+
+
+class TransmissionInquiryResponse(BaseModel):
+    query: str
+    status: str
+    sku: Optional[str] = None
+    transmission_family: Optional[str] = None
+    part_type: Optional[str] = None
+    fitment_status: Optional[str] = None
+    inventory_available: bool = False
+    aggregate_available: int = 0
+    verification_status: Optional[str] = None
+    human_readable: str = ""
+    # Simplified inventory/identifiers for API response
+    inventory: list[dict] = Field(default_factory=list)
+    identifiers: list[dict] = Field(default_factory=list)
+    interchanges: list[dict] = Field(default_factory=list)
+
+
+@router.post("/transmission/inquiry", response_model=TransmissionInquiryResponse)
+async def transmission_inquiry(req: TransmissionInquiryRequest):
+    """Read-only transmission inquiry endpoint.
+
+    Delegates entirely to the accepted service layer.
+    """
+    try:
+        # Use the monorepo root + existing DmsService pattern already present in this file
+        root = resolve_monorepo_root()
+        dms = DmsService(str(root))
+        answer = answer_transmission_inquiry(req.query, dms)
+        return TransmissionInquiryResponse(
+            query=answer.query,
+            status=answer.status,
+            sku=answer.sku,
+            transmission_family=answer.transmission_family,
+            part_type=answer.part_type,
+            fitment_status=answer.fitment_status,
+            inventory_available=answer.inventory_available,
+            aggregate_available=answer.aggregate_available,
+            verification_status=answer.verification_status,
+            human_readable=answer.human_readable,
+            inventory=answer.inventory,
+            identifiers=answer.identifiers,
+            interchanges=answer.interchanges,
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"transmission inquiry failed: {exc}",
         ) from exc
 
 
