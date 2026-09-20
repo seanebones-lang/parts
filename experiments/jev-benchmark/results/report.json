@@ -1,0 +1,1992 @@
+{
+  "corpus": {
+    "total": 124,
+    "per_class": {
+      "price_request": 27,
+      "order_status": 15,
+      "general_question": 17,
+      "parts_availability": 22,
+      "compatibility_fitment": 16,
+      "sell_part": 14,
+      "spam_or_irrelevant": 13
+    },
+    "needs_human_true": 24,
+    "needs_human_false": 100,
+    "gold_label_sources": {
+      "seed_data": 8,
+      "test_fixture": 3,
+      "synthetic": 113
+    }
+  },
+  "approaches": {
+    "rule_based": {
+      "approach": "rule_based",
+      "status": "ok",
+      "config": {
+        "name": "rule_based",
+        "cost_per_query": 0.0,
+        "offline": true
+      },
+      "accuracy": 0.371,
+      "per_class": {
+        "parts_availability": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 22
+        },
+        "price_request": {
+          "precision": 0.3676,
+          "recall": 0.9259,
+          "f1": 0.5263,
+          "support": 27
+        },
+        "compatibility_fitment": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 16
+        },
+        "order_status": {
+          "precision": 0.6364,
+          "recall": 0.4667,
+          "f1": 0.5385,
+          "support": 15
+        },
+        "sell_part": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 14
+        },
+        "general_question": {
+          "precision": 0.3111,
+          "recall": 0.8235,
+          "f1": 0.4516,
+          "support": 17
+        },
+        "spam_or_irrelevant": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 13
+        }
+      },
+      "confusion_matrix": {
+        "parts_availability": {
+          "parts_availability": 0,
+          "price_request": 17,
+          "compatibility_fitment": 0,
+          "order_status": 0,
+          "sell_part": 0,
+          "general_question": 5,
+          "spam_or_irrelevant": 0
+        },
+        "price_request": {
+          "parts_availability": 0,
+          "price_request": 25,
+          "compatibility_fitment": 0,
+          "order_status": 0,
+          "sell_part": 0,
+          "general_question": 2,
+          "spam_or_irrelevant": 0
+        },
+        "compatibility_fitment": {
+          "parts_availability": 0,
+          "price_request": 12,
+          "compatibility_fitment": 0,
+          "order_status": 0,
+          "sell_part": 0,
+          "general_question": 4,
+          "spam_or_irrelevant": 0
+        },
+        "order_status": {
+          "parts_availability": 0,
+          "price_request": 8,
+          "compatibility_fitment": 0,
+          "order_status": 7,
+          "sell_part": 0,
+          "general_question": 0,
+          "spam_or_irrelevant": 0
+        },
+        "sell_part": {
+          "parts_availability": 0,
+          "price_request": 4,
+          "compatibility_fitment": 0,
+          "order_status": 0,
+          "sell_part": 0,
+          "general_question": 10,
+          "spam_or_irrelevant": 0
+        },
+        "general_question": {
+          "parts_availability": 0,
+          "price_request": 2,
+          "compatibility_fitment": 0,
+          "order_status": 1,
+          "sell_part": 0,
+          "general_question": 14,
+          "spam_or_irrelevant": 0
+        },
+        "spam_or_irrelevant": {
+          "parts_availability": 0,
+          "price_request": 0,
+          "compatibility_fitment": 0,
+          "order_status": 3,
+          "sell_part": 0,
+          "general_question": 10,
+          "spam_or_irrelevant": 0
+        }
+      },
+      "needs_human": {
+        "accuracy": 0.7903,
+        "needs_human_confusion": {
+          "tp": 3,
+          "tn": 95,
+          "fp": 5,
+          "fn": 21,
+          "precision_need": 0.375,
+          "recall_need": 0.125
+        }
+      },
+      "latency": {
+        "mean_s": 3.4e-05,
+        "median_s": 3.4e-05,
+        "p50_s": 3.4e-05,
+        "p95_s": 4.8e-05,
+        "min_s": 2.1e-05,
+        "max_s": 7.4e-05,
+        "count": 124
+      },
+      "cost": {
+        "total_usd": 0.0,
+        "per_query_mean": 0.0
+      },
+      "per_row": [
+        {
+          "message_id": "demo-quote-civic-brakes-001",
+          "gold_label": "price_request",
+          "pred_label": "price_request",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 7.391599999997944e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.98,
+          "production_label": "quote_request",
+          "production_reasons": [
+            "quote",
+            "price",
+            "do you have",
+            "looking for",
+            "brake",
+            "pad",
+            "vehicle+part"
+          ]
+        },
+        {
+          "message_id": "demo-order-oil-filter-002",
+          "gold_label": "price_request",
+          "pred_label": "price_request",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 6.070799999999266e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.96,
+          "production_label": "parts_order",
+          "production_reasons": [
+            "order",
+            "please order",
+            "place an order",
+            "qty"
+          ]
+        },
+        {
+          "message_id": "demo-ship-tracking-003",
+          "gold_label": "order_status",
+          "pred_label": "order_status",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 5.6707999999988656e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.876,
+          "production_label": "shipping_inquiry",
+          "production_reasons": [
+            "tracking",
+            "ups",
+            "ship"
+          ]
+        },
+        {
+          "message_id": "demo-pay-invoice-004",
+          "gold_label": "general_question",
+          "pred_label": "general_question",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 5.3541000000018046e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.664,
+          "production_label": "payment_inquiry",
+          "production_reasons": [
+            "invoice",
+            "payment"
+          ]
+        },
+        {
+          "message_id": "demo-complaint-005",
+          "gold_label": "general_question",
+          "pred_label": "general_question",
+          "gold_needs_human": true,
+          "pred_needs_human": true,
+          "latency_s": 6.612500000000021e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.98,
+          "production_label": "complaint",
+          "production_reasons": [
+            "complaint",
+            "refund now",
+            "unacceptable",
+            "manager",
+            "angry"
+          ]
+        },
+        {
+          "message_id": "demo-general-hours-006",
+          "gold_label": "general_question",
+          "pred_label": "general_question",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 3.9917000000000424e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.804,
+          "production_label": "customer_service",
+          "production_reasons": [
+            "hours",
+            "location",
+            "address"
+          ]
+        },
+        {
+          "message_id": "demo-quote-f150-rotors-007",
+          "gold_label": "price_request",
+          "pred_label": "price_request",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 5.720900000000251e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.98,
+          "production_label": "quote_request",
+          "production_reasons": [
+            "price",
+            "how much",
+            "availability",
+            "brake",
+            "rotor",
+            "vehicle+part"
+          ]
+        },
+        {
+          "message_id": "demo-spark-ngk-008",
+          "gold_label": "price_request",
+          "pred_label": "price_request",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 4.29580000000096e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.822,
+          "production_label": "quote_request",
+          "production_reasons": [
+            "availability",
+            "looking for",
+            "spark"
+          ]
+        },
+        {
+          "message_id": "fix-quote-pads",
+          "gold_label": "price_request",
+          "pred_label": "price_request",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 3.5124999999996964e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.98,
+          "production_label": "quote_request",
+          "production_reasons": [
+            "quote",
+            "how much",
+            "brake",
+            "pad",
+            "vehicle+part"
+          ]
+        },
+        {
+          "message_id": "fix-complaint",
+          "gold_label": "general_question",
+          "pred_label": "general_question",
+          "gold_needs_human": true,
+          "pred_needs_human": true,
+          "latency_s": 3.79580000000046e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.98,
+          "production_label": "complaint",
+          "production_reasons": [
+            "complaint",
+            "refund now",
+            "unacceptable",
+            "manager"
+          ]
+        },
+        {
+          "message_id": "fix-oil-price",
+          "gold_label": "price_request",
+          "pred_label": "price_request",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 3.566600000001752e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.804,
+          "production_label": "quote_request",
+          "production_reasons": [
+            "price",
+            "filter",
+            "vehicle+part"
+          ]
+        },
+        {
+          "message_id": "synth-parts_availability-001",
+          "gold_label": "parts_availability",
+          "pred_label": "price_request",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 4.158400000001117e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.936,
+          "production_label": "quote_request",
+          "production_reasons": [
+            "how much",
+            "do you have",
+            "brake",
+            "pad"
+          ]
+        },
+        {
+          "message_id": "synth-parts_availability-002",
+          "gold_label": "parts_availability",
+          "pred_label": "price_request",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 4.650000000000487e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.98,
+          "production_label": "quote_request",
+          "production_reasons": [
+            "do you have",
+            "looking for",
+            "brake",
+            "pad",
+            "vehicle+part"
+          ]
+        },
+        {
+          "message_id": "synth-parts_availability-003",
+          "gold_label": "parts_availability",
+          "pred_label": "price_request",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 3.600000000000825e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.61,
+          "production_label": "quote_request",
+          "production_reasons": [
+            "filter",
+            "vehicle+part"
+          ]
+        },
+        {
+          "message_id": "synth-parts_availability-004",
+          "gold_label": "parts_availability",
+          "pred_label": "price_request",
+          "gold_needs_human": true,
+          "pred_needs_human": false,
+          "latency_s": 4.108399999999679e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.628,
+          "production_label": "quote_request",
+          "production_reasons": [
+            "availability",
+            "rotor"
+          ]
+        },
+        {
+          "message_id": "synth-parts_availability-005",
+          "gold_label": "parts_availability",
+          "pred_label": "price_request",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 3.220800000000579e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.514,
+          "production_label": "quote_request",
+          "production_reasons": [
+            "spark"
+          ]
+        },
+        {
+          "message_id": "synth-parts_availability-006",
+          "gold_label": "parts_availability",
+          "pred_label": "price_request",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 3.645900000001645e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.514,
+          "production_label": "quote_request",
+          "production_reasons": [
+            "filter"
+          ]
+        },
+        {
+          "message_id": "synth-parts_availability-007",
+          "gold_label": "parts_availability",
+          "pred_label": "price_request",
+          "gold_needs_human": true,
+          "pred_needs_human": false,
+          "latency_s": 3.2624999999980586e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.574,
+          "production_label": "quote_request",
+          "production_reasons": [
+            "filter"
+          ]
+        },
+        {
+          "message_id": "synth-parts_availability-008",
+          "gold_label": "parts_availability",
+          "pred_label": "price_request",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 3.770799999999741e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.496,
+          "production_label": "quote_request",
+          "production_reasons": [
+            "vehicle+part"
+          ]
+        },
+        {
+          "message_id": "synth-parts_availability-009",
+          "gold_label": "parts_availability",
+          "pred_label": "price_request",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 3.49580000000016e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.514,
+          "production_label": "quote_request",
+          "production_reasons": [
+            "pad"
+          ]
+        },
+        {
+          "message_id": "synth-parts_availability-010",
+          "gold_label": "parts_availability",
+          "pred_label": "general_question",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 2.5292000000010084e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.442,
+          "production_label": "general_inquiry",
+          "production_reasons": [
+            "fallback"
+          ]
+        },
+        {
+          "message_id": "synth-parts_availability-011",
+          "gold_label": "parts_availability",
+          "pred_label": "price_request",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 4.083299999999013e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.918,
+          "production_label": "quote_request",
+          "production_reasons": [
+            "do you have",
+            "brake",
+            "rotor",
+            "vehicle+part"
+          ]
+        },
+        {
+          "message_id": "synth-parts_availability-012",
+          "gold_label": "parts_availability",
+          "pred_label": "price_request",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 3.5165999999975384e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.496,
+          "production_label": "quote_request",
+          "production_reasons": [
+            "vehicle+part"
+          ]
+        },
+        {
+          "message_id": "synth-parts_availability-013",
+          "gold_label": "parts_availability",
+          "pred_label": "general_question",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 3.358300000000369e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.442,
+          "production_label": "general_inquiry",
+          "production_reasons": [
+            "fallback"
+          ]
+        },
+        {
+          "message_id": "synth-parts_availability-014",
+          "gold_label": "parts_availability",
+          "pred_label": "price_request",
+          "gold_needs_human": true,
+          "pred_needs_human": false,
+          "latency_s": 3.5334000000025734e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.514,
+          "production_label": "quote_request",
+          "production_reasons": [
+            "filter"
+          ]
+        },
+        {
+          "message_id": "synth-parts_availability-015",
+          "gold_label": "parts_availability",
+          "pred_label": "price_request",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 3.5082999999991316e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.514,
+          "production_label": "quote_request",
+          "production_reasons": [
+            "do you have"
+          ]
+        },
+        {
+          "message_id": "synth-parts_availability-016",
+          "gold_label": "parts_availability",
+          "pred_label": "general_question",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 3.129199999998833e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.442,
+          "production_label": "general_inquiry",
+          "production_reasons": [
+            "fallback"
+          ]
+        },
+        {
+          "message_id": "synth-parts_availability-017",
+          "gold_label": "parts_availability",
+          "pred_label": "price_request",
+          "gold_needs_human": true,
+          "pred_needs_human": false,
+          "latency_s": 4.550000000000387e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.882,
+          "production_label": "quote_request",
+          "production_reasons": [
+            "looking for",
+            "rotor",
+            "pad"
+          ]
+        },
+        {
+          "message_id": "synth-parts_availability-018",
+          "gold_label": "parts_availability",
+          "pred_label": "price_request",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 2.266700000000399e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.514,
+          "production_label": "quote_request",
+          "production_reasons": [
+            "pad"
+          ]
+        },
+        {
+          "message_id": "synth-parts_availability-019",
+          "gold_label": "parts_availability",
+          "pred_label": "general_question",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 3.083300000000788e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.442,
+          "production_label": "general_inquiry",
+          "production_reasons": [
+            "fallback"
+          ]
+        },
+        {
+          "message_id": "synth-parts_availability-020",
+          "gold_label": "parts_availability",
+          "pred_label": "price_request",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 3.400000000000625e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.514,
+          "production_label": "quote_request",
+          "production_reasons": [
+            "filter"
+          ]
+        },
+        {
+          "message_id": "synth-parts_availability-021",
+          "gold_label": "parts_availability",
+          "pred_label": "general_question",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 3.400000000000625e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.442,
+          "production_label": "general_inquiry",
+          "production_reasons": [
+            "fallback"
+          ]
+        },
+        {
+          "message_id": "synth-parts_availability-022",
+          "gold_label": "parts_availability",
+          "pred_label": "price_request",
+          "gold_needs_human": true,
+          "pred_needs_human": false,
+          "latency_s": 3.4332999999997504e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.574,
+          "production_label": "quote_request",
+          "production_reasons": [
+            "do you have"
+          ]
+        },
+        {
+          "message_id": "synth-price_request-023",
+          "gold_label": "price_request",
+          "pred_label": "price_request",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 3.6458999999988695e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.918,
+          "production_label": "quote_request",
+          "production_reasons": [
+            "how much",
+            "brake",
+            "pad",
+            "vehicle+part"
+          ]
+        },
+        {
+          "message_id": "synth-price_request-024",
+          "gold_label": "price_request",
+          "pred_label": "price_request",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 3.545800000001598e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.918,
+          "production_label": "quote_request",
+          "production_reasons": [
+            "price",
+            "brake",
+            "rotor",
+            "vehicle+part"
+          ]
+        },
+        {
+          "message_id": "synth-price_request-025",
+          "gold_label": "price_request",
+          "pred_label": "price_request",
+          "gold_needs_human": true,
+          "pred_needs_human": false,
+          "latency_s": 3.654200000000052e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.936,
+          "production_label": "quote_request",
+          "production_reasons": [
+            "price",
+            "how much",
+            "pad",
+            "fitment"
+          ]
+        },
+        {
+          "message_id": "synth-price_request-026",
+          "gold_label": "price_request",
+          "pred_label": "price_request",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 3.6124999999997964e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.822,
+          "production_label": "quote_request",
+          "production_reasons": [
+            "quote",
+            "price",
+            "filter"
+          ]
+        },
+        {
+          "message_id": "synth-price_request-027",
+          "gold_label": "price_request",
+          "pred_label": "price_request",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 3.5541000000000045e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.628,
+          "production_label": "quote_request",
+          "production_reasons": [
+            "price",
+            "spark"
+          ]
+        },
+        {
+          "message_id": "synth-price_request-028",
+          "gold_label": "price_request",
+          "pred_label": "price_request",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 3.4542000000026274e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.496,
+          "production_label": "quote_request",
+          "production_reasons": [
+            "vehicle+part"
+          ]
+        },
+        {
+          "message_id": "synth-price_request-029",
+          "gold_label": "price_request",
+          "pred_label": "price_request",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 3.04170000000048e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.514,
+          "production_label": "quote_request",
+          "production_reasons": [
+            "price"
+          ]
+        },
+        {
+          "message_id": "synth-price_request-030",
+          "gold_label": "price_request",
+          "pred_label": "price_request",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 2.8791000000000233e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.628,
+          "production_label": "quote_request",
+          "production_reasons": [
+            "brake",
+            "pad"
+          ]
+        },
+        {
+          "message_id": "synth-price_request-031",
+          "gold_label": "price_request",
+          "pred_label": "price_request",
+          "gold_needs_human": true,
+          "pred_needs_human": false,
+          "latency_s": 2.233300000001326e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.628,
+          "production_label": "quote_request",
+          "production_reasons": [
+            "price",
+            "how much"
+          ]
+        },
+        {
+          "message_id": "synth-price_request-032",
+          "gold_label": "price_request",
+          "pred_label": "price_request",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 3.308399999998879e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.628,
+          "production_label": "quote_request",
+          "production_reasons": [
+            "quote",
+            "price"
+          ]
+        },
+        {
+          "message_id": "synth-price_request-033",
+          "gold_label": "price_request",
+          "pred_label": "price_request",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 3.370799999999341e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.918,
+          "production_label": "quote_request",
+          "production_reasons": [
+            "quote",
+            "brake",
+            "pad",
+            "vehicle+part"
+          ]
+        },
+        {
+          "message_id": "synth-price_request-034",
+          "gold_label": "price_request",
+          "pred_label": "price_request",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 3.3540999999998045e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.822,
+          "production_label": "quote_request",
+          "production_reasons": [
+            "pricing",
+            "cost for",
+            "rotor"
+          ]
+        },
+        {
+          "message_id": "synth-price_request-035",
+          "gold_label": "price_request",
+          "pred_label": "price_request",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 3.29579999999996e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.822,
+          "production_label": "quote_request",
+          "production_reasons": [
+            "price",
+            "pricing",
+            "filter"
+          ]
+        },
+        {
+          "message_id": "synth-price_request-036",
+          "gold_label": "price_request",
+          "pred_label": "price_request",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 2.9332999999992504e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.628,
+          "production_label": "quote_request",
+          "production_reasons": [
+            "price",
+            "spark"
+          ]
+        },
+        {
+          "message_id": "synth-price_request-037",
+          "gold_label": "price_request",
+          "pred_label": "price_request",
+          "gold_needs_human": true,
+          "pred_needs_human": false,
+          "latency_s": 3.1916999999992424e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.514,
+          "production_label": "quote_request",
+          "production_reasons": [
+            "price"
+          ]
+        },
+        {
+          "message_id": "synth-price_request-038",
+          "gold_label": "price_request",
+          "pred_label": "price_request",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 2.208300000000607e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.628,
+          "production_label": "quote_request",
+          "production_reasons": [
+            "price",
+            "how much"
+          ]
+        },
+        {
+          "message_id": "synth-price_request-039",
+          "gold_label": "price_request",
+          "pred_label": "price_request",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 3.38339999999826e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.628,
+          "production_label": "quote_request",
+          "production_reasons": [
+            "quote",
+            "rotor"
+          ]
+        },
+        {
+          "message_id": "synth-price_request-040",
+          "gold_label": "price_request",
+          "pred_label": "general_question",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 3.0374999999999153e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.532,
+          "production_label": "payment_inquiry",
+          "production_reasons": [
+            "invoice"
+          ]
+        },
+        {
+          "message_id": "synth-price_request-041",
+          "gold_label": "price_request",
+          "pred_label": "price_request",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 3.3832999999983127e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.822,
+          "production_label": "quote_request",
+          "production_reasons": [
+            "price",
+            "brake",
+            "pad"
+          ]
+        },
+        {
+          "message_id": "synth-price_request-042",
+          "gold_label": "price_request",
+          "pred_label": "price_request",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 3.179199999997495e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.822,
+          "production_label": "quote_request",
+          "production_reasons": [
+            "quote",
+            "price",
+            "rotor"
+          ]
+        },
+        {
+          "message_id": "synth-price_request-043",
+          "gold_label": "price_request",
+          "pred_label": "general_question",
+          "gold_needs_human": true,
+          "pred_needs_human": false,
+          "latency_s": 2.6250000000005436e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.442,
+          "production_label": "general_inquiry",
+          "production_reasons": [
+            "fallback"
+          ]
+        },
+        {
+          "message_id": "synth-compatibility_fitment-044",
+          "gold_label": "compatibility_fitment",
+          "pred_label": "general_question",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 3.008300000001407e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.442,
+          "production_label": "general_inquiry",
+          "production_reasons": [
+            "fallback"
+          ]
+        },
+        {
+          "message_id": "synth-compatibility_fitment-045",
+          "gold_label": "compatibility_fitment",
+          "pred_label": "price_request",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 3.500000000000725e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.61,
+          "production_label": "quote_request",
+          "production_reasons": [
+            "filter",
+            "vehicle+part"
+          ]
+        },
+        {
+          "message_id": "synth-compatibility_fitment-046",
+          "gold_label": "compatibility_fitment",
+          "pred_label": "price_request",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 3.245799999998522e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.574,
+          "production_label": "quote_request",
+          "production_reasons": [
+            "compatible"
+          ]
+        },
+        {
+          "message_id": "synth-compatibility_fitment-047",
+          "gold_label": "compatibility_fitment",
+          "pred_label": "price_request",
+          "gold_needs_human": true,
+          "pred_needs_human": false,
+          "latency_s": 2.820900000000126e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.46,
+          "production_label": "quote_request",
+          "production_reasons": []
+        },
+        {
+          "message_id": "synth-compatibility_fitment-048",
+          "gold_label": "compatibility_fitment",
+          "pred_label": "price_request",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 3.575000000000106e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.688,
+          "production_label": "quote_request",
+          "production_reasons": [
+            "oem",
+            "sku"
+          ]
+        },
+        {
+          "message_id": "synth-compatibility_fitment-049",
+          "gold_label": "compatibility_fitment",
+          "pred_label": "price_request",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 3.5124999999996964e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.514,
+          "production_label": "quote_request",
+          "production_reasons": [
+            "rotor"
+          ]
+        },
+        {
+          "message_id": "synth-compatibility_fitment-050",
+          "gold_label": "compatibility_fitment",
+          "pred_label": "price_request",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 3.5541000000000045e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.822,
+          "production_label": "quote_request",
+          "production_reasons": [
+            "brake",
+            "pad",
+            "fitment"
+          ]
+        },
+        {
+          "message_id": "synth-compatibility_fitment-051",
+          "gold_label": "compatibility_fitment",
+          "pred_label": "price_request",
+          "gold_needs_human": true,
+          "pred_needs_human": false,
+          "latency_s": 2.2999999999995246e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.514,
+          "production_label": "quote_request",
+          "production_reasons": [
+            "compatible"
+          ]
+        },
+        {
+          "message_id": "synth-compatibility_fitment-052",
+          "gold_label": "compatibility_fitment",
+          "pred_label": "price_request",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 3.2124999999993964e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.514,
+          "production_label": "quote_request",
+          "production_reasons": [
+            "rotor"
+          ]
+        },
+        {
+          "message_id": "synth-compatibility_fitment-053",
+          "gold_label": "compatibility_fitment",
+          "pred_label": "price_request",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 3.104100000000942e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.628,
+          "production_label": "quote_request",
+          "production_reasons": [
+            "brake",
+            "pad"
+          ]
+        },
+        {
+          "message_id": "synth-compatibility_fitment-054",
+          "gold_label": "compatibility_fitment",
+          "pred_label": "price_request",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 3.116599999999914e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.574,
+          "production_label": "quote_request",
+          "production_reasons": [
+            "oem"
+          ]
+        },
+        {
+          "message_id": "synth-compatibility_fitment-055",
+          "gold_label": "compatibility_fitment",
+          "pred_label": "general_question",
+          "gold_needs_human": true,
+          "pred_needs_human": false,
+          "latency_s": 3.579200000000671e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.442,
+          "production_label": "general_inquiry",
+          "production_reasons": [
+            "fallback"
+          ]
+        },
+        {
+          "message_id": "synth-compatibility_fitment-056",
+          "gold_label": "compatibility_fitment",
+          "pred_label": "price_request",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 3.258400000000217e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.628,
+          "production_label": "quote_request",
+          "production_reasons": [
+            "filter",
+            "fitment"
+          ]
+        },
+        {
+          "message_id": "synth-compatibility_fitment-057",
+          "gold_label": "compatibility_fitment",
+          "pred_label": "general_question",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 3.5290999999992856e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.442,
+          "production_label": "general_inquiry",
+          "production_reasons": [
+            "fallback"
+          ]
+        },
+        {
+          "message_id": "synth-compatibility_fitment-058",
+          "gold_label": "compatibility_fitment",
+          "pred_label": "price_request",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 3.5791000000007234e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.514,
+          "production_label": "quote_request",
+          "production_reasons": [
+            "pad"
+          ]
+        },
+        {
+          "message_id": "synth-compatibility_fitment-059",
+          "gold_label": "compatibility_fitment",
+          "pred_label": "general_question",
+          "gold_needs_human": true,
+          "pred_needs_human": false,
+          "latency_s": 2.6957999999993598e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.442,
+          "production_label": "general_inquiry",
+          "production_reasons": [
+            "fallback"
+          ]
+        },
+        {
+          "message_id": "synth-order_status-060",
+          "gold_label": "order_status",
+          "pred_label": "order_status",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 3.583300000001288e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.532,
+          "production_label": "shipping_inquiry",
+          "production_reasons": [
+            "ship"
+          ]
+        },
+        {
+          "message_id": "synth-order_status-061",
+          "gold_label": "order_status",
+          "pred_label": "order_status",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 3.516700000000261e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.532,
+          "production_label": "shipping_inquiry",
+          "production_reasons": [
+            "tracking"
+          ]
+        },
+        {
+          "message_id": "synth-order_status-062",
+          "gold_label": "order_status",
+          "pred_label": "price_request",
+          "gold_needs_human": true,
+          "pred_needs_human": false,
+          "latency_s": 3.1250000000010436e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.52,
+          "production_label": "parts_order",
+          "production_reasons": [
+            "order"
+          ]
+        },
+        {
+          "message_id": "synth-order_status-063",
+          "gold_label": "order_status",
+          "pred_label": "price_request",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 3.537500000000415e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.52,
+          "production_label": "parts_order",
+          "production_reasons": [
+            "order"
+          ]
+        },
+        {
+          "message_id": "synth-order_status-064",
+          "gold_label": "order_status",
+          "pred_label": "price_request",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 2.770799999998741e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.628,
+          "production_label": "quote_request",
+          "production_reasons": [
+            "brake",
+            "pad"
+          ]
+        },
+        {
+          "message_id": "synth-order_status-065",
+          "gold_label": "order_status",
+          "pred_label": "price_request",
+          "gold_needs_human": true,
+          "pred_needs_human": false,
+          "latency_s": 2.8540999999993044e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.52,
+          "production_label": "parts_order",
+          "production_reasons": [
+            "order"
+          ]
+        },
+        {
+          "message_id": "synth-order_status-066",
+          "gold_label": "order_status",
+          "pred_label": "price_request",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 2.2207999999995787e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.52,
+          "production_label": "parts_order",
+          "production_reasons": [
+            "order"
+          ]
+        },
+        {
+          "message_id": "synth-order_status-067",
+          "gold_label": "order_status",
+          "pred_label": "order_status",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 3.0500000000016625e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.664,
+          "production_label": "shipping_inquiry",
+          "production_reasons": [
+            "delivery",
+            "eta"
+          ]
+        },
+        {
+          "message_id": "synth-order_status-068",
+          "gold_label": "order_status",
+          "pred_label": "order_status",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 3.0000000000002247e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.532,
+          "production_label": "shipping_inquiry",
+          "production_reasons": [
+            "tracking"
+          ]
+        },
+        {
+          "message_id": "synth-order_status-069",
+          "gold_label": "order_status",
+          "pred_label": "price_request",
+          "gold_needs_human": true,
+          "pred_needs_human": false,
+          "latency_s": 2.562500000000134e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.52,
+          "production_label": "parts_order",
+          "production_reasons": [
+            "order"
+          ]
+        },
+        {
+          "message_id": "synth-order_status-070",
+          "gold_label": "order_status",
+          "pred_label": "order_status",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 2.787500000001053e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.532,
+          "production_label": "shipping_inquiry",
+          "production_reasons": [
+            "ship"
+          ]
+        },
+        {
+          "message_id": "synth-order_status-071",
+          "gold_label": "order_status",
+          "pred_label": "price_request",
+          "gold_needs_human": true,
+          "pred_needs_human": false,
+          "latency_s": 2.5207999999998787e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.52,
+          "production_label": "parts_order",
+          "production_reasons": [
+            "order"
+          ]
+        },
+        {
+          "message_id": "synth-order_status-072",
+          "gold_label": "order_status",
+          "pred_label": "price_request",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 3.274999999999806e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.52,
+          "production_label": "parts_order",
+          "production_reasons": [
+            "order"
+          ]
+        },
+        {
+          "message_id": "synth-order_status-073",
+          "gold_label": "order_status",
+          "pred_label": "order_status",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 2.062499999999634e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.532,
+          "production_label": "shipping_inquiry",
+          "production_reasons": [
+            "eta"
+          ]
+        },
+        {
+          "message_id": "synth-sell_part-074",
+          "gold_label": "sell_part",
+          "pred_label": "price_request",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 3.7290999999994856e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.514,
+          "production_label": "quote_request",
+          "production_reasons": [
+            "rotor"
+          ]
+        },
+        {
+          "message_id": "synth-sell_part-075",
+          "gold_label": "sell_part",
+          "pred_label": "general_question",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 3.2124999999993964e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.442,
+          "production_label": "general_inquiry",
+          "production_reasons": [
+            "fallback"
+          ]
+        },
+        {
+          "message_id": "synth-sell_part-076",
+          "gold_label": "sell_part",
+          "pred_label": "general_question",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 3.3916000000022706e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.442,
+          "production_label": "general_inquiry",
+          "production_reasons": [
+            "fallback"
+          ]
+        },
+        {
+          "message_id": "synth-sell_part-077",
+          "gold_label": "sell_part",
+          "pred_label": "price_request",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 3.6082999999992316e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.628,
+          "production_label": "quote_request",
+          "production_reasons": [
+            "brake",
+            "pad"
+          ]
+        },
+        {
+          "message_id": "synth-sell_part-078",
+          "gold_label": "sell_part",
+          "pred_label": "general_question",
+          "gold_needs_human": true,
+          "pred_needs_human": false,
+          "latency_s": 3.0124999999991964e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.442,
+          "production_label": "general_inquiry",
+          "production_reasons": [
+            "fallback"
+          ]
+        },
+        {
+          "message_id": "synth-sell_part-079",
+          "gold_label": "sell_part",
+          "pred_label": "price_request",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 3.066700000001199e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.52,
+          "production_label": "parts_order",
+          "production_reasons": [
+            "purchase"
+          ]
+        },
+        {
+          "message_id": "synth-sell_part-080",
+          "gold_label": "sell_part",
+          "pred_label": "general_question",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 3.2542000000024274e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.442,
+          "production_label": "general_inquiry",
+          "production_reasons": [
+            "fallback"
+          ]
+        },
+        {
+          "message_id": "synth-sell_part-081",
+          "gold_label": "sell_part",
+          "pred_label": "general_question",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 3.383300000001088e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.442,
+          "production_label": "general_inquiry",
+          "production_reasons": [
+            "fallback"
+          ]
+        },
+        {
+          "message_id": "synth-sell_part-082",
+          "gold_label": "sell_part",
+          "pred_label": "general_question",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 3.2458000000012976e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.442,
+          "production_label": "general_inquiry",
+          "production_reasons": [
+            "fallback"
+          ]
+        },
+        {
+          "message_id": "synth-sell_part-083",
+          "gold_label": "sell_part",
+          "pred_label": "general_question",
+          "gold_needs_human": true,
+          "pred_needs_human": false,
+          "latency_s": 2.645900000000645e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.442,
+          "production_label": "general_inquiry",
+          "production_reasons": [
+            "fallback"
+          ]
+        },
+        {
+          "message_id": "synth-sell_part-084",
+          "gold_label": "sell_part",
+          "pred_label": "price_request",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 3.570799999999541e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.628,
+          "production_label": "quote_request",
+          "production_reasons": [
+            "brake",
+            "pad"
+          ]
+        },
+        {
+          "message_id": "synth-sell_part-085",
+          "gold_label": "sell_part",
+          "pred_label": "general_question",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 2.7458000000007976e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.442,
+          "production_label": "general_inquiry",
+          "production_reasons": [
+            "fallback"
+          ]
+        },
+        {
+          "message_id": "synth-sell_part-086",
+          "gold_label": "sell_part",
+          "pred_label": "general_question",
+          "gold_needs_human": true,
+          "pred_needs_human": false,
+          "latency_s": 2.9166999999996612e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.442,
+          "production_label": "general_inquiry",
+          "production_reasons": [
+            "fallback"
+          ]
+        },
+        {
+          "message_id": "synth-sell_part-087",
+          "gold_label": "sell_part",
+          "pred_label": "general_question",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 3.191700000002018e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.442,
+          "production_label": "general_inquiry",
+          "production_reasons": [
+            "fallback"
+          ]
+        },
+        {
+          "message_id": "synth-general_question-088",
+          "gold_label": "general_question",
+          "pred_label": "general_question",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 2.662500000000234e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.508,
+          "production_label": "customer_service",
+          "production_reasons": [
+            "hours"
+          ]
+        },
+        {
+          "message_id": "synth-general_question-089",
+          "gold_label": "general_question",
+          "pred_label": "general_question",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 3.070899999998988e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.508,
+          "production_label": "customer_service",
+          "production_reasons": [
+            "location"
+          ]
+        },
+        {
+          "message_id": "synth-general_question-090",
+          "gold_label": "general_question",
+          "pred_label": "general_question",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 2.9250000000008436e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.508,
+          "production_label": "customer_service",
+          "production_reasons": [
+            "return policy"
+          ]
+        },
+        {
+          "message_id": "synth-general_question-091",
+          "gold_label": "general_question",
+          "pred_label": "price_request",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 4.2874999999997776e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.628,
+          "production_label": "quote_request",
+          "production_reasons": [
+            "do you have",
+            "rotor"
+          ]
+        },
+        {
+          "message_id": "synth-general_question-092",
+          "gold_label": "general_question",
+          "pred_label": "general_question",
+          "gold_needs_human": true,
+          "pred_needs_human": true,
+          "latency_s": 3.7416999999984046e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.7,
+          "production_label": "complaint",
+          "production_reasons": [
+            "manager"
+          ]
+        },
+        {
+          "message_id": "synth-general_question-093",
+          "gold_label": "general_question",
+          "pred_label": "price_request",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 3.262500000000834e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.514,
+          "production_label": "quote_request",
+          "production_reasons": [
+            "do you have"
+          ]
+        },
+        {
+          "message_id": "synth-general_question-094",
+          "gold_label": "general_question",
+          "pred_label": "general_question",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 2.6458999999978694e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.442,
+          "production_label": "general_inquiry",
+          "production_reasons": [
+            "fallback"
+          ]
+        },
+        {
+          "message_id": "synth-general_question-095",
+          "gold_label": "general_question",
+          "pred_label": "general_question",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 2.962500000000534e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.442,
+          "production_label": "general_inquiry",
+          "production_reasons": [
+            "fallback"
+          ]
+        },
+        {
+          "message_id": "synth-general_question-096",
+          "gold_label": "general_question",
+          "pred_label": "general_question",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 2.9916999999990423e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.508,
+          "production_label": "customer_service",
+          "production_reasons": [
+            "phone"
+          ]
+        },
+        {
+          "message_id": "synth-general_question-097",
+          "gold_label": "general_question",
+          "pred_label": "general_question",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 2.462500000000034e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.442,
+          "production_label": "general_inquiry",
+          "production_reasons": [
+            "fallback"
+          ]
+        },
+        {
+          "message_id": "synth-general_question-098",
+          "gold_label": "general_question",
+          "pred_label": "general_question",
+          "gold_needs_human": true,
+          "pred_needs_human": false,
+          "latency_s": 3.216699999999961e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.532,
+          "production_label": "payment_inquiry",
+          "production_reasons": [
+            "billing"
+          ]
+        },
+        {
+          "message_id": "synth-general_question-099",
+          "gold_label": "general_question",
+          "pred_label": "general_question",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 2.870799999998841e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.508,
+          "production_label": "customer_service",
+          "production_reasons": [
+            "open"
+          ]
+        },
+        {
+          "message_id": "synth-general_question-100",
+          "gold_label": "general_question",
+          "pred_label": "order_status",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 3.508399999999079e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.664,
+          "production_label": "shipping_inquiry",
+          "production_reasons": [
+            "shipping",
+            "ship"
+          ]
+        },
+        {
+          "message_id": "synth-spam_or_irrelevant-101",
+          "gold_label": "spam_or_irrelevant",
+          "pred_label": "general_question",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 4.241699999998905e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.442,
+          "production_label": "general_inquiry",
+          "production_reasons": [
+            "fallback"
+          ]
+        },
+        {
+          "message_id": "synth-spam_or_irrelevant-102",
+          "gold_label": "spam_or_irrelevant",
+          "pred_label": "general_question",
+          "gold_needs_human": false,
+          "pred_needs_human": true,
+          "latency_s": 4.283300000001988e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.7,
+          "production_label": "complaint",
+          "production_reasons": [
+            "scam"
+          ]
+        },
+        {
+          "message_id": "synth-spam_or_irrelevant-103",
+          "gold_label": "spam_or_irrelevant",
+          "pred_label": "order_status",
+          "gold_needs_human": false,
+          "pred_needs_human": true,
+          "latency_s": 4.6499999999977115e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.7,
+          "production_label": "shipping_inquiry",
+          "production_reasons": [
+            "ship"
+          ]
+        },
+        {
+          "message_id": "synth-spam_or_irrelevant-104",
+          "gold_label": "spam_or_irrelevant",
+          "pred_label": "general_question",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 4.833299999998375e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.442,
+          "production_label": "general_inquiry",
+          "production_reasons": [
+            "fallback"
+          ]
+        },
+        {
+          "message_id": "synth-spam_or_irrelevant-105",
+          "gold_label": "spam_or_irrelevant",
+          "pred_label": "order_status",
+          "gold_needs_human": false,
+          "pred_needs_human": true,
+          "latency_s": 4.079199999998395e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.7,
+          "production_label": "shipping_inquiry",
+          "production_reasons": [
+            "eta"
+          ]
+        },
+        {
+          "message_id": "synth-spam_or_irrelevant-106",
+          "gold_label": "spam_or_irrelevant",
+          "pred_label": "general_question",
+          "gold_needs_human": false,
+          "pred_needs_human": true,
+          "latency_s": 3.179200000000271e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.7,
+          "production_label": "general_inquiry",
+          "production_reasons": [
+            "fallback"
+          ]
+        },
+        {
+          "message_id": "synth-spam_or_irrelevant-107",
+          "gold_label": "spam_or_irrelevant",
+          "pred_label": "general_question",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 3.1290999999988856e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.442,
+          "production_label": "general_inquiry",
+          "production_reasons": [
+            "fallback"
+          ]
+        },
+        {
+          "message_id": "synth-spam_or_irrelevant-108",
+          "gold_label": "spam_or_irrelevant",
+          "pred_label": "general_question",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 3.4916999999995424e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.442,
+          "production_label": "general_inquiry",
+          "production_reasons": [
+            "fallback"
+          ]
+        },
+        {
+          "message_id": "synth-spam_or_irrelevant-109",
+          "gold_label": "spam_or_irrelevant",
+          "pred_label": "general_question",
+          "gold_needs_human": false,
+          "pred_needs_human": true,
+          "latency_s": 3.566599999998976e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.7,
+          "production_label": "complaint",
+          "production_reasons": [
+            "scam"
+          ]
+        },
+        {
+          "message_id": "synth-spam_or_irrelevant-110",
+          "gold_label": "spam_or_irrelevant",
+          "pred_label": "general_question",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 2.770799999998741e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.442,
+          "production_label": "general_inquiry",
+          "production_reasons": [
+            "fallback"
+          ]
+        },
+        {
+          "message_id": "synth-spam_or_irrelevant-111",
+          "gold_label": "spam_or_irrelevant",
+          "pred_label": "general_question",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 3.233399999999498e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.664,
+          "production_label": "payment_inquiry",
+          "production_reasons": [
+            "invoice",
+            "paid"
+          ]
+        },
+        {
+          "message_id": "synth-spam_or_irrelevant-112",
+          "gold_label": "spam_or_irrelevant",
+          "pred_label": "general_question",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 2.683300000000388e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.442,
+          "production_label": "general_inquiry",
+          "production_reasons": [
+            "fallback"
+          ]
+        },
+        {
+          "message_id": "synth-spam_or_irrelevant-113",
+          "gold_label": "spam_or_irrelevant",
+          "pred_label": "order_status",
+          "gold_needs_human": false,
+          "pred_needs_human": false,
+          "latency_s": 4.0500000000026626e-05,
+          "cost_usd": 0.0,
+          "confidence": 0.532,
+          "production_label": "shipping_inquiry",
+          "production_reasons": [
+            "ship"
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -30,3 +30,15 @@ The 6L80/6L90 records seeded in Phase 1 are synthetic demonstration data only. T
 - Jev shadow mode can later be extended to also classify transmission intent.
 
 Phase 1 deliberately stops before any production email or routing changes.
+
+## Phase 2 Data Flow
+
+natural-language inquiry
+    → deterministic parser/normalizer (resolver.py)
+    → TransmissionRepository
+    → canonical DMS (catalog_parts, inventory_levels, part_fitments, part_interchanges, part_identifiers)
+    → fitment / interchange / inventory resolution
+    → structured TransmissionInquiryResult
+    → derived RAG projection (future email consumer)
+
+All current 6L80/6L90 records remain synthetic demo data with `verification_status = unverified`.

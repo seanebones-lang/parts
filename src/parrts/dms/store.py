@@ -195,6 +195,68 @@ CREATE INDEX IF NOT EXISTS idx_adjustments_created ON stock_adjustments(created_
 CREATE INDEX IF NOT EXISTS idx_supersession_old ON part_supersessions(old_sku);
 CREATE INDEX IF NOT EXISTS idx_supersession_new ON part_supersessions(new_sku);
 CREATE INDEX IF NOT EXISTS idx_payment_events_order ON payment_events(order_id);
+
+-- Transmission Hard-Parts Vertical (non-destructive extension)
+CREATE TABLE IF NOT EXISTS transmission_families (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    family TEXT NOT NULL UNIQUE,
+    manufacturer TEXT DEFAULT '',
+    notes TEXT DEFAULT '',
+    created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS part_identifiers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    sku TEXT NOT NULL,
+    identifier_type TEXT NOT NULL,
+    identifier_value TEXT NOT NULL,
+    notes TEXT DEFAULT '',
+    created_at TEXT NOT NULL,
+    UNIQUE (sku, identifier_type, identifier_value),
+    FOREIGN KEY (sku) REFERENCES catalog_parts(sku)
+);
+
+CREATE TABLE IF NOT EXISTS part_interchanges (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    source_sku TEXT NOT NULL,
+    target_sku TEXT NOT NULL,
+    relationship_type TEXT NOT NULL,
+    confidence REAL DEFAULT 0.0,
+    notes TEXT DEFAULT '',
+    source TEXT DEFAULT '',
+    verification_status TEXT DEFAULT 'unverified',
+    created_at TEXT NOT NULL,
+    actor TEXT DEFAULT '',
+    UNIQUE (source_sku, target_sku, relationship_type),
+    FOREIGN KEY (source_sku) REFERENCES catalog_parts(sku),
+    FOREIGN KEY (target_sku) REFERENCES catalog_parts(sku)
+);
+
+CREATE TABLE IF NOT EXISTS part_fitments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    sku TEXT NOT NULL,
+    year_from INTEGER,
+    year_to INTEGER,
+    make TEXT,
+    model TEXT,
+    engine TEXT,
+    transmission_family TEXT,
+    transmission_variant TEXT,
+    notes TEXT DEFAULT '',
+    verification_status TEXT DEFAULT 'unverified',
+    created_at TEXT NOT NULL,
+    FOREIGN KEY (sku) REFERENCES catalog_parts(sku)
+);
+
+-- Extend catalog_parts with transmission columns (SQLite safe pattern)
+ALTER TABLE catalog_parts ADD COLUMN transmission_family TEXT DEFAULT '';
+ALTER TABLE catalog_parts ADD COLUMN transmission_variant TEXT DEFAULT '';
+ALTER TABLE catalog_parts ADD COLUMN verification_status TEXT DEFAULT 'unverified';
+ALTER TABLE inventory_levels ADD COLUMN condition TEXT DEFAULT 'new';
+
+CREATE INDEX IF NOT EXISTS idx_part_identifiers_sku ON part_identifiers(sku);
+CREATE INDEX IF NOT EXISTS idx_part_interchanges_source ON part_interchanges(source_sku);
+CREATE INDEX IF NOT EXISTS idx_part_fitments_sku ON part_fitments(sku);
 CREATE INDEX IF NOT EXISTS idx_shipment_events_order ON shipment_events(order_id);
 CREATE INDEX IF NOT EXISTS idx_notification_events_order ON notification_events(order_id);
 CREATE INDEX IF NOT EXISTS idx_notification_events_created ON notification_events(created_at);

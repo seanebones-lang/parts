@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1200px; height: 627px; overflow: hidden; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: linear-gradient(155deg, #0B1F33 0%, #122a42 55%, #1B4D3E 120%);
+    color: #F5F3EC;
+    position: relative;
+  }
+  body::before {
+    content: "";
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+  }
+  .bar { height: 6px; background: #D97757; }
+  .wrap { padding: 48px 64px 0; position: relative; z-index: 1; }
+  .eyebrow {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 15px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(232,230,223,0.7);
+    margin-bottom: 28px;
+  }
+  h1 {
+    font-family: Georgia, "Times New Roman", serif;
+    font-weight: 500;
+    font-size: 56px;
+    line-height: 1.08;
+    letter-spacing: -0.02em;
+    color: #fff;
+    margin-bottom: 18px;
+  }
+  .sub {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 28px;
+    color: #D97757;
+    margin-bottom: 14px;
+  }
+  .line {
+    font-size: 18px;
+    color: rgba(245,243,236,0.82);
+    margin-bottom: 36px;
+  }
+  .cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 18px;
+  }
+  .card {
+    background: linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.04));
+    border: 1.5px solid rgba(255,255,255,0.14);
+    border-radius: 14px;
+    padding: 20px 22px 18px;
+    min-height: 118px;
+  }
+  .dots { display: flex; gap: 10px; margin-bottom: 14px; }
+  .dot { width: 14px; height: 14px; border-radius: 50%; }
+  .g { background: #788C5D; }
+  .y { background: #D97757; }
+  .r { background: #B04A3F; }
+  .label {
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    color: #D97757;
+    margin-bottom: 8px;
+  }
+  .title {
+    font-family: Georgia, serif;
+    font-size: 22px;
+    color: #fff;
+    margin-bottom: 6px;
+  }
+  .meta {
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 12px;
+    color: rgba(232,230,223,0.62);
+    letter-spacing: 0.06em;
+  }
+  .footer {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    height: 52px;
+    background: rgba(0,0,0,0.28);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 64px;
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 15px;
+    color: rgba(232,230,223,0.85);
+    z-index: 2;
+  }
+  .footer span { color: rgba(232,230,223,0.5); font-size: 13px; }
+</style>
+</head>
+<body>
+  <div class="bar"></div>
+  <div class="wrap">
+    <div class="eyebrow">NextEleven LLC  ·  Dealership Parts OS</div>
+    <h1>NextEleven Parts<br/>Inventory System</h1>
+    <div class="sub">Speed with control for multi-store dealerships</div>
+    <div class="line">Email desk · AI multi-location search · DMS · transfers · OEM feeds</div>
+    <div class="cards">
+      <div class="card">
+        <div class="dots">
+          <div class="dot g"></div>
+          <div class="dot y"></div>
+          <div class="dot r"></div>
+        </div>
+        <div class="title">Email desk G / Y / R</div>
+        <div class="meta">HUMAN-IN-THE-LOOP</div>
+      </div>
+      <div class="card">
+        <div class="label">AI LOOKUP</div>
+        <div class="title">Multi-location search</div>
+        <div class="meta">HYBRID + TRAFFIC LIGHTS</div>
+      </div>
+      <div class="card">
+        <div class="label">OPERATIONS</div>
+        <div class="title">DMS · transfers · OEM</div>
+        <div class="meta">FAIL CLOSED ON PAY / SHIP</div>
+      </div>
+    </div>
+  </div>
+  <div class="footer">
+    <div>seanebones-lang.github.io/nexteleven-parts-pitch</div>
+    <span>v0.15</span>
+  </div>
+</body>
+</html>

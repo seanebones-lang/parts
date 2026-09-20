@@ -1,0 +1,34 @@
+Corpus: 124 rows
+  per-class: {'price_request': 27, 'order_status': 15, 'general_question': 17, 'parts_availability': 22, 'compatibility_fitment': 16, 'sell_part': 14, 'spam_or_irrelevant': 13}
+  needs_human true: 24 false: 100
+
+--- rule_based: ok ---
+  accuracy: 0.0000
+  per-class P/R/F1:
+    parts_availability       P=0.000 R=0.000 F1=0.000 (n=22)
+    price_request            P=0.000 R=0.000 F1=0.000 (n=27)
+    compatibility_fitment    P=0.000 R=0.000 F1=0.000 (n=16)
+    order_status             P=0.000 R=0.000 F1=0.000 (n=15)
+    sell_part                P=0.000 R=0.000 F1=0.000 (n=14)
+    general_question         P=0.000 R=0.000 F1=0.000 (n=17)
+    spam_or_irrelevant       P=0.000 R=0.000 F1=0.000 (n=13)
+  needs_human: {'accuracy': 0.1935, 'needs_human_confusion': {'tp': 24, 'tn': 0, 'fp': 100, 'fn': 0, 'precision_need': 0.1935, 'recall_need': 1.0}}
+  latency: {'mean_s': 0.0, 'median_s': 0.0, 'p50_s': 0.0, 'p95_s': 0.0, 'min_s': 0.0, 'max_s': 0.0, 'count': 124}
+  cost: {'total_usd': 0.0, 'per_query_mean': 0.0}
+
+--- llm_existing: ok ---
+  accuracy: 0.9032
+  per-class P/R/F1:
+    parts_availability       P=0.870 R=0.909 F1=0.889 (n=22)
+    price_request            P=1.000 R=0.889 F1=0.941 (n=27)
+    compatibility_fitment    P=0.941 R=1.000 F1=0.970 (n=16)
+    order_status             P=0.750 R=1.000 F1=0.857 (n=15)
+    sell_part                P=1.000 R=1.000 F1=1.000 (n=14)
+    general_question         P=1.000 R=0.588 F1=0.741 (n=17)
+    spam_or_irrelevant       P=0.812 R=1.000 F1=0.897 (n=13)
+  needs_human: {'accuracy': 0.8226, 'needs_human_confusion': {'tp': 7, 'tn': 95, 'fp': 5, 'fn': 17, 'precision_need': 0.5833, 'recall_need': 0.2917}}
+  latency: {'mean_s': 4.027605, 'median_s': 3.721769, 'p50_s': 3.721769, 'p95_s': 6.277212, 'min_s': 2.238833, 'max_s': 9.430195, 'count': 124}
+  cost: {'total_usd': 0.010674, 'per_query_mean': 8.6e-05}
+
+Full JSON report written to: /Users/nexteleven/Desktop/Parrts-Dist-RAG/experiments/jev-benchmark/results/llm_report.json
+EXIT=0

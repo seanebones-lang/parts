@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="627" viewBox="0 0 1200 627">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0B1F33"/>
+      <stop offset="55%" stop-color="#122a42"/>
+      <stop offset="100%" stop-color="#1B4D3E"/>
+    </linearGradient>
+    <linearGradient id="card" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.10)"/>
+      <stop offset="100%" stop-color="rgba(255,255,255,0.04)"/>
+    </linearGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0V40" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+    </pattern>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="627" fill="url(#bg)"/>
+  <rect width="1200" height="627" fill="url(#grid)"/>
+
+  <!-- Accent bar top -->
+  <rect x="0" y="0" width="1200" height="6" fill="#D97757"/>
+
+  <!-- Eyebrow -->
+  <text x="72" y="88" fill="rgba(232,230,223,0.72)" font-family="ui-monospace, SF Mono, Menlo, monospace" font-size="18" letter-spacing="3.5">NEXTELEVEN LLC  ·  DEALERSHIP PARTS OS</text>
+
+  <!-- Headline -->
+  <text x="72" y="175" fill="#FFFFFF" font-family="Georgia, ui-serif, Times New Roman, serif" font-size="54" font-weight="500">NextEleven Parts</text>
+  <text x="72" y="240" fill="#FFFFFF" font-family="Georgia, ui-serif, Times New Roman, serif" font-size="54" font-weight="500">Inventory System</text>
+
+  <!-- Subhead -->
+  <text x="72" y="300" fill="#D97757" font-family="Georgia, ui-serif, Times New Roman, serif" font-size="28">Speed with control for multi-store dealerships</text>
+
+  <!-- Supporting line -->
+  <text x="72" y="345" fill="rgba(245,243,236,0.82)" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="20">Email desk · AI multi-location search · DMS · transfers · OEM feeds</text>
+
+  <!-- Feature cards -->
+  <g transform="translate(72,400)">
+    <!-- Card 1 -->
+    <rect width="320" height="110" rx="14" fill="url(#card)" stroke="rgba(255,255,255,0.14)" stroke-width="1.5"/>
+    <circle cx="36" cy="40" r="8" fill="#788C5D"/>
+    <circle cx="58" cy="40" r="8" fill="#D97757"/>
+    <circle cx="80" cy="40" r="8" fill="#B04A3F"/>
+    <text x="28" y="78" fill="#FFFFFF" font-family="Georgia, serif" font-size="22">Email desk G / Y / R</text>
+    <text x="28" y="98" fill="rgba(232,230,223,0.65)" font-family="ui-monospace, Menlo, monospace" font-size="13">HUMAN-IN-THE-LOOP</text>
+
+    <!-- Card 2 -->
+    <g transform="translate(344,0)">
+      <rect width="320" height="110" rx="14" fill="url(#card)" stroke="rgba(255,255,255,0.14)" stroke-width="1.5"/>
+      <text x="28" y="48" fill="#D97757" font-family="ui-monospace, Menlo, monospace" font-size="14" letter-spacing="2">AI LOOKUP</text>
+      <text x="28" y="78" fill="#FFFFFF" font-family="Georgia, serif" font-size="22">Multi-location search</text>
+      <text x="28" y="98" fill="rgba(232,230,223,0.65)" font-family="ui-monospace, Menlo, monospace" font-size="13">HYBRID + TRAFFIC LIGHTS</text>
+    </g>
+
+    <!-- Card 3 -->
+    <g transform="translate(688,0)">
+      <rect width="340" height="110" rx="14" fill="url(#card)" stroke="rgba(255,255,255,0.14)" stroke-width="1.5"/>
+      <text x="28" y="48" fill="#D97757" font-family="ui-monospace, Menlo, monospace" font-size="14" letter-spacing="2">OPERATIONS</text>
+      <text x="28" y="78" fill="#FFFFFF" font-family="Georgia, serif" font-size="22">DMS · transfers · OEM</text>
+      <text x="28" y="98" fill="rgba(232,230,223,0.65)" font-family="ui-monospace, Menlo, monospace" font-size="13">FAIL CLOSED ON PAY / SHIP</text>
+    </g>
+  </g>
+
+  <!-- Bottom URL strip -->
+  <rect x="0" y="575" width="1200" height="52" fill="rgba(0,0,0,0.28)"/>
+  <text x="72" y="607" fill="rgba(232,230,223,0.85)" font-family="ui-monospace, Menlo, monospace" font-size="16">seanebones-lang.github.io/nexteleven-parts-pitch</text>
+  <text x="1128" y="607" text-anchor="end" fill="rgba(232,230,223,0.55)" font-family="ui-monospace, Menlo, monospace" font-size="14">v0.15</text>
+</svg>

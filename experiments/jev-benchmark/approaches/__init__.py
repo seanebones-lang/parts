@@ -1,0 +1,1 @@
+"""JEV benchmark approach registry (empty by design; import modules directly)."""

@@ -1,0 +1,4404 @@
+{
+  "results": [
+    {
+      "gold": "parts_availability",
+      "pred": "parts_availability",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "parts_availability": 1.0,
+        "price_request": 0.0,
+        "general_question": 0.0,
+        "compatibility_fitment": 0.0,
+        "order_status": 0.0,
+        "sell_part": 0.0,
+        "spam_or_irrelevant": 0.0
+      },
+      "noul_probability": 0.1,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.3232867500046268,
+      "usage": {
+        "input_tokens": 796,
+        "output_tokens": 108
+      }
+    },
+    {
+      "gold": "compatibility_fitment",
+      "pred": "compatibility_fitment",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "general_question": 0.0,
+        "sell_part": 0.0,
+        "price_request": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "order_status": 0.0,
+        "compatibility_fitment": 1.0,
+        "parts_availability": 0.0
+      },
+      "noul_probability": 0.08,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.316358708019834,
+      "usage": {
+        "input_tokens": 780,
+        "output_tokens": 110
+      }
+    },
+    {
+      "gold": "parts_availability",
+      "pred": "parts_availability",
+      "choice_confidence": 0.94,
+      "probabilities": {
+        "parts_availability": 0.96,
+        "sell_part": 0.0,
+        "price_request": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "general_question": 0.0,
+        "compatibility_fitment": 0.03,
+        "order_status": 0.01
+      },
+      "noul_probability": 0.19,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.30932400000165217,
+      "usage": {
+        "input_tokens": 780,
+        "output_tokens": 108
+      }
+    },
+    {
+      "gold": "order_status",
+      "pred": "order_status",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "spam_or_irrelevant": 0.0,
+        "order_status": 1.0,
+        "parts_availability": 0.0,
+        "compatibility_fitment": 0.0,
+        "price_request": 0.0,
+        "general_question": 0.0,
+        "sell_part": 0.0
+      },
+      "noul_probability": 0.11,
+      "needs_human_gold": true,
+      "needs_human_pred": false,
+      "latency_s": 0.3699307079950813,
+      "usage": {
+        "input_tokens": 790,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "compatibility_fitment",
+      "pred": "compatibility_fitment",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "spam_or_irrelevant": 0.0,
+        "parts_availability": 0.0,
+        "price_request": 0.0,
+        "order_status": 0.0,
+        "sell_part": 0.0,
+        "compatibility_fitment": 1.0,
+        "general_question": 0.0
+      },
+      "noul_probability": 0.14,
+      "needs_human_gold": true,
+      "needs_human_pred": false,
+      "latency_s": 0.27396604197565466,
+      "usage": {
+        "input_tokens": 794,
+        "output_tokens": 110
+      }
+    },
+    {
+      "gold": "sell_part",
+      "pred": "parts_availability",
+      "choice_confidence": 0.73,
+      "probabilities": {
+        "sell_part": 0.19,
+        "general_question": 0.03,
+        "compatibility_fitment": 0.0,
+        "parts_availability": 0.76,
+        "spam_or_irrelevant": 0.01,
+        "order_status": 0.0,
+        "price_request": 0.01
+      },
+      "noul_probability": 0.22,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.35587887500878423,
+      "usage": {
+        "input_tokens": 780,
+        "output_tokens": 108
+      }
+    },
+    {
+      "gold": "sell_part",
+      "pred": "sell_part",
+      "choice_confidence": 0.77,
+      "probabilities": {
+        "price_request": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "sell_part": 0.81,
+        "parts_availability": 0.14,
+        "compatibility_fitment": 0.0,
+        "general_question": 0.04,
+        "order_status": 0.0
+      },
+      "noul_probability": 0.2,
+      "needs_human_gold": true,
+      "needs_human_pred": false,
+      "latency_s": 0.3017110000073444,
+      "usage": {
+        "input_tokens": 776,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "order_status",
+      "pred": "order_status",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "order_status": 1.0,
+        "price_request": 0.0,
+        "sell_part": 0.0,
+        "parts_availability": 0.0,
+        "compatibility_fitment": 0.0,
+        "general_question": 0.0,
+        "spam_or_irrelevant": 0.0
+      },
+      "noul_probability": 0.08,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.284098834003089,
+      "usage": {
+        "input_tokens": 782,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "spam_or_irrelevant",
+      "pred": "spam_or_irrelevant",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "price_request": 0.0,
+        "order_status": 0.0,
+        "compatibility_fitment": 0.0,
+        "sell_part": 0.0,
+        "parts_availability": 0.0,
+        "spam_or_irrelevant": 1.0,
+        "general_question": 0.0
+      },
+      "noul_probability": 0.3,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.30263133300468326,
+      "usage": {
+        "input_tokens": 784,
+        "output_tokens": 109
+      }
+    },
+    {
+      "gold": "price_request",
+      "pred": "price_request",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "order_status": 0.0,
+        "compatibility_fitment": 0.0,
+        "parts_availability": 0.0,
+        "general_question": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "price_request": 1.0,
+        "sell_part": 0.0
+      },
+      "noul_probability": 0.05,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.31406129198148847,
+      "usage": {
+        "input_tokens": 782,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "order_status",
+      "pred": "order_status",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "parts_availability": 0.0,
+        "compatibility_fitment": 0.0,
+        "price_request": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "general_question": 0.0,
+        "sell_part": 0.0,
+        "order_status": 1.0
+      },
+      "noul_probability": 0.1,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.32554245900246315,
+      "usage": {
+        "input_tokens": 778,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "general_question",
+      "pred": "general_question",
+      "choice_confidence": 0.77,
+      "probabilities": {
+        "sell_part": 0.0,
+        "general_question": 0.8,
+        "price_request": 0.0,
+        "parts_availability": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "order_status": 0.2,
+        "compatibility_fitment": 0.0
+      },
+      "noul_probability": 0.05,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.3019564170099329,
+      "usage": {
+        "input_tokens": 788,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "spam_or_irrelevant",
+      "pred": "spam_or_irrelevant",
+      "choice_confidence": 0.98,
+      "probabilities": {
+        "spam_or_irrelevant": 0.99,
+        "compatibility_fitment": 0.0,
+        "price_request": 0.0,
+        "order_status": 0.0,
+        "general_question": 0.01,
+        "parts_availability": 0.0,
+        "sell_part": 0.0
+      },
+      "noul_probability": 0.11,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.2630960830138065,
+      "usage": {
+        "input_tokens": 780,
+        "output_tokens": 109
+      }
+    },
+    {
+      "gold": "order_status",
+      "pred": "order_status",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "compatibility_fitment": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "parts_availability": 0.0,
+        "general_question": 0.0,
+        "sell_part": 0.0,
+        "price_request": 0.0,
+        "order_status": 1.0
+      },
+      "noul_probability": 0.09,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.274220166989835,
+      "usage": {
+        "input_tokens": 790,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "general_question",
+      "pred": "general_question",
+      "choice_confidence": 0.78,
+      "probabilities": {
+        "parts_availability": 0.0,
+        "price_request": 0.0,
+        "compatibility_fitment": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "general_question": 0.81,
+        "sell_part": 0.0,
+        "order_status": 0.19
+      },
+      "noul_probability": 0.04,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.24741133299539797,
+      "usage": {
+        "input_tokens": 778,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "parts_availability",
+      "pred": "parts_availability",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "parts_availability": 1.0,
+        "price_request": 0.0,
+        "sell_part": 0.0,
+        "compatibility_fitment": 0.0,
+        "order_status": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "general_question": 0.0
+      },
+      "noul_probability": 0.07,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.32074508399819024,
+      "usage": {
+        "input_tokens": 798,
+        "output_tokens": 108
+      }
+    },
+    {
+      "gold": "price_request",
+      "pred": "price_request",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "spam_or_irrelevant": 0.0,
+        "parts_availability": 0.0,
+        "price_request": 1.0,
+        "sell_part": 0.0,
+        "order_status": 0.0,
+        "general_question": 0.0,
+        "compatibility_fitment": 0.0
+      },
+      "noul_probability": 0.07,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.30709462499362417,
+      "usage": {
+        "input_tokens": 792,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "general_question",
+      "pred": "general_question",
+      "choice_confidence": 0.99,
+      "probabilities": {
+        "price_request": 0.0,
+        "general_question": 0.99,
+        "parts_availability": 0.0,
+        "sell_part": 0.0,
+        "order_status": 0.0,
+        "spam_or_irrelevant": 0.01,
+        "compatibility_fitment": 0.0
+      },
+      "noul_probability": 0.13,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.3246521250111982,
+      "usage": {
+        "input_tokens": 780,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "spam_or_irrelevant",
+      "pred": "spam_or_irrelevant",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "spam_or_irrelevant": 1.0,
+        "order_status": 0.0,
+        "sell_part": 0.0,
+        "general_question": 0.0,
+        "compatibility_fitment": 0.0,
+        "price_request": 0.0,
+        "parts_availability": 0.0
+      },
+      "noul_probability": 0.71,
+      "needs_human_gold": false,
+      "needs_human_pred": true,
+      "latency_s": 0.25888854201184586,
+      "usage": {
+        "input_tokens": 794,
+        "output_tokens": 109
+      }
+    },
+    {
+      "gold": "parts_availability",
+      "pred": "compatibility_fitment",
+      "choice_confidence": 0.45,
+      "probabilities": {
+        "sell_part": 0.0,
+        "spam_or_irrelevant": 0.1,
+        "parts_availability": 0.33,
+        "general_question": 0.01,
+        "compatibility_fitment": 0.53,
+        "order_status": 0.0,
+        "price_request": 0.03
+      },
+      "noul_probability": 0.09,
+      "needs_human_gold": true,
+      "needs_human_pred": false,
+      "latency_s": 0.2939792500110343,
+      "usage": {
+        "input_tokens": 796,
+        "output_tokens": 110
+      }
+    },
+    {
+      "gold": "price_request",
+      "pred": "price_request",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "parts_availability": 0.0,
+        "price_request": 1.0,
+        "sell_part": 0.0,
+        "order_status": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "general_question": 0.0,
+        "compatibility_fitment": 0.0
+      },
+      "noul_probability": 0.04,
+      "needs_human_gold": true,
+      "needs_human_pred": false,
+      "latency_s": 0.3382447080221027,
+      "usage": {
+        "input_tokens": 796,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "compatibility_fitment",
+      "pred": "compatibility_fitment",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "price_request": 0.0,
+        "parts_availability": 0.0,
+        "general_question": 0.0,
+        "sell_part": 0.0,
+        "order_status": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "compatibility_fitment": 1.0
+      },
+      "noul_probability": 0.06,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.3012366659822874,
+      "usage": {
+        "input_tokens": 800,
+        "output_tokens": 110
+      }
+    },
+    {
+      "gold": "price_request",
+      "pred": "price_request",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "sell_part": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "parts_availability": 0.0,
+        "compatibility_fitment": 0.0,
+        "order_status": 0.0,
+        "price_request": 1.0,
+        "general_question": 0.0
+      },
+      "noul_probability": 0.04,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.28506633298820816,
+      "usage": {
+        "input_tokens": 796,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "spam_or_irrelevant",
+      "pred": "spam_or_irrelevant",
+      "choice_confidence": 0.99,
+      "probabilities": {
+        "price_request": 0.0,
+        "parts_availability": 0.0,
+        "compatibility_fitment": 0.0,
+        "order_status": 0.0,
+        "spam_or_irrelevant": 0.99,
+        "sell_part": 0.0,
+        "general_question": 0.01
+      },
+      "noul_probability": 0.15,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.3361182499793358,
+      "usage": {
+        "input_tokens": 776,
+        "output_tokens": 109
+      }
+    },
+    {
+      "gold": "price_request",
+      "pred": "price_request",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "order_status": 0.0,
+        "parts_availability": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "general_question": 0.0,
+        "sell_part": 0.0,
+        "price_request": 1.0,
+        "compatibility_fitment": 0.0
+      },
+      "noul_probability": 0.06,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.251946374977706,
+      "usage": {
+        "input_tokens": 786,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "price_request",
+      "pred": "price_request",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "spam_or_irrelevant": 0.0,
+        "general_question": 0.0,
+        "price_request": 1.0,
+        "compatibility_fitment": 0.0,
+        "order_status": 0.0,
+        "parts_availability": 0.0,
+        "sell_part": 0.0
+      },
+      "noul_probability": 0.06,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.26245966702117585,
+      "usage": {
+        "input_tokens": 788,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "spam_or_irrelevant",
+      "pred": "spam_or_irrelevant",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "general_question": 0.0,
+        "price_request": 0.0,
+        "sell_part": 0.0,
+        "spam_or_irrelevant": 1.0,
+        "order_status": 0.0,
+        "parts_availability": 0.0,
+        "compatibility_fitment": 0.0
+      },
+      "noul_probability": 0.12,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.31128487500245683,
+      "usage": {
+        "input_tokens": 782,
+        "output_tokens": 109
+      }
+    },
+    {
+      "gold": "compatibility_fitment",
+      "pred": "compatibility_fitment",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "compatibility_fitment": 1.0,
+        "sell_part": 0.0,
+        "price_request": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "general_question": 0.0,
+        "parts_availability": 0.0,
+        "order_status": 0.0
+      },
+      "noul_probability": 0.13,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.3069569999934174,
+      "usage": {
+        "input_tokens": 788,
+        "output_tokens": 110
+      }
+    },
+    {
+      "gold": "price_request",
+      "pred": "price_request",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "general_question": 0.0,
+        "sell_part": 0.0,
+        "price_request": 1.0,
+        "parts_availability": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "compatibility_fitment": 0.0,
+        "order_status": 0.0
+      },
+      "noul_probability": 0.07,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.26369016701937653,
+      "usage": {
+        "input_tokens": 786,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "spam_or_irrelevant",
+      "pred": "spam_or_irrelevant",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "order_status": 0.0,
+        "compatibility_fitment": 0.0,
+        "general_question": 0.0,
+        "spam_or_irrelevant": 1.0,
+        "sell_part": 0.0,
+        "price_request": 0.0,
+        "parts_availability": 0.0
+      },
+      "noul_probability": 0.67,
+      "needs_human_gold": false,
+      "needs_human_pred": true,
+      "latency_s": 0.29690441698767245,
+      "usage": {
+        "input_tokens": 794,
+        "output_tokens": 109
+      }
+    },
+    {
+      "gold": "parts_availability",
+      "pred": "parts_availability",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "parts_availability": 1.0,
+        "spam_or_irrelevant": 0.0,
+        "compatibility_fitment": 0.0,
+        "price_request": 0.0,
+        "order_status": 0.0,
+        "sell_part": 0.0,
+        "general_question": 0.0
+      },
+      "noul_probability": 0.06,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.26531354201142676,
+      "usage": {
+        "input_tokens": 790,
+        "output_tokens": 108
+      }
+    },
+    {
+      "gold": "sell_part",
+      "pred": "sell_part",
+      "choice_confidence": 0.7,
+      "probabilities": {
+        "order_status": 0.0,
+        "general_question": 0.0,
+        "compatibility_fitment": 0.0,
+        "parts_availability": 0.01,
+        "price_request": 0.01,
+        "spam_or_irrelevant": 0.23,
+        "sell_part": 0.75
+      },
+      "noul_probability": 0.46,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.2749045839882456,
+      "usage": {
+        "input_tokens": 786,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "sell_part",
+      "pred": "sell_part",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "price_request": 0.0,
+        "parts_availability": 0.0,
+        "sell_part": 1.0,
+        "compatibility_fitment": 0.0,
+        "order_status": 0.0,
+        "general_question": 0.0,
+        "spam_or_irrelevant": 0.0
+      },
+      "noul_probability": 0.2,
+      "needs_human_gold": true,
+      "needs_human_pred": false,
+      "latency_s": 0.2492313330003526,
+      "usage": {
+        "input_tokens": 786,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "price_request",
+      "pred": "price_request",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "spam_or_irrelevant": 0.0,
+        "sell_part": 0.0,
+        "price_request": 1.0,
+        "parts_availability": 0.0,
+        "general_question": 0.0,
+        "order_status": 0.0,
+        "compatibility_fitment": 0.0
+      },
+      "noul_probability": 0.07,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.3031218750111293,
+      "usage": {
+        "input_tokens": 788,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "compatibility_fitment",
+      "pred": "compatibility_fitment",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "price_request": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "general_question": 0.0,
+        "sell_part": 0.0,
+        "order_status": 0.0,
+        "parts_availability": 0.0,
+        "compatibility_fitment": 1.0
+      },
+      "noul_probability": 0.13,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.3033482909959275,
+      "usage": {
+        "input_tokens": 802,
+        "output_tokens": 110
+      }
+    },
+    {
+      "gold": "order_status",
+      "pred": "order_status",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "parts_availability": 0.0,
+        "price_request": 0.0,
+        "sell_part": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "general_question": 0.0,
+        "compatibility_fitment": 0.0,
+        "order_status": 1.0
+      },
+      "noul_probability": 0.1,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.29152112497831695,
+      "usage": {
+        "input_tokens": 782,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "price_request",
+      "pred": "price_request",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "general_question": 0.0,
+        "price_request": 1.0,
+        "spam_or_irrelevant": 0.0,
+        "order_status": 0.0,
+        "compatibility_fitment": 0.0,
+        "sell_part": 0.0,
+        "parts_availability": 0.0
+      },
+      "noul_probability": 0.05,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.3533082499925513,
+      "usage": {
+        "input_tokens": 782,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "compatibility_fitment",
+      "pred": "compatibility_fitment",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "general_question": 0.0,
+        "price_request": 0.0,
+        "sell_part": 0.0,
+        "compatibility_fitment": 1.0,
+        "parts_availability": 0.0,
+        "order_status": 0.0,
+        "spam_or_irrelevant": 0.0
+      },
+      "noul_probability": 0.12,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.28918824999709614,
+      "usage": {
+        "input_tokens": 792,
+        "output_tokens": 110
+      }
+    },
+    {
+      "gold": "sell_part",
+      "pred": "sell_part",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "parts_availability": 0.0,
+        "price_request": 0.0,
+        "compatibility_fitment": 0.0,
+        "general_question": 0.0,
+        "order_status": 0.0,
+        "sell_part": 1.0,
+        "spam_or_irrelevant": 0.0
+      },
+      "noul_probability": 0.09,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.2613404160074424,
+      "usage": {
+        "input_tokens": 784,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "general_question",
+      "pred": "general_question",
+      "choice_confidence": 0.74,
+      "probabilities": {
+        "spam_or_irrelevant": 0.0,
+        "general_question": 0.78,
+        "price_request": 0.0,
+        "compatibility_fitment": 0.0,
+        "order_status": 0.22,
+        "parts_availability": 0.0,
+        "sell_part": 0.0
+      },
+      "noul_probability": 0.04,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.2781285409873817,
+      "usage": {
+        "input_tokens": 796,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "general_question",
+      "pred": "general_question",
+      "choice_confidence": 0.74,
+      "probabilities": {
+        "spam_or_irrelevant": 0.0,
+        "order_status": 0.22,
+        "price_request": 0.0,
+        "general_question": 0.78,
+        "compatibility_fitment": 0.0,
+        "parts_availability": 0.0,
+        "sell_part": 0.0
+      },
+      "noul_probability": 0.05,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.33812116700573824,
+      "usage": {
+        "input_tokens": 784,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "spam_or_irrelevant",
+      "pred": "spam_or_irrelevant",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "general_question": 0.0,
+        "sell_part": 0.0,
+        "price_request": 0.0,
+        "spam_or_irrelevant": 1.0,
+        "parts_availability": 0.0,
+        "compatibility_fitment": 0.0,
+        "order_status": 0.0
+      },
+      "noul_probability": 0.18,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.3186255839827936,
+      "usage": {
+        "input_tokens": 784,
+        "output_tokens": 109
+      }
+    },
+    {
+      "gold": "general_question",
+      "pred": "general_question",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "spam_or_irrelevant": 0.0,
+        "sell_part": 0.0,
+        "price_request": 0.0,
+        "order_status": 0.0,
+        "general_question": 1.0,
+        "parts_availability": 0.0,
+        "compatibility_fitment": 0.0
+      },
+      "noul_probability": 0.07,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.2917902080225758,
+      "usage": {
+        "input_tokens": 780,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "price_request",
+      "pred": "price_request",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "compatibility_fitment": 0.0,
+        "parts_availability": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "general_question": 0.0,
+        "sell_part": 0.0,
+        "price_request": 1.0,
+        "order_status": 0.0
+      },
+      "noul_probability": 0.05,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.2646623750042636,
+      "usage": {
+        "input_tokens": 782,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "spam_or_irrelevant",
+      "pred": "spam_or_irrelevant",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "price_request": 0.0,
+        "order_status": 0.0,
+        "spam_or_irrelevant": 1.0,
+        "compatibility_fitment": 0.0,
+        "general_question": 0.0,
+        "sell_part": 0.0,
+        "parts_availability": 0.0
+      },
+      "noul_probability": 0.26,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.2976945000118576,
+      "usage": {
+        "input_tokens": 784,
+        "output_tokens": 109
+      }
+    },
+    {
+      "gold": "spam_or_irrelevant",
+      "pred": "spam_or_irrelevant",
+      "choice_confidence": 0.99,
+      "probabilities": {
+        "general_question": 0.0,
+        "sell_part": 0.0,
+        "price_request": 0.0,
+        "parts_availability": 0.0,
+        "order_status": 0.0,
+        "spam_or_irrelevant": 1.0,
+        "compatibility_fitment": 0.0
+      },
+      "noul_probability": 0.32,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.3069851670006756,
+      "usage": {
+        "input_tokens": 784,
+        "output_tokens": 109
+      }
+    },
+    {
+      "gold": "parts_availability",
+      "pred": "compatibility_fitment",
+      "choice_confidence": 0.46,
+      "probabilities": {
+        "spam_or_irrelevant": 0.03,
+        "general_question": 0.02,
+        "sell_part": 0.0,
+        "price_request": 0.02,
+        "order_status": 0.0,
+        "compatibility_fitment": 0.54,
+        "parts_availability": 0.39
+      },
+      "noul_probability": 0.09,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.30116224999073893,
+      "usage": {
+        "input_tokens": 790,
+        "output_tokens": 110
+      }
+    },
+    {
+      "gold": "compatibility_fitment",
+      "pred": "compatibility_fitment",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "compatibility_fitment": 1.0,
+        "parts_availability": 0.0,
+        "price_request": 0.0,
+        "order_status": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "sell_part": 0.0,
+        "general_question": 0.0
+      },
+      "noul_probability": 0.11,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.4367311669921037,
+      "usage": {
+        "input_tokens": 788,
+        "output_tokens": 110
+      }
+    },
+    {
+      "gold": "sell_part",
+      "pred": "sell_part",
+      "choice_confidence": 0.83,
+      "probabilities": {
+        "price_request": 0.0,
+        "general_question": 0.0,
+        "spam_or_irrelevant": 0.14,
+        "parts_availability": 0.0,
+        "order_status": 0.0,
+        "sell_part": 0.86,
+        "compatibility_fitment": 0.0
+      },
+      "noul_probability": 0.32,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.33305379099329,
+      "usage": {
+        "input_tokens": 782,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "order_status",
+      "pred": "order_status",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "order_status": 1.0,
+        "price_request": 0.0,
+        "general_question": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "compatibility_fitment": 0.0,
+        "sell_part": 0.0,
+        "parts_availability": 0.0
+      },
+      "noul_probability": 0.11,
+      "needs_human_gold": true,
+      "needs_human_pred": false,
+      "latency_s": 0.3037277920229826,
+      "usage": {
+        "input_tokens": 790,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "parts_availability",
+      "pred": "parts_availability",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "general_question": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "price_request": 0.0,
+        "order_status": 0.0,
+        "compatibility_fitment": 0.0,
+        "sell_part": 0.0,
+        "parts_availability": 1.0
+      },
+      "noul_probability": 0.1,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.35471033299108967,
+      "usage": {
+        "input_tokens": 796,
+        "output_tokens": 108
+      }
+    },
+    {
+      "gold": "spam_or_irrelevant",
+      "pred": "spam_or_irrelevant",
+      "choice_confidence": 0.99,
+      "probabilities": {
+        "general_question": 0.0,
+        "sell_part": 0.0,
+        "price_request": 0.0,
+        "compatibility_fitment": 0.0,
+        "spam_or_irrelevant": 0.99,
+        "parts_availability": 0.0,
+        "order_status": 0.01
+      },
+      "noul_probability": 0.59,
+      "needs_human_gold": false,
+      "needs_human_pred": true,
+      "latency_s": 0.35877608400187455,
+      "usage": {
+        "input_tokens": 790,
+        "output_tokens": 109
+      }
+    },
+    {
+      "gold": "price_request",
+      "pred": "price_request",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "order_status": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "price_request": 1.0,
+        "general_question": 0.0,
+        "compatibility_fitment": 0.0,
+        "sell_part": 0.0,
+        "parts_availability": 0.0
+      },
+      "noul_probability": 0.15,
+      "needs_human_gold": true,
+      "needs_human_pred": false,
+      "latency_s": 0.331628499989165,
+      "usage": {
+        "input_tokens": 788,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "sell_part",
+      "pred": "sell_part",
+      "choice_confidence": 0.97,
+      "probabilities": {
+        "parts_availability": 0.01,
+        "spam_or_irrelevant": 0.02,
+        "general_question": 0.0,
+        "sell_part": 0.97,
+        "compatibility_fitment": 0.0,
+        "price_request": 0.0,
+        "order_status": 0.0
+      },
+      "noul_probability": 0.12,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.29858354199677706,
+      "usage": {
+        "input_tokens": 782,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "order_status",
+      "pred": "order_status",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "general_question": 0.0,
+        "sell_part": 0.0,
+        "price_request": 0.0,
+        "compatibility_fitment": 0.0,
+        "order_status": 1.0,
+        "spam_or_irrelevant": 0.0,
+        "parts_availability": 0.0
+      },
+      "noul_probability": 0.07,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.25012408298789524,
+      "usage": {
+        "input_tokens": 776,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "compatibility_fitment",
+      "pred": "compatibility_fitment",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "general_question": 0.0,
+        "sell_part": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "price_request": 0.0,
+        "compatibility_fitment": 1.0,
+        "order_status": 0.0,
+        "parts_availability": 0.0
+      },
+      "noul_probability": 0.11,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.2546470829984173,
+      "usage": {
+        "input_tokens": 792,
+        "output_tokens": 110
+      }
+    },
+    {
+      "gold": "parts_availability",
+      "pred": "compatibility_fitment",
+      "choice_confidence": 0.43,
+      "probabilities": {
+        "sell_part": 0.0,
+        "order_status": 0.0,
+        "spam_or_irrelevant": 0.04,
+        "price_request": 0.03,
+        "general_question": 0.02,
+        "compatibility_fitment": 0.52,
+        "parts_availability": 0.39
+      },
+      "noul_probability": 0.09,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.24148383300052956,
+      "usage": {
+        "input_tokens": 790,
+        "output_tokens": 110
+      }
+    },
+    {
+      "gold": "compatibility_fitment",
+      "pred": "compatibility_fitment",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "order_status": 0.0,
+        "compatibility_fitment": 1.0,
+        "parts_availability": 0.0,
+        "price_request": 0.0,
+        "general_question": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "sell_part": 0.0
+      },
+      "noul_probability": 0.13,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.31383920897496864,
+      "usage": {
+        "input_tokens": 802,
+        "output_tokens": 110
+      }
+    },
+    {
+      "gold": "general_question",
+      "pred": "general_question",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "spam_or_irrelevant": 0.0,
+        "general_question": 1.0,
+        "price_request": 0.0,
+        "order_status": 0.0,
+        "compatibility_fitment": 0.0,
+        "sell_part": 0.0,
+        "parts_availability": 0.0
+      },
+      "noul_probability": 0.12,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.29959824998513795,
+      "usage": {
+        "input_tokens": 780,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "compatibility_fitment",
+      "pred": "compatibility_fitment",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "spam_or_irrelevant": 0.0,
+        "order_status": 0.0,
+        "price_request": 0.0,
+        "general_question": 0.0,
+        "compatibility_fitment": 1.0,
+        "parts_availability": 0.0,
+        "sell_part": 0.0
+      },
+      "noul_probability": 0.1,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.3562362079974264,
+      "usage": {
+        "input_tokens": 790,
+        "output_tokens": 110
+      }
+    },
+    {
+      "gold": "parts_availability",
+      "pred": "parts_availability",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "order_status": 0.0,
+        "compatibility_fitment": 0.0,
+        "parts_availability": 1.0,
+        "price_request": 0.0,
+        "general_question": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "sell_part": 0.0
+      },
+      "noul_probability": 0.14,
+      "needs_human_gold": true,
+      "needs_human_pred": false,
+      "latency_s": 0.318343916995218,
+      "usage": {
+        "input_tokens": 792,
+        "output_tokens": 108
+      }
+    },
+    {
+      "gold": "price_request",
+      "pred": "price_request",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "price_request": 1.0,
+        "parts_availability": 0.0,
+        "compatibility_fitment": 0.0,
+        "order_status": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "sell_part": 0.0,
+        "general_question": 0.0
+      },
+      "noul_probability": 0.16,
+      "needs_human_gold": true,
+      "needs_human_pred": false,
+      "latency_s": 0.2576335000048857,
+      "usage": {
+        "input_tokens": 798,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "sell_part",
+      "pred": "sell_part",
+      "choice_confidence": 0.75,
+      "probabilities": {
+        "price_request": 0.0,
+        "general_question": 0.04,
+        "spam_or_irrelevant": 0.0,
+        "sell_part": 0.79,
+        "order_status": 0.0,
+        "parts_availability": 0.17,
+        "compatibility_fitment": 0.0
+      },
+      "noul_probability": 0.21,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.24722020802437328,
+      "usage": {
+        "input_tokens": 776,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "general_question",
+      "pred": "general_question",
+      "choice_confidence": 0.45,
+      "probabilities": {
+        "parts_availability": 0.0,
+        "price_request": 0.0,
+        "sell_part": 0.0,
+        "compatibility_fitment": 0.0,
+        "order_status": 0.47,
+        "spam_or_irrelevant": 0.0,
+        "general_question": 0.53
+      },
+      "noul_probability": 0.76,
+      "needs_human_gold": true,
+      "needs_human_pred": true,
+      "latency_s": 0.290838665998308,
+      "usage": {
+        "input_tokens": 790,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "parts_availability",
+      "pred": "compatibility_fitment",
+      "choice_confidence": 0.45,
+      "probabilities": {
+        "general_question": 0.02,
+        "spam_or_irrelevant": 0.03,
+        "price_request": 0.03,
+        "order_status": 0.0,
+        "compatibility_fitment": 0.53,
+        "sell_part": 0.0,
+        "parts_availability": 0.39
+      },
+      "noul_probability": 0.08,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.32313104200875387,
+      "usage": {
+        "input_tokens": 790,
+        "output_tokens": 110
+      }
+    },
+    {
+      "gold": "price_request",
+      "pred": "price_request",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "order_status": 0.0,
+        "compatibility_fitment": 0.0,
+        "parts_availability": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "general_question": 0.0,
+        "price_request": 1.0,
+        "sell_part": 0.0
+      },
+      "noul_probability": 0.07,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.31311658400227316,
+      "usage": {
+        "input_tokens": 788,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "price_request",
+      "pred": "order_status",
+      "choice_confidence": 0.72,
+      "probabilities": {
+        "price_request": 0.23,
+        "order_status": 0.76,
+        "sell_part": 0.0,
+        "general_question": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "compatibility_fitment": 0.0,
+        "parts_availability": 0.01
+      },
+      "noul_probability": 0.11,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.32032441699993797,
+      "usage": {
+        "input_tokens": 792,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "general_question",
+      "pred": "general_question",
+      "choice_confidence": 0.48,
+      "probabilities": {
+        "order_status": 0.45,
+        "compatibility_fitment": 0.0,
+        "parts_availability": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "price_request": 0.0,
+        "general_question": 0.55,
+        "sell_part": 0.0
+      },
+      "noul_probability": 0.08,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.32522570801666006,
+      "usage": {
+        "input_tokens": 782,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "general_question",
+      "pred": "general_question",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "price_request": 0.0,
+        "order_status": 0.0,
+        "general_question": 1.0,
+        "spam_or_irrelevant": 0.0,
+        "compatibility_fitment": 0.0,
+        "sell_part": 0.0,
+        "parts_availability": 0.0
+      },
+      "noul_probability": 0.04,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.2914823330065701,
+      "usage": {
+        "input_tokens": 778,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "price_request",
+      "pred": "price_request",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "order_status": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "general_question": 0.0,
+        "parts_availability": 0.0,
+        "compatibility_fitment": 0.0,
+        "sell_part": 0.0,
+        "price_request": 1.0
+      },
+      "noul_probability": 0.04,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.2737090829759836,
+      "usage": {
+        "input_tokens": 792,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "parts_availability",
+      "pred": "compatibility_fitment",
+      "choice_confidence": 0.38,
+      "probabilities": {
+        "spam_or_irrelevant": 0.03,
+        "parts_availability": 0.44,
+        "price_request": 0.05,
+        "order_status": 0.0,
+        "general_question": 0.01,
+        "sell_part": 0.0,
+        "compatibility_fitment": 0.47
+      },
+      "noul_probability": 0.1,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.2780943750112783,
+      "usage": {
+        "input_tokens": 794,
+        "output_tokens": 110
+      }
+    },
+    {
+      "gold": "parts_availability",
+      "pred": "parts_availability",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "general_question": 0.0,
+        "sell_part": 0.0,
+        "price_request": 0.0,
+        "order_status": 0.0,
+        "parts_availability": 1.0,
+        "spam_or_irrelevant": 0.0,
+        "compatibility_fitment": 0.0
+      },
+      "noul_probability": 0.06,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.3611603750032373,
+      "usage": {
+        "input_tokens": 790,
+        "output_tokens": 108
+      }
+    },
+    {
+      "gold": "order_status",
+      "pred": "order_status",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "general_question": 0.0,
+        "price_request": 0.0,
+        "order_status": 1.0,
+        "spam_or_irrelevant": 0.0,
+        "parts_availability": 0.0,
+        "compatibility_fitment": 0.0,
+        "sell_part": 0.0
+      },
+      "noul_probability": 0.08,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.30996033299015835,
+      "usage": {
+        "input_tokens": 786,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "price_request",
+      "pred": "price_request",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "general_question": 0.0,
+        "sell_part": 0.0,
+        "order_status": 0.0,
+        "parts_availability": 0.0,
+        "compatibility_fitment": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "price_request": 1.0
+      },
+      "noul_probability": 0.07,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.268411750002997,
+      "usage": {
+        "input_tokens": 790,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "sell_part",
+      "pred": "sell_part",
+      "choice_confidence": 0.93,
+      "probabilities": {
+        "spam_or_irrelevant": 0.01,
+        "sell_part": 0.94,
+        "price_request": 0.01,
+        "parts_availability": 0.02,
+        "general_question": 0.02,
+        "order_status": 0.0,
+        "compatibility_fitment": 0.0
+      },
+      "noul_probability": 0.22,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.2985223750001751,
+      "usage": {
+        "input_tokens": 782,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "spam_or_irrelevant",
+      "pred": "spam_or_irrelevant",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "sell_part": 0.0,
+        "general_question": 0.0,
+        "price_request": 0.0,
+        "spam_or_irrelevant": 1.0,
+        "parts_availability": 0.0,
+        "compatibility_fitment": 0.0,
+        "order_status": 0.0
+      },
+      "noul_probability": 0.14,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.3101635829953011,
+      "usage": {
+        "input_tokens": 782,
+        "output_tokens": 109
+      }
+    },
+    {
+      "gold": "price_request",
+      "pred": "price_request",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "sell_part": 0.0,
+        "price_request": 1.0,
+        "general_question": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "order_status": 0.0,
+        "parts_availability": 0.0,
+        "compatibility_fitment": 0.0
+      },
+      "noul_probability": 0.08,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.28640874999109656,
+      "usage": {
+        "input_tokens": 798,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "price_request",
+      "pred": "price_request",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "general_question": 0.0,
+        "parts_availability": 0.0,
+        "price_request": 1.0,
+        "sell_part": 0.0,
+        "compatibility_fitment": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "order_status": 0.0
+      },
+      "noul_probability": 0.08,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.2597567079938017,
+      "usage": {
+        "input_tokens": 798,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "price_request",
+      "pred": "price_request",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "sell_part": 0.0,
+        "general_question": 0.0,
+        "price_request": 1.0,
+        "spam_or_irrelevant": 0.0,
+        "compatibility_fitment": 0.0,
+        "order_status": 0.0,
+        "parts_availability": 0.0
+      },
+      "noul_probability": 0.06,
+      "needs_human_gold": true,
+      "needs_human_pred": false,
+      "latency_s": 0.2511942499841098,
+      "usage": {
+        "input_tokens": 786,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "sell_part",
+      "pred": "sell_part",
+      "choice_confidence": 0.8,
+      "probabilities": {
+        "general_question": 0.0,
+        "sell_part": 0.84,
+        "price_request": 0.0,
+        "compatibility_fitment": 0.0,
+        "order_status": 0.0,
+        "spam_or_irrelevant": 0.16,
+        "parts_availability": 0.0
+      },
+      "noul_probability": 0.36,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.30932445800863206,
+      "usage": {
+        "input_tokens": 782,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "order_status",
+      "pred": "order_status",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "sell_part": 0.0,
+        "parts_availability": 0.0,
+        "order_status": 1.0,
+        "general_question": 0.0,
+        "compatibility_fitment": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "price_request": 0.0
+      },
+      "noul_probability": 0.1,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.24541899998439476,
+      "usage": {
+        "input_tokens": 786,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "price_request",
+      "pred": "price_request",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "general_question": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "order_status": 0.0,
+        "parts_availability": 0.0,
+        "compatibility_fitment": 0.0,
+        "sell_part": 0.0,
+        "price_request": 1.0
+      },
+      "noul_probability": 0.08,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.2652874579944182,
+      "usage": {
+        "input_tokens": 796,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "spam_or_irrelevant",
+      "pred": "spam_or_irrelevant",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "sell_part": 0.0,
+        "spam_or_irrelevant": 1.0,
+        "parts_availability": 0.0,
+        "compatibility_fitment": 0.0,
+        "order_status": 0.0,
+        "price_request": 0.0,
+        "general_question": 0.0
+      },
+      "noul_probability": 0.61,
+      "needs_human_gold": false,
+      "needs_human_pred": true,
+      "latency_s": 0.300659792002989,
+      "usage": {
+        "input_tokens": 782,
+        "output_tokens": 109
+      }
+    },
+    {
+      "gold": "parts_availability",
+      "pred": "parts_availability",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "sell_part": 0.0,
+        "general_question": 0.0,
+        "price_request": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "parts_availability": 1.0,
+        "compatibility_fitment": 0.0,
+        "order_status": 0.0
+      },
+      "noul_probability": 0.11,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.2712654590141028,
+      "usage": {
+        "input_tokens": 800,
+        "output_tokens": 108
+      }
+    },
+    {
+      "gold": "sell_part",
+      "pred": "sell_part",
+      "choice_confidence": 0.65,
+      "probabilities": {
+        "order_status": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "compatibility_fitment": 0.0,
+        "price_request": 0.0,
+        "parts_availability": 0.23,
+        "sell_part": 0.71,
+        "general_question": 0.06
+      },
+      "noul_probability": 0.07,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.24751620800816454,
+      "usage": {
+        "input_tokens": 778,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "general_question",
+      "pred": "general_question",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "sell_part": 0.0,
+        "order_status": 0.0,
+        "price_request": 0.0,
+        "parts_availability": 0.0,
+        "general_question": 1.0,
+        "spam_or_irrelevant": 0.0,
+        "compatibility_fitment": 0.0
+      },
+      "noul_probability": 0.04,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.3016099579981528,
+      "usage": {
+        "input_tokens": 778,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "price_request",
+      "pred": "price_request",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "general_question": 0.0,
+        "compatibility_fitment": 0.0,
+        "sell_part": 0.0,
+        "order_status": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "price_request": 1.0,
+        "parts_availability": 0.0
+      },
+      "noul_probability": 0.06,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.5063814580207691,
+      "usage": {
+        "input_tokens": 786,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "parts_availability",
+      "pred": "parts_availability",
+      "choice_confidence": 0.92,
+      "probabilities": {
+        "general_question": 0.0,
+        "sell_part": 0.04,
+        "price_request": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "compatibility_fitment": 0.02,
+        "order_status": 0.01,
+        "parts_availability": 0.93
+      },
+      "noul_probability": 0.11,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.29197841699351557,
+      "usage": {
+        "input_tokens": 798,
+        "output_tokens": 108
+      }
+    },
+    {
+      "gold": "parts_availability",
+      "pred": "compatibility_fitment",
+      "choice_confidence": 0.48,
+      "probabilities": {
+        "sell_part": 0.0,
+        "general_question": 0.01,
+        "price_request": 0.03,
+        "spam_or_irrelevant": 0.11,
+        "compatibility_fitment": 0.56,
+        "order_status": 0.0,
+        "parts_availability": 0.29
+      },
+      "noul_probability": 0.09,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.2925391659955494,
+      "usage": {
+        "input_tokens": 796,
+        "output_tokens": 110
+      }
+    },
+    {
+      "gold": "general_question",
+      "pred": "general_question",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "sell_part": 0.0,
+        "compatibility_fitment": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "order_status": 0.0,
+        "parts_availability": 0.0,
+        "price_request": 0.0,
+        "general_question": 1.0
+      },
+      "noul_probability": 0.04,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.2710364579979796,
+      "usage": {
+        "input_tokens": 778,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "compatibility_fitment",
+      "pred": "compatibility_fitment",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "price_request": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "compatibility_fitment": 1.0,
+        "sell_part": 0.0,
+        "order_status": 0.0,
+        "parts_availability": 0.0,
+        "general_question": 0.0
+      },
+      "noul_probability": 0.14,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.255364415992517,
+      "usage": {
+        "input_tokens": 806,
+        "output_tokens": 110
+      }
+    },
+    {
+      "gold": "compatibility_fitment",
+      "pred": "compatibility_fitment",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "compatibility_fitment": 1.0,
+        "parts_availability": 0.0,
+        "price_request": 0.0,
+        "general_question": 0.0,
+        "sell_part": 0.0,
+        "order_status": 0.0,
+        "spam_or_irrelevant": 0.0
+      },
+      "noul_probability": 0.06,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.28342283400706947,
+      "usage": {
+        "input_tokens": 800,
+        "output_tokens": 110
+      }
+    },
+    {
+      "gold": "spam_or_irrelevant",
+      "pred": "spam_or_irrelevant",
+      "choice_confidence": 0.99,
+      "probabilities": {
+        "order_status": 0.0,
+        "general_question": 0.0,
+        "price_request": 0.0,
+        "parts_availability": 0.0,
+        "spam_or_irrelevant": 1.0,
+        "sell_part": 0.0,
+        "compatibility_fitment": 0.0
+      },
+      "noul_probability": 0.29,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.27974495801026933,
+      "usage": {
+        "input_tokens": 788,
+        "output_tokens": 109
+      }
+    },
+    {
+      "gold": "compatibility_fitment",
+      "pred": "compatibility_fitment",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "general_question": 0.0,
+        "sell_part": 0.0,
+        "price_request": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "compatibility_fitment": 1.0,
+        "order_status": 0.0,
+        "parts_availability": 0.0
+      },
+      "noul_probability": 0.06,
+      "needs_human_gold": true,
+      "needs_human_pred": false,
+      "latency_s": 0.33140429097693413,
+      "usage": {
+        "input_tokens": 800,
+        "output_tokens": 110
+      }
+    },
+    {
+      "gold": "spam_or_irrelevant",
+      "pred": "spam_or_irrelevant",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "order_status": 0.0,
+        "spam_or_irrelevant": 1.0,
+        "price_request": 0.0,
+        "general_question": 0.0,
+        "compatibility_fitment": 0.0,
+        "sell_part": 0.0,
+        "parts_availability": 0.0
+      },
+      "noul_probability": 0.48,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.3125814170052763,
+      "usage": {
+        "input_tokens": 782,
+        "output_tokens": 109
+      }
+    },
+    {
+      "gold": "order_status",
+      "pred": "general_question",
+      "choice_confidence": 0.88,
+      "probabilities": {
+        "general_question": 0.89,
+        "sell_part": 0.0,
+        "compatibility_fitment": 0.01,
+        "order_status": 0.03,
+        "spam_or_irrelevant": 0.01,
+        "price_request": 0.0,
+        "parts_availability": 0.06
+      },
+      "noul_probability": 0.3,
+      "needs_human_gold": true,
+      "needs_human_pred": false,
+      "latency_s": 0.4468948330031708,
+      "usage": {
+        "input_tokens": 786,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "sell_part",
+      "pred": "sell_part",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "price_request": 0.0,
+        "general_question": 0.0,
+        "order_status": 0.0,
+        "parts_availability": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "sell_part": 1.0,
+        "compatibility_fitment": 0.0
+      },
+      "noul_probability": 0.2,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.27697383298072964,
+      "usage": {
+        "input_tokens": 786,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "order_status",
+      "pred": "order_status",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "spam_or_irrelevant": 0.0,
+        "sell_part": 0.0,
+        "compatibility_fitment": 0.0,
+        "order_status": 1.0,
+        "parts_availability": 0.0,
+        "price_request": 0.0,
+        "general_question": 0.0
+      },
+      "noul_probability": 0.07,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.30459216600866057,
+      "usage": {
+        "input_tokens": 778,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "sell_part",
+      "pred": "sell_part",
+      "choice_confidence": 0.95,
+      "probabilities": {
+        "spam_or_irrelevant": 0.03,
+        "parts_availability": 0.01,
+        "price_request": 0.0,
+        "general_question": 0.0,
+        "compatibility_fitment": 0.0,
+        "sell_part": 0.96,
+        "order_status": 0.0
+      },
+      "noul_probability": 0.09,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.24326716701034456,
+      "usage": {
+        "input_tokens": 786,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "price_request",
+      "pred": "price_request",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "general_question": 0.0,
+        "price_request": 1.0,
+        "compatibility_fitment": 0.0,
+        "order_status": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "sell_part": 0.0,
+        "parts_availability": 0.0
+      },
+      "noul_probability": 0.16,
+      "needs_human_gold": true,
+      "needs_human_pred": false,
+      "latency_s": 0.3066733749874402,
+      "usage": {
+        "input_tokens": 798,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "parts_availability",
+      "pred": "parts_availability",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "order_status": 0.0,
+        "compatibility_fitment": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "price_request": 0.0,
+        "parts_availability": 1.0,
+        "general_question": 0.0,
+        "sell_part": 0.0
+      },
+      "noul_probability": 0.06,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.3901903750083875,
+      "usage": {
+        "input_tokens": 790,
+        "output_tokens": 108
+      }
+    },
+    {
+      "gold": "price_request",
+      "pred": "price_request",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "order_status": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "parts_availability": 0.0,
+        "general_question": 0.0,
+        "sell_part": 0.0,
+        "price_request": 1.0,
+        "compatibility_fitment": 0.0
+      },
+      "noul_probability": 0.07,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.3049277499958407,
+      "usage": {
+        "input_tokens": 786,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "order_status",
+      "pred": "order_status",
+      "choice_confidence": 0.95,
+      "probabilities": {
+        "general_question": 0.0,
+        "order_status": 0.95,
+        "price_request": 0.0,
+        "sell_part": 0.0,
+        "spam_or_irrelevant": 0.05,
+        "compatibility_fitment": 0.0,
+        "parts_availability": 0.0
+      },
+      "noul_probability": 0.14,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.2595475419948343,
+      "usage": {
+        "input_tokens": 786,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "general_question",
+      "pred": "general_question",
+      "choice_confidence": 0.77,
+      "probabilities": {
+        "price_request": 0.0,
+        "order_status": 0.2,
+        "spam_or_irrelevant": 0.0,
+        "compatibility_fitment": 0.0,
+        "sell_part": 0.0,
+        "general_question": 0.8,
+        "parts_availability": 0.0
+      },
+      "noul_probability": 0.04,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.29422579100355506,
+      "usage": {
+        "input_tokens": 778,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "order_status",
+      "pred": "order_status",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "spam_or_irrelevant": 0.0,
+        "compatibility_fitment": 0.0,
+        "price_request": 0.0,
+        "order_status": 1.0,
+        "sell_part": 0.0,
+        "parts_availability": 0.0,
+        "general_question": 0.0
+      },
+      "noul_probability": 0.07,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.3119083750061691,
+      "usage": {
+        "input_tokens": 774,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "price_request",
+      "pred": "price_request",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "order_status": 0.0,
+        "parts_availability": 0.0,
+        "sell_part": 0.0,
+        "compatibility_fitment": 0.0,
+        "price_request": 1.0,
+        "general_question": 0.0,
+        "spam_or_irrelevant": 0.0
+      },
+      "noul_probability": 0.06,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.269347833993379,
+      "usage": {
+        "input_tokens": 790,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "order_status",
+      "pred": "order_status",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "price_request": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "sell_part": 0.0,
+        "general_question": 0.0,
+        "order_status": 1.0,
+        "compatibility_fitment": 0.0,
+        "parts_availability": 0.0
+      },
+      "noul_probability": 0.08,
+      "needs_human_gold": true,
+      "needs_human_pred": false,
+      "latency_s": 0.28510008301236667,
+      "usage": {
+        "input_tokens": 782,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "compatibility_fitment",
+      "pred": "compatibility_fitment",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "order_status": 0.0,
+        "price_request": 0.0,
+        "sell_part": 0.0,
+        "compatibility_fitment": 1.0,
+        "parts_availability": 0.0,
+        "general_question": 0.0,
+        "spam_or_irrelevant": 0.0
+      },
+      "noul_probability": 0.12,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.2567352500045672,
+      "usage": {
+        "input_tokens": 792,
+        "output_tokens": 110
+      }
+    },
+    {
+      "gold": "price_request",
+      "pred": "price_request",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "general_question": 0.0,
+        "parts_availability": 0.0,
+        "compatibility_fitment": 0.0,
+        "price_request": 1.0,
+        "sell_part": 0.0,
+        "order_status": 0.0,
+        "spam_or_irrelevant": 0.0
+      },
+      "noul_probability": 0.07,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.2536142079916317,
+      "usage": {
+        "input_tokens": 790,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "general_question",
+      "pred": "general_question",
+      "choice_confidence": 0.5,
+      "probabilities": {
+        "parts_availability": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "general_question": 0.57,
+        "order_status": 0.43,
+        "compatibility_fitment": 0.0,
+        "price_request": 0.0,
+        "sell_part": 0.0
+      },
+      "noul_probability": 0.73,
+      "needs_human_gold": true,
+      "needs_human_pred": true,
+      "latency_s": 0.2348410410049837,
+      "usage": {
+        "input_tokens": 786,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "spam_or_irrelevant",
+      "pred": "spam_or_irrelevant",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "sell_part": 0.0,
+        "compatibility_fitment": 0.0,
+        "spam_or_irrelevant": 1.0,
+        "price_request": 0.0,
+        "general_question": 0.0,
+        "parts_availability": 0.0,
+        "order_status": 0.0
+      },
+      "noul_probability": 0.72,
+      "needs_human_gold": false,
+      "needs_human_pred": true,
+      "latency_s": 0.34706254201591946,
+      "usage": {
+        "input_tokens": 794,
+        "output_tokens": 109
+      }
+    },
+    {
+      "gold": "price_request",
+      "pred": "price_request",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "price_request": 1.0,
+        "compatibility_fitment": 0.0,
+        "order_status": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "general_question": 0.0,
+        "sell_part": 0.0,
+        "parts_availability": 0.0
+      },
+      "noul_probability": 0.06,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.2636261250008829,
+      "usage": {
+        "input_tokens": 786,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "price_request",
+      "pred": "price_request",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "price_request": 1.0,
+        "spam_or_irrelevant": 0.0,
+        "parts_availability": 0.0,
+        "sell_part": 0.0,
+        "order_status": 0.0,
+        "general_question": 0.0,
+        "compatibility_fitment": 0.0
+      },
+      "noul_probability": 0.09,
+      "needs_human_gold": true,
+      "needs_human_pred": false,
+      "latency_s": 0.30545820799306966,
+      "usage": {
+        "input_tokens": 792,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "sell_part",
+      "pred": "sell_part",
+      "choice_confidence": 0.89,
+      "probabilities": {
+        "price_request": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "compatibility_fitment": 0.0,
+        "sell_part": 0.91,
+        "parts_availability": 0.08,
+        "order_status": 0.0,
+        "general_question": 0.01
+      },
+      "noul_probability": 0.08,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.26264787500258535,
+      "usage": {
+        "input_tokens": 780,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "general_question",
+      "pred": "general_question",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "price_request": 0.0,
+        "parts_availability": 0.0,
+        "compatibility_fitment": 0.0,
+        "order_status": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "sell_part": 0.0,
+        "general_question": 1.0
+      },
+      "noul_probability": 0.07,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.28298729099333286,
+      "usage": {
+        "input_tokens": 784,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "sell_part",
+      "pred": "sell_part",
+      "choice_confidence": 0.62,
+      "probabilities": {
+        "parts_availability": 0.23,
+        "price_request": 0.03,
+        "sell_part": 0.67,
+        "spam_or_irrelevant": 0.03,
+        "general_question": 0.04,
+        "compatibility_fitment": 0.0,
+        "order_status": 0.0
+      },
+      "noul_probability": 0.14,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.31047666698577814,
+      "usage": {
+        "input_tokens": 782,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "sell_part",
+      "pred": "sell_part",
+      "choice_confidence": 0.84,
+      "probabilities": {
+        "parts_availability": 0.0,
+        "price_request": 0.0,
+        "general_question": 0.0,
+        "spam_or_irrelevant": 0.13,
+        "compatibility_fitment": 0.0,
+        "sell_part": 0.87,
+        "order_status": 0.0
+      },
+      "noul_probability": 0.32,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.2835152500192635,
+      "usage": {
+        "input_tokens": 782,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "sell_part",
+      "pred": "sell_part",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "price_request": 0.0,
+        "order_status": 0.0,
+        "sell_part": 1.0,
+        "parts_availability": 0.0,
+        "compatibility_fitment": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "general_question": 0.0
+      },
+      "noul_probability": 0.2,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.345587957999669,
+      "usage": {
+        "input_tokens": 786,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "parts_availability",
+      "pred": "parts_availability",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "compatibility_fitment": 0.0,
+        "order_status": 0.0,
+        "general_question": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "sell_part": 0.0,
+        "price_request": 0.0,
+        "parts_availability": 1.0
+      },
+      "noul_probability": 0.07,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.2992600410070736,
+      "usage": {
+        "input_tokens": 792,
+        "output_tokens": 108
+      }
+    },
+    {
+      "gold": "parts_availability",
+      "pred": "parts_availability",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "general_question": 0.0,
+        "sell_part": 0.0,
+        "price_request": 0.0,
+        "parts_availability": 1.0,
+        "spam_or_irrelevant": 0.0,
+        "compatibility_fitment": 0.0,
+        "order_status": 0.0
+      },
+      "noul_probability": 0.08,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.2792140830133576,
+      "usage": {
+        "input_tokens": 792,
+        "output_tokens": 108
+      }
+    },
+    {
+      "gold": "general_question",
+      "pred": "general_question",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "general_question": 1.0,
+        "sell_part": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "order_status": 0.0,
+        "compatibility_fitment": 0.0,
+        "price_request": 0.0,
+        "parts_availability": 0.0
+      },
+      "noul_probability": 0.11,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.30930054100463167,
+      "usage": {
+        "input_tokens": 780,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "order_status",
+      "pred": "order_status",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "general_question": 0.0,
+        "sell_part": 0.0,
+        "price_request": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "order_status": 1.0,
+        "compatibility_fitment": 0.0,
+        "parts_availability": 0.0
+      },
+      "noul_probability": 0.09,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.2704742919886485,
+      "usage": {
+        "input_tokens": 776,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "parts_availability",
+      "pred": "parts_availability",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "spam_or_irrelevant": 0.0,
+        "general_question": 0.0,
+        "price_request": 0.0,
+        "order_status": 0.0,
+        "parts_availability": 1.0,
+        "sell_part": 0.0,
+        "compatibility_fitment": 0.0
+      },
+      "noul_probability": 0.07,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.2800686249975115,
+      "usage": {
+        "input_tokens": 796,
+        "output_tokens": 108
+      }
+    },
+    {
+      "gold": "compatibility_fitment",
+      "pred": "compatibility_fitment",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "spam_or_irrelevant": 0.0,
+        "sell_part": 0.0,
+        "price_request": 0.0,
+        "order_status": 0.0,
+        "general_question": 0.0,
+        "parts_availability": 0.0,
+        "compatibility_fitment": 1.0
+      },
+      "noul_probability": 0.09,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.32778537497506477,
+      "usage": {
+        "input_tokens": 806,
+        "output_tokens": 110
+      }
+    },
+    {
+      "gold": "compatibility_fitment",
+      "pred": "compatibility_fitment",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "price_request": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "parts_availability": 0.0,
+        "sell_part": 0.0,
+        "order_status": 0.0,
+        "general_question": 0.0,
+        "compatibility_fitment": 1.0
+      },
+      "noul_probability": 0.14,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.259718375018565,
+      "usage": {
+        "input_tokens": 792,
+        "output_tokens": 110
+      }
+    },
+    {
+      "gold": "sell_part",
+      "pred": "sell_part",
+      "choice_confidence": 0.95,
+      "probabilities": {
+        "spam_or_irrelevant": 0.02,
+        "parts_availability": 0.01,
+        "price_request": 0.0,
+        "general_question": 0.01,
+        "compatibility_fitment": 0.0,
+        "sell_part": 0.96,
+        "order_status": 0.0
+      },
+      "noul_probability": 0.22,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.246142999996664,
+      "usage": {
+        "input_tokens": 782,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "order_status",
+      "pred": "order_status",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "spam_or_irrelevant": 0.0,
+        "order_status": 1.0,
+        "sell_part": 0.0,
+        "compatibility_fitment": 0.0,
+        "general_question": 0.0,
+        "price_request": 0.0,
+        "parts_availability": 0.0
+      },
+      "noul_probability": 0.08,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.31299733300693333,
+      "usage": {
+        "input_tokens": 782,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "compatibility_fitment",
+      "pred": "compatibility_fitment",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "general_question": 0.0,
+        "sell_part": 0.0,
+        "order_status": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "compatibility_fitment": 1.0,
+        "parts_availability": 0.0,
+        "price_request": 0.0
+      },
+      "noul_probability": 0.08,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.312544375017751,
+      "usage": {
+        "input_tokens": 780,
+        "output_tokens": 110
+      }
+    },
+    {
+      "gold": "general_question",
+      "pred": "general_question",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "sell_part": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "price_request": 0.0,
+        "compatibility_fitment": 0.0,
+        "order_status": 0.0,
+        "general_question": 1.0,
+        "parts_availability": 0.0
+      },
+      "noul_probability": 0.11,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.32478158400044776,
+      "usage": {
+        "input_tokens": 780,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "general_question",
+      "pred": "general_question",
+      "choice_confidence": 0.92,
+      "probabilities": {
+        "order_status": 0.0,
+        "general_question": 0.93,
+        "sell_part": 0.0,
+        "price_request": 0.0,
+        "spam_or_irrelevant": 0.07,
+        "compatibility_fitment": 0.0,
+        "parts_availability": 0.0
+      },
+      "noul_probability": 0.19,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.3665093329909723,
+      "usage": {
+        "input_tokens": 786,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "price_request",
+      "pred": "price_request",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "order_status": 0.0,
+        "compatibility_fitment": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "price_request": 1.0,
+        "parts_availability": 0.0,
+        "general_question": 0.0,
+        "sell_part": 0.0
+      },
+      "noul_probability": 0.08,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.2994025420048274,
+      "usage": {
+        "input_tokens": 792,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "compatibility_fitment",
+      "pred": "compatibility_fitment",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "price_request": 0.0,
+        "parts_availability": 0.0,
+        "sell_part": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "compatibility_fitment": 1.0,
+        "general_question": 0.0,
+        "order_status": 0.0
+      },
+      "noul_probability": 0.13,
+      "needs_human_gold": true,
+      "needs_human_pred": false,
+      "latency_s": 0.3812009579851292,
+      "usage": {
+        "input_tokens": 794,
+        "output_tokens": 110
+      }
+    },
+    {
+      "gold": "order_status",
+      "pred": "order_status",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "parts_availability": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "compatibility_fitment": 0.0,
+        "order_status": 1.0,
+        "general_question": 0.0,
+        "price_request": 0.0,
+        "sell_part": 0.0
+      },
+      "noul_probability": 0.17,
+      "needs_human_gold": true,
+      "needs_human_pred": false,
+      "latency_s": 0.2581599580007605,
+      "usage": {
+        "input_tokens": 790,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "order_status",
+      "pred": "order_status",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "sell_part": 0.0,
+        "general_question": 0.0,
+        "price_request": 0.0,
+        "parts_availability": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "order_status": 1.0,
+        "compatibility_fitment": 0.0
+      },
+      "noul_probability": 0.09,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.28019537500222214,
+      "usage": {
+        "input_tokens": 790,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "order_status",
+      "pred": "order_status",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "general_question": 0.0,
+        "compatibility_fitment": 0.0,
+        "price_request": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "parts_availability": 0.0,
+        "order_status": 1.0,
+        "sell_part": 0.0
+      },
+      "noul_probability": 0.09,
+      "needs_human_gold": true,
+      "needs_human_pred": false,
+      "latency_s": 0.2630963330157101,
+      "usage": {
+        "input_tokens": 782,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "price_request",
+      "pred": "price_request",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "spam_or_irrelevant": 0.0,
+        "sell_part": 0.0,
+        "compatibility_fitment": 0.0,
+        "order_status": 0.0,
+        "parts_availability": 0.0,
+        "price_request": 1.0,
+        "general_question": 0.0
+      },
+      "noul_probability": 0.05,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.31278975002351217,
+      "usage": {
+        "input_tokens": 788,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "sell_part",
+      "pred": "sell_part",
+      "choice_confidence": 0.97,
+      "probabilities": {
+        "spam_or_irrelevant": 0.02,
+        "compatibility_fitment": 0.0,
+        "price_request": 0.0,
+        "order_status": 0.0,
+        "general_question": 0.0,
+        "parts_availability": 0.0,
+        "sell_part": 0.98
+      },
+      "noul_probability": 0.12,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.34089437502552755,
+      "usage": {
+        "input_tokens": 782,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "spam_or_irrelevant",
+      "pred": "spam_or_irrelevant",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "price_request": 0.0,
+        "sell_part": 0.0,
+        "parts_availability": 0.0,
+        "spam_or_irrelevant": 1.0,
+        "compatibility_fitment": 0.0,
+        "general_question": 0.0,
+        "order_status": 0.0
+      },
+      "noul_probability": 0.3,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.2793128329794854,
+      "usage": {
+        "input_tokens": 784,
+        "output_tokens": 109
+      }
+    },
+    {
+      "gold": "spam_or_irrelevant",
+      "pred": "spam_or_irrelevant",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "price_request": 0.0,
+        "spam_or_irrelevant": 1.0,
+        "sell_part": 0.0,
+        "parts_availability": 0.0,
+        "compatibility_fitment": 0.0,
+        "general_question": 0.0,
+        "order_status": 0.0
+      },
+      "noul_probability": 0.17,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.28652270798920654,
+      "usage": {
+        "input_tokens": 788,
+        "output_tokens": 109
+      }
+    },
+    {
+      "gold": "spam_or_irrelevant",
+      "pred": "spam_or_irrelevant",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "price_request": 0.0,
+        "spam_or_irrelevant": 1.0,
+        "parts_availability": 0.0,
+        "general_question": 0.0,
+        "sell_part": 0.0,
+        "compatibility_fitment": 0.0,
+        "order_status": 0.0
+      },
+      "noul_probability": 0.7,
+      "needs_human_gold": false,
+      "needs_human_pred": true,
+      "latency_s": 0.27616837501409464,
+      "usage": {
+        "input_tokens": 788,
+        "output_tokens": 109
+      }
+    },
+    {
+      "gold": "spam_or_irrelevant",
+      "pred": "spam_or_irrelevant",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "general_question": 0.0,
+        "sell_part": 0.0,
+        "price_request": 0.0,
+        "compatibility_fitment": 0.0,
+        "order_status": 0.0,
+        "parts_availability": 0.0,
+        "spam_or_irrelevant": 1.0
+      },
+      "noul_probability": 0.45,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.3095934169832617,
+      "usage": {
+        "input_tokens": 794,
+        "output_tokens": 109
+      }
+    },
+    {
+      "gold": "order_status",
+      "pred": "order_status",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "spam_or_irrelevant": 0.0,
+        "general_question": 0.0,
+        "price_request": 0.0,
+        "order_status": 1.0,
+        "compatibility_fitment": 0.0,
+        "parts_availability": 0.0,
+        "sell_part": 0.0
+      },
+      "noul_probability": 0.09,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.3904425000073388,
+      "usage": {
+        "input_tokens": 794,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "price_request",
+      "pred": "price_request",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "parts_availability": 0.0,
+        "general_question": 0.0,
+        "order_status": 0.0,
+        "sell_part": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "price_request": 1.0,
+        "compatibility_fitment": 0.0
+      },
+      "noul_probability": 0.07,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.24643525001010858,
+      "usage": {
+        "input_tokens": 792,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "general_question",
+      "pred": "general_question",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "spam_or_irrelevant": 0.0,
+        "compatibility_fitment": 0.0,
+        "price_request": 0.0,
+        "order_status": 0.0,
+        "general_question": 1.0,
+        "sell_part": 0.0,
+        "parts_availability": 0.0
+      },
+      "noul_probability": 0.04,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.28852029200061224,
+      "usage": {
+        "input_tokens": 782,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "parts_availability",
+      "pred": "parts_availability",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "sell_part": 0.0,
+        "order_status": 0.0,
+        "compatibility_fitment": 0.0,
+        "price_request": 0.0,
+        "general_question": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "parts_availability": 1.0
+      },
+      "noul_probability": 0.06,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.4729775830055587,
+      "usage": {
+        "input_tokens": 796,
+        "output_tokens": 108
+      }
+    },
+    {
+      "gold": "general_question",
+      "pred": "general_question",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "order_status": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "sell_part": 0.0,
+        "parts_availability": 0.0,
+        "compatibility_fitment": 0.0,
+        "general_question": 1.0,
+        "price_request": 0.0
+      },
+      "noul_probability": 0.05,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.2905165000120178,
+      "usage": {
+        "input_tokens": 778,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "compatibility_fitment",
+      "pred": "compatibility_fitment",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "compatibility_fitment": 1.0,
+        "sell_part": 0.0,
+        "price_request": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "parts_availability": 0.0,
+        "order_status": 0.0,
+        "general_question": 0.0
+      },
+      "noul_probability": 0.1,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.28572254098253325,
+      "usage": {
+        "input_tokens": 800,
+        "output_tokens": 110
+      }
+    },
+    {
+      "gold": "spam_or_irrelevant",
+      "pred": "spam_or_irrelevant",
+      "choice_confidence": 0.98,
+      "probabilities": {
+        "spam_or_irrelevant": 0.99,
+        "price_request": 0.0,
+        "sell_part": 0.0,
+        "general_question": 0.0,
+        "order_status": 0.01,
+        "compatibility_fitment": 0.0,
+        "parts_availability": 0.0
+      },
+      "noul_probability": 0.49,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.26080749998800457,
+      "usage": {
+        "input_tokens": 782,
+        "output_tokens": 109
+      }
+    },
+    {
+      "gold": "compatibility_fitment",
+      "pred": "compatibility_fitment",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "parts_availability": 0.0,
+        "price_request": 0.0,
+        "sell_part": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "order_status": 0.0,
+        "general_question": 0.0,
+        "compatibility_fitment": 1.0
+      },
+      "noul_probability": 0.11,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.28564049999113195,
+      "usage": {
+        "input_tokens": 792,
+        "output_tokens": 110
+      }
+    },
+    {
+      "gold": "price_request",
+      "pred": "price_request",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "price_request": 1.0,
+        "order_status": 0.0,
+        "sell_part": 0.0,
+        "parts_availability": 0.0,
+        "compatibility_fitment": 0.0,
+        "general_question": 0.0,
+        "spam_or_irrelevant": 0.0
+      },
+      "noul_probability": 0.05,
+      "needs_human_gold": true,
+      "needs_human_pred": false,
+      "latency_s": 0.37814087499282323,
+      "usage": {
+        "input_tokens": 786,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "parts_availability",
+      "pred": "parts_availability",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "price_request": 0.0,
+        "order_status": 0.0,
+        "general_question": 0.0,
+        "sell_part": 0.0,
+        "compatibility_fitment": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "parts_availability": 1.0
+      },
+      "noul_probability": 0.12,
+      "needs_human_gold": true,
+      "needs_human_pred": false,
+      "latency_s": 0.3028778329899069,
+      "usage": {
+        "input_tokens": 788,
+        "output_tokens": 108
+      }
+    },
+    {
+      "gold": "compatibility_fitment",
+      "pred": "compatibility_fitment",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "spam_or_irrelevant": 0.0,
+        "general_question": 0.0,
+        "compatibility_fitment": 1.0,
+        "price_request": 0.0,
+        "sell_part": 0.0,
+        "order_status": 0.0,
+        "parts_availability": 0.0
+      },
+      "noul_probability": 0.12,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.29845387500245124,
+      "usage": {
+        "input_tokens": 788,
+        "output_tokens": 110
+      }
+    },
+    {
+      "gold": "parts_availability",
+      "pred": "parts_availability",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "order_status": 0.0,
+        "compatibility_fitment": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "parts_availability": 1.0,
+        "price_request": 0.0,
+        "general_question": 0.0,
+        "sell_part": 0.0
+      },
+      "noul_probability": 0.06,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.29546291701262817,
+      "usage": {
+        "input_tokens": 796,
+        "output_tokens": 108
+      }
+    },
+    {
+      "gold": "general_question",
+      "pred": "general_question",
+      "choice_confidence": 0.75,
+      "probabilities": {
+        "parts_availability": 0.0,
+        "general_question": 0.79,
+        "spam_or_irrelevant": 0.0,
+        "compatibility_fitment": 0.0,
+        "order_status": 0.21,
+        "price_request": 0.0,
+        "sell_part": 0.0
+      },
+      "noul_probability": 0.04,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.3120309170044493,
+      "usage": {
+        "input_tokens": 792,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "spam_or_irrelevant",
+      "pred": "spam_or_irrelevant",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "compatibility_fitment": 0.0,
+        "general_question": 0.0,
+        "order_status": 0.0,
+        "parts_availability": 0.0,
+        "price_request": 0.0,
+        "spam_or_irrelevant": 1.0,
+        "sell_part": 0.0
+      },
+      "noul_probability": 0.4,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.26906274998327717,
+      "usage": {
+        "input_tokens": 782,
+        "output_tokens": 109
+      }
+    },
+    {
+      "gold": "order_status",
+      "pred": "general_question",
+      "choice_confidence": 0.88,
+      "probabilities": {
+        "parts_availability": 0.05,
+        "price_request": 0.0,
+        "order_status": 0.04,
+        "compatibility_fitment": 0.0,
+        "general_question": 0.9,
+        "spam_or_irrelevant": 0.01,
+        "sell_part": 0.0
+      },
+      "noul_probability": 0.31,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.3129342499887571,
+      "usage": {
+        "input_tokens": 778,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "general_question",
+      "pred": "general_question",
+      "choice_confidence": 0.76,
+      "probabilities": {
+        "parts_availability": 0.0,
+        "general_question": 0.8,
+        "sell_part": 0.0,
+        "compatibility_fitment": 0.0,
+        "order_status": 0.2,
+        "spam_or_irrelevant": 0.0,
+        "price_request": 0.0
+      },
+      "noul_probability": 0.04,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.28969408400007524,
+      "usage": {
+        "input_tokens": 778,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "general_question",
+      "pred": "general_question",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "general_question": 1.0,
+        "sell_part": 0.0,
+        "price_request": 0.0,
+        "parts_availability": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "compatibility_fitment": 0.0,
+        "order_status": 0.0
+      },
+      "noul_probability": 0.14,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.3273125420091674,
+      "usage": {
+        "input_tokens": 780,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "compatibility_fitment",
+      "pred": "compatibility_fitment",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "order_status": 0.0,
+        "compatibility_fitment": 1.0,
+        "spam_or_irrelevant": 0.0,
+        "parts_availability": 0.0,
+        "price_request": 0.0,
+        "general_question": 0.0,
+        "sell_part": 0.0
+      },
+      "noul_probability": 0.08,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.31997037498513237,
+      "usage": {
+        "input_tokens": 798,
+        "output_tokens": 110
+      }
+    },
+    {
+      "gold": "parts_availability",
+      "pred": "parts_availability",
+      "choice_confidence": 0.61,
+      "probabilities": {
+        "general_question": 0.04,
+        "sell_part": 0.0,
+        "price_request": 0.0,
+        "parts_availability": 0.67,
+        "spam_or_irrelevant": 0.05,
+        "compatibility_fitment": 0.0,
+        "order_status": 0.24
+      },
+      "noul_probability": 0.31,
+      "needs_human_gold": true,
+      "needs_human_pred": false,
+      "latency_s": 0.2667500000097789,
+      "usage": {
+        "input_tokens": 796,
+        "output_tokens": 108
+      }
+    },
+    {
+      "gold": "compatibility_fitment",
+      "pred": "compatibility_fitment",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "parts_availability": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "general_question": 0.0,
+        "price_request": 0.0,
+        "compatibility_fitment": 1.0,
+        "sell_part": 0.0,
+        "order_status": 0.0
+      },
+      "noul_probability": 0.08,
+      "needs_human_gold": true,
+      "needs_human_pred": false,
+      "latency_s": 0.2779359160049353,
+      "usage": {
+        "input_tokens": 798,
+        "output_tokens": 110
+      }
+    },
+    {
+      "gold": "spam_or_irrelevant",
+      "pred": "spam_or_irrelevant",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "sell_part": 0.0,
+        "general_question": 0.0,
+        "order_status": 0.0,
+        "parts_availability": 0.0,
+        "spam_or_irrelevant": 1.0,
+        "price_request": 0.0,
+        "compatibility_fitment": 0.0
+      },
+      "noul_probability": 0.18,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.3298819169867784,
+      "usage": {
+        "input_tokens": 784,
+        "output_tokens": 109
+      }
+    },
+    {
+      "gold": "compatibility_fitment",
+      "pred": "compatibility_fitment",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "price_request": 0.0,
+        "order_status": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "compatibility_fitment": 1.0,
+        "sell_part": 0.0,
+        "parts_availability": 0.0,
+        "general_question": 0.0
+      },
+      "noul_probability": 0.12,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.2877073750132695,
+      "usage": {
+        "input_tokens": 788,
+        "output_tokens": 110
+      }
+    },
+    {
+      "gold": "parts_availability",
+      "pred": "parts_availability",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "price_request": 0.0,
+        "order_status": 0.0,
+        "sell_part": 0.0,
+        "compatibility_fitment": 0.0,
+        "parts_availability": 1.0,
+        "spam_or_irrelevant": 0.0,
+        "general_question": 0.0
+      },
+      "noul_probability": 0.06,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.30346504200133495,
+      "usage": {
+        "input_tokens": 790,
+        "output_tokens": 108
+      }
+    },
+    {
+      "gold": "price_request",
+      "pred": "price_request",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "price_request": 1.0,
+        "sell_part": 0.0,
+        "parts_availability": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "compatibility_fitment": 0.0,
+        "general_question": 0.0,
+        "order_status": 0.0
+      },
+      "noul_probability": 0.06,
+      "needs_human_gold": true,
+      "needs_human_pred": false,
+      "latency_s": 0.2970850830024574,
+      "usage": {
+        "input_tokens": 786,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "sell_part",
+      "pred": "sell_part",
+      "choice_confidence": 0.61,
+      "probabilities": {
+        "general_question": 0.03,
+        "sell_part": 0.67,
+        "compatibility_fitment": 0.0,
+        "order_status": 0.0,
+        "spam_or_irrelevant": 0.03,
+        "price_request": 0.06,
+        "parts_availability": 0.21
+      },
+      "noul_probability": 0.12,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.2726103329914622,
+      "usage": {
+        "input_tokens": 778,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "price_request",
+      "pred": "price_request",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "spam_or_irrelevant": 0.0,
+        "order_status": 0.0,
+        "parts_availability": 0.0,
+        "sell_part": 0.0,
+        "general_question": 0.0,
+        "compatibility_fitment": 0.0,
+        "price_request": 1.0
+      },
+      "noul_probability": 0.06,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.3316506659903098,
+      "usage": {
+        "input_tokens": 786,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "price_request",
+      "pred": "price_request",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "general_question": 0.0,
+        "price_request": 1.0,
+        "compatibility_fitment": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "parts_availability": 0.0,
+        "order_status": 0.0,
+        "sell_part": 0.0
+      },
+      "noul_probability": 0.08,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.2775053749792278,
+      "usage": {
+        "input_tokens": 798,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "sell_part",
+      "pred": "sell_part",
+      "choice_confidence": 0.95,
+      "probabilities": {
+        "general_question": 0.0,
+        "order_status": 0.0,
+        "sell_part": 0.95,
+        "price_request": 0.0,
+        "spam_or_irrelevant": 0.02,
+        "compatibility_fitment": 0.0,
+        "parts_availability": 0.03
+      },
+      "noul_probability": 0.12,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.2915611249918584,
+      "usage": {
+        "input_tokens": 786,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "general_question",
+      "pred": "general_question",
+      "choice_confidence": 0.43,
+      "probabilities": {
+        "order_status": 0.49,
+        "spam_or_irrelevant": 0.0,
+        "parts_availability": 0.0,
+        "general_question": 0.51,
+        "sell_part": 0.0,
+        "compatibility_fitment": 0.0,
+        "price_request": 0.0
+      },
+      "noul_probability": 0.08,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.2831993329746183,
+      "usage": {
+        "input_tokens": 782,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "parts_availability",
+      "pred": "parts_availability",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "sell_part": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "general_question": 0.0,
+        "parts_availability": 1.0,
+        "order_status": 0.0,
+        "compatibility_fitment": 0.0,
+        "price_request": 0.0
+      },
+      "noul_probability": 0.06,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.27450295799644664,
+      "usage": {
+        "input_tokens": 794,
+        "output_tokens": 108
+      }
+    },
+    {
+      "gold": "spam_or_irrelevant",
+      "pred": "spam_or_irrelevant",
+      "choice_confidence": 0.99,
+      "probabilities": {
+        "parts_availability": 0.0,
+        "sell_part": 0.0,
+        "order_status": 0.0,
+        "compatibility_fitment": 0.0,
+        "general_question": 0.01,
+        "spam_or_irrelevant": 0.99,
+        "price_request": 0.0
+      },
+      "noul_probability": 0.15,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.32147475000238046,
+      "usage": {
+        "input_tokens": 776,
+        "output_tokens": 109
+      }
+    },
+    {
+      "gold": "compatibility_fitment",
+      "pred": "compatibility_fitment",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "parts_availability": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "order_status": 0.0,
+        "price_request": 0.0,
+        "compatibility_fitment": 1.0,
+        "sell_part": 0.0,
+        "general_question": 0.0
+      },
+      "noul_probability": 0.06,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.25780391599982977,
+      "usage": {
+        "input_tokens": 800,
+        "output_tokens": 110
+      }
+    },
+    {
+      "gold": "general_question",
+      "pred": "general_question",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "sell_part": 0.0,
+        "parts_availability": 0.0,
+        "order_status": 0.0,
+        "general_question": 1.0,
+        "compatibility_fitment": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "price_request": 0.0
+      },
+      "noul_probability": 0.06,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.2906477079959586,
+      "usage": {
+        "input_tokens": 780,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "compatibility_fitment",
+      "pred": "compatibility_fitment",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "spam_or_irrelevant": 0.0,
+        "general_question": 0.0,
+        "parts_availability": 0.0,
+        "compatibility_fitment": 1.0,
+        "price_request": 0.0,
+        "order_status": 0.0,
+        "sell_part": 0.0
+      },
+      "noul_probability": 0.13,
+      "needs_human_gold": true,
+      "needs_human_pred": false,
+      "latency_s": 0.3315672079916112,
+      "usage": {
+        "input_tokens": 794,
+        "output_tokens": 110
+      }
+    },
+    {
+      "gold": "parts_availability",
+      "pred": "parts_availability",
+      "choice_confidence": 0.48,
+      "probabilities": {
+        "compatibility_fitment": 0.23,
+        "general_question": 0.18,
+        "order_status": 0.02,
+        "parts_availability": 0.55,
+        "price_request": 0.0,
+        "spam_or_irrelevant": 0.01,
+        "sell_part": 0.0
+      },
+      "noul_probability": 0.13,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.29704325000056997,
+      "usage": {
+        "input_tokens": 798,
+        "output_tokens": 108
+      }
+    },
+    {
+      "gold": "order_status",
+      "pred": "order_status",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "sell_part": 0.0,
+        "general_question": 0.0,
+        "order_status": 1.0,
+        "price_request": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "parts_availability": 0.0,
+        "compatibility_fitment": 0.0
+      },
+      "noul_probability": 0.07,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.3219672499981243,
+      "usage": {
+        "input_tokens": 774,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "general_question",
+      "pred": "general_question",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "price_request": 0.0,
+        "sell_part": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "compatibility_fitment": 0.0,
+        "order_status": 0.0,
+        "general_question": 1.0,
+        "parts_availability": 0.0
+      },
+      "noul_probability": 0.06,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.25648662497405894,
+      "usage": {
+        "input_tokens": 782,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "compatibility_fitment",
+      "pred": "compatibility_fitment",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "general_question": 0.0,
+        "parts_availability": 0.0,
+        "price_request": 0.0,
+        "sell_part": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "compatibility_fitment": 1.0,
+        "order_status": 0.0
+      },
+      "noul_probability": 0.07,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.2998730830149725,
+      "usage": {
+        "input_tokens": 798,
+        "output_tokens": 110
+      }
+    },
+    {
+      "gold": "order_status",
+      "pred": "order_status",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "sell_part": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "order_status": 1.0,
+        "price_request": 0.0,
+        "compatibility_fitment": 0.0,
+        "parts_availability": 0.0,
+        "general_question": 0.0
+      },
+      "noul_probability": 0.08,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.3193481669877656,
+      "usage": {
+        "input_tokens": 778,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "parts_availability",
+      "pred": "parts_availability",
+      "choice_confidence": 0.38,
+      "probabilities": {
+        "price_request": 0.0,
+        "compatibility_fitment": 0.37,
+        "order_status": 0.0,
+        "spam_or_irrelevant": 0.13,
+        "general_question": 0.0,
+        "sell_part": 0.02,
+        "parts_availability": 0.48
+      },
+      "noul_probability": 0.25,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.3183618330222089,
+      "usage": {
+        "input_tokens": 800,
+        "output_tokens": 108
+      }
+    },
+    {
+      "gold": "general_question",
+      "pred": "general_question",
+      "choice_confidence": 0.99,
+      "probabilities": {
+        "general_question": 1.0,
+        "sell_part": 0.0,
+        "price_request": 0.0,
+        "parts_availability": 0.0,
+        "compatibility_fitment": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "order_status": 0.0
+      },
+      "noul_probability": 0.13,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.27402666700072587,
+      "usage": {
+        "input_tokens": 780,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "compatibility_fitment",
+      "pred": "compatibility_fitment",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "parts_availability": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "order_status": 0.0,
+        "price_request": 0.0,
+        "compatibility_fitment": 1.0,
+        "sell_part": 0.0,
+        "general_question": 0.0
+      },
+      "noul_probability": 0.08,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.27079875001800247,
+      "usage": {
+        "input_tokens": 784,
+        "output_tokens": 110
+      }
+    },
+    {
+      "gold": "spam_or_irrelevant",
+      "pred": "spam_or_irrelevant",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "parts_availability": 0.0,
+        "spam_or_irrelevant": 1.0,
+        "order_status": 0.0,
+        "price_request": 0.0,
+        "compatibility_fitment": 0.0,
+        "sell_part": 0.0,
+        "general_question": 0.0
+      },
+      "noul_probability": 0.29,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.2800411250209436,
+      "usage": {
+        "input_tokens": 784,
+        "output_tokens": 109
+      }
+    },
+    {
+      "gold": "general_question",
+      "pred": "general_question",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "order_status": 0.0,
+        "general_question": 1.0,
+        "compatibility_fitment": 0.0,
+        "parts_availability": 0.0,
+        "price_request": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "sell_part": 0.0
+      },
+      "noul_probability": 0.08,
+      "needs_human_gold": true,
+      "needs_human_pred": false,
+      "latency_s": 0.259893833019305,
+      "usage": {
+        "input_tokens": 782,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "general_question",
+      "pred": "general_question",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "spam_or_irrelevant": 0.0,
+        "parts_availability": 0.0,
+        "price_request": 0.0,
+        "general_question": 1.0,
+        "compatibility_fitment": 0.0,
+        "sell_part": 0.0,
+        "order_status": 0.0
+      },
+      "noul_probability": 0.04,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.2974812909960747,
+      "usage": {
+        "input_tokens": 784,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "parts_availability",
+      "pred": "parts_availability",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "general_question": 0.0,
+        "compatibility_fitment": 0.0,
+        "price_request": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "parts_availability": 1.0,
+        "order_status": 0.0,
+        "sell_part": 0.0
+      },
+      "noul_probability": 0.07,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.3141789590008557,
+      "usage": {
+        "input_tokens": 800,
+        "output_tokens": 108
+      }
+    },
+    {
+      "gold": "general_question",
+      "pred": "general_question",
+      "choice_confidence": 0.42,
+      "probabilities": {
+        "spam_or_irrelevant": 0.0,
+        "parts_availability": 0.0,
+        "price_request": 0.0,
+        "order_status": 0.5,
+        "general_question": 0.5,
+        "sell_part": 0.0,
+        "compatibility_fitment": 0.0
+      },
+      "noul_probability": 0.73,
+      "needs_human_gold": true,
+      "needs_human_pred": true,
+      "latency_s": 0.24872679100371897,
+      "usage": {
+        "input_tokens": 786,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "price_request",
+      "pred": "order_status",
+      "choice_confidence": 0.69,
+      "probabilities": {
+        "order_status": 0.74,
+        "sell_part": 0.0,
+        "price_request": 0.25,
+        "spam_or_irrelevant": 0.0,
+        "compatibility_fitment": 0.0,
+        "general_question": 0.0,
+        "parts_availability": 0.01
+      },
+      "noul_probability": 0.12,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.29049408397986554,
+      "usage": {
+        "input_tokens": 792,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "order_status",
+      "pred": "order_status",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "price_request": 0.0,
+        "parts_availability": 0.0,
+        "compatibility_fitment": 0.0,
+        "order_status": 1.0,
+        "spam_or_irrelevant": 0.0,
+        "sell_part": 0.0,
+        "general_question": 0.0
+      },
+      "noul_probability": 0.09,
+      "needs_human_gold": true,
+      "needs_human_pred": false,
+      "latency_s": 0.30200420899200253,
+      "usage": {
+        "input_tokens": 784,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "spam_or_irrelevant",
+      "pred": "spam_or_irrelevant",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "spam_or_irrelevant": 1.0,
+        "general_question": 0.0,
+        "price_request": 0.0,
+        "order_status": 0.0,
+        "parts_availability": 0.0,
+        "compatibility_fitment": 0.0,
+        "sell_part": 0.0
+      },
+      "noul_probability": 0.42,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.3180449579958804,
+      "usage": {
+        "input_tokens": 798,
+        "output_tokens": 109
+      }
+    },
+    {
+      "gold": "spam_or_irrelevant",
+      "pred": "spam_or_irrelevant",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "general_question": 0.0,
+        "sell_part": 0.0,
+        "price_request": 0.0,
+        "spam_or_irrelevant": 1.0,
+        "parts_availability": 0.0,
+        "order_status": 0.0,
+        "compatibility_fitment": 0.0
+      },
+      "noul_probability": 0.74,
+      "needs_human_gold": false,
+      "needs_human_pred": true,
+      "latency_s": 0.29738925001583993,
+      "usage": {
+        "input_tokens": 786,
+        "output_tokens": 109
+      }
+    },
+    {
+      "gold": "parts_availability",
+      "pred": "parts_availability",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "compatibility_fitment": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "parts_availability": 1.0,
+        "sell_part": 0.0,
+        "general_question": 0.0,
+        "order_status": 0.0,
+        "price_request": 0.0
+      },
+      "noul_probability": 0.07,
+      "needs_human_gold": true,
+      "needs_human_pred": false,
+      "latency_s": 0.2829075420158915,
+      "usage": {
+        "input_tokens": 798,
+        "output_tokens": 108
+      }
+    },
+    {
+      "gold": "order_status",
+      "pred": "order_status",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "price_request": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "sell_part": 0.0,
+        "general_question": 0.0,
+        "order_status": 1.0,
+        "compatibility_fitment": 0.0,
+        "parts_availability": 0.0
+      },
+      "noul_probability": 0.08,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.34873387499828823,
+      "usage": {
+        "input_tokens": 780,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "spam_or_irrelevant",
+      "pred": "spam_or_irrelevant",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "general_question": 0.0,
+        "sell_part": 0.0,
+        "price_request": 0.0,
+        "spam_or_irrelevant": 1.0,
+        "order_status": 0.0,
+        "compatibility_fitment": 0.0,
+        "parts_availability": 0.0
+      },
+      "noul_probability": 0.7,
+      "needs_human_gold": false,
+      "needs_human_pred": true,
+      "latency_s": 0.26648275001207367,
+      "usage": {
+        "input_tokens": 784,
+        "output_tokens": 109
+      }
+    },
+    {
+      "gold": "parts_availability",
+      "pred": "parts_availability",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "spam_or_irrelevant": 0.0,
+        "general_question": 0.0,
+        "price_request": 0.0,
+        "compatibility_fitment": 0.0,
+        "sell_part": 0.0,
+        "order_status": 0.0,
+        "parts_availability": 1.0
+      },
+      "noul_probability": 0.05,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.30748308400507085,
+      "usage": {
+        "input_tokens": 794,
+        "output_tokens": 108
+      }
+    },
+    {
+      "gold": "parts_availability",
+      "pred": "parts_availability",
+      "choice_confidence": 0.92,
+      "probabilities": {
+        "order_status": 0.05,
+        "spam_or_irrelevant": 0.0,
+        "compatibility_fitment": 0.02,
+        "price_request": 0.0,
+        "parts_availability": 0.93,
+        "general_question": 0.0,
+        "sell_part": 0.0
+      },
+      "noul_probability": 0.14,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.2538395000156015,
+      "usage": {
+        "input_tokens": 784,
+        "output_tokens": 108
+      }
+    },
+    {
+      "gold": "parts_availability",
+      "pred": "parts_availability",
+      "choice_confidence": 1.0,
+      "probabilities": {
+        "general_question": 0.0,
+        "price_request": 0.0,
+        "compatibility_fitment": 0.0,
+        "spam_or_irrelevant": 0.0,
+        "parts_availability": 1.0,
+        "order_status": 0.0,
+        "sell_part": 0.0
+      },
+      "noul_probability": 0.1,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.28231495901127346,
+      "usage": {
+        "input_tokens": 800,
+        "output_tokens": 108
+      }
+    },
+    {
+      "gold": "sell_part",
+      "pred": "sell_part",
+      "choice_confidence": 0.79,
+      "probabilities": {
+        "price_request": 0.0,
+        "spam_or_irrelevant": 0.17,
+        "compatibility_fitment": 0.0,
+        "sell_part": 0.83,
+        "order_status": 0.0,
+        "parts_availability": 0.0,
+        "general_question": 0.0
+      },
+      "noul_probability": 0.29,
+      "needs_human_gold": false,
+      "needs_human_pred": false,
+      "latency_s": 0.3424997920228634,
+      "usage": {
+        "input_tokens": 790,
+        "output_tokens": 105
+      }
+    },
+    {
+      "gold": "spam_or_irrelevant",
+      "pred": "spam_or_irrelevant",
+      "choice_confidence": 0.98,
+      "probabilities": {
+        "compatibility_fitment": 0.0,
+        "spam_or_irrelevant": 0.98,
+        "price_request": 0.0,
+        "sell_part": 0.0,
+        "general_question": 0.0,
+        "order_status": 0.02,
+        "parts_availability": 0.0
+      },
+      "noul_probability": 0.51,
+      "needs_human_gold": false,
+      "needs_human_pred": true,
+      "latency_s": 0.2719201250001788,
+      "usage": {
+        "input_tokens": 782,
+        "output_tokens": 109
+      }
+    }
+  ]
+}
