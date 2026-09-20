@@ -105,3 +105,77 @@ CREATE INDEX IF NOT EXISTS idx_orders_customer ON orders(customer_id);
 CREATE INDEX IF NOT EXISTS idx_order_lines_order ON order_lines(order_id);
 CREATE INDEX IF NOT EXISTS idx_supersession_old ON part_supersessions(old_sku);
 CREATE INDEX IF NOT EXISTS idx_payment_events_order ON payment_events(order_id);
+
+-- ============================================================
+-- Transmission Hard-Parts Vertical (non-destructive extension)
+-- ============================================================
+
+-- Transmission families (data-driven, not enum)
+CREATE TABLE IF NOT EXISTS transmission_families (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    family TEXT NOT NULL UNIQUE,           -- e.g. "6L80", "10R80", "68RFE"
+    manufacturer TEXT DEFAULT '',
+    notes TEXT DEFAULT '',
+    created_at TEXT NOT NULL
+);
+
+-- Extended identifiers / aliases for catalog parts
+CREATE TABLE IF NOT EXISTS part_identifiers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    sku TEXT NOT NULL,
+    identifier_type TEXT NOT NULL,         -- oem, casting, aftermarket, common_name, abbreviation
+    identifier_value TEXT NOT NULL,
+    notes TEXT DEFAULT '',
+    created_at TEXT NOT NULL,
+    UNIQUE (sku, identifier_type, identifier_value),
+    FOREIGN KEY (sku) REFERENCES catalog_parts(sku)
+);
+
+-- Interchange relationships (directional)
+CREATE TABLE IF NOT EXISTS part_interchanges (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    source_sku TEXT NOT NULL,
+    target_sku TEXT NOT NULL,
+    relationship_type TEXT NOT NULL,       -- interchangeable, supersedes, core_exchange, not_interchangeable
+    confidence REAL DEFAULT 0.0,
+    notes TEXT DEFAULT '',
+    source TEXT DEFAULT '',                -- provenance / verification source
+    verification_status TEXT DEFAULT 'unverified', -- unverified | verified | disputed
+    created_at TEXT NOT NULL,
+    actor TEXT DEFAULT '',
+    UNIQUE (source_sku, target_sku, relationship_type),
+    FOREIGN KEY (source_sku) REFERENCES catalog_parts(sku),
+    FOREIGN KEY (target_sku) REFERENCES catalog_parts(sku)
+);
+
+-- Minimal fitment table (for transmission vertical)
+CREATE TABLE IF NOT EXISTS part_fitments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    sku TEXT NOT NULL,
+    year_from INTEGER,
+    year_to INTEGER,
+    make TEXT,
+    model TEXT,
+    engine TEXT,
+    transmission_family TEXT,
+    transmission_variant TEXT,
+    notes TEXT DEFAULT '',
+    verification_status TEXT DEFAULT 'unverified',
+    created_at TEXT NOT NULL,
+    FOREIGN KEY (sku) REFERENCES catalog_parts(sku)
+);
+
+-- Extend catalog_parts with transmission-specific identity fields
+ALTER TABLE catalog_parts ADD COLUMN transmission_family TEXT DEFAULT '';
+ALTER TABLE catalog_parts ADD COLUMN transmission_variant TEXT DEFAULT '';
+ALTER TABLE catalog_parts ADD COLUMN verification_status TEXT DEFAULT 'unverified';
+
+-- Extend inventory_levels with condition (new/used/rebuilt/core)
+ALTER TABLE inventory_levels ADD COLUMN condition TEXT DEFAULT 'new';
+
+-- Indexes for new transmission tables
+CREATE INDEX IF NOT EXISTS idx_part_identifiers_sku ON part_identifiers(sku);
+CREATE INDEX IF NOT EXISTS idx_part_interchanges_source ON part_interchanges(source_sku);
+CREATE INDEX IF NOT EXISTS idx_part_interchanges_target ON part_interchanges(target_sku);
+CREATE INDEX IF NOT EXISTS idx_part_fitments_sku ON part_fitments(sku);
+CREATE INDEX IF NOT EXISTS idx_catalog_transmission ON catalog_parts(transmission_family);
