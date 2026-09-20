@@ -10,7 +10,7 @@ from tempfile import TemporaryDirectory
 
 from parrts.dms.service import DmsService
 from .seed_loader import load_demo_seed
-from .resolver import resolve_inquiry
+from .service import answer_transmission_inquiry
 
 
 def run_demo():
@@ -26,23 +26,22 @@ def run_demo():
         queries = [
             "Do you have a pump for a 2011 Tahoe 6L80?",
             "Do you have 24264418?",
-            "Do you have a valve body for a 6L90?",
-            "Do you have anything for a 2025 F-150 10R80?",
-            "Do you have a pump for a 2011 Tahoe 6L80 that is used?",
+            "Do you have FAKE-IDENT-999?",
+            "Do you have anything?",
         ]
 
         for q in queries:
             print(f"Query: {q}")
-            result = resolve_inquiry(q, dms)
-            print(f"  Family: {result.transmission_family}")
-            print(f"  Part:   {result.part_type}")
-            print(f"  SKUs:   {result.matched_skus}")
-            print(f"  Fitment:{result.fitment_status}")
-            print(f"  Stock:  {result.inventory_available}")
-            print(f"  Notes:  {result.notes}")
-            print(f"  Aliases:{result.aliases_found}")
-            print(f"  Interchange: {result.interchange_candidates}")
-            print(f"  Uncertainty: {result.uncertainty}")
+            answer = answer_transmission_inquiry(q, dms)
+            print(f"  Status: {answer.status}")
+            print(f"  SKU:    {answer.sku}")
+            print(f"  Family: {answer.transmission_family}")
+            print(f"  Part:   {answer.part_type}")
+            print(f"  Available: {answer.inventory_available} (qty={answer.aggregate_available})")
+            if answer.inventory:
+                first = answer.inventory[0]
+                print(f"  Location: {first.get('location')} / Bin: {first.get('bin')} ({first.get('condition')})")
+            print(f"  Summary: {answer.human_readable}")
             print()
 
 
