@@ -138,8 +138,10 @@ def compute_metrics(rows: list[dict]) -> dict:
         "override_equivalent_rate": (len(false_res) + len(missed)) / n if n else 0.0,
         "verdict_counts": dict(Counter(r["verdict"] for r in rows)),
         "cohort_verdicts": {
-            cohort: dict(Counter(r["verdict"] for r in rows if r.get("cohort") == cohort))
-            for cohort in sorted({r.get("cohort") for r in rows})
+            str(cohort): dict(
+                Counter(r["verdict"] for r in rows if r.get("cohort") == cohort)
+            )
+            for cohort in sorted({str(r.get("cohort") or "") for r in rows})
         },
     }
 
@@ -218,30 +220,30 @@ def render_internal(meta: dict, freeze_sha: str, sut: str, result: dict) -> str:
     lines.append("")
     # group false + missed by category
     fail = [r for r in rows if r["verdict"] in ("false_resolution", "missed_resolution")]
+    by_verdict_category = dict(
+        Counter(f"{r['verdict']}|{r.get('category')}" for r in fail)
+    )
     lines.append("```json")
     lines.append(
         json.dumps(
             {
-                "by_verdict_category": dict(
-                    Counter((r["verdict"], r.get("category")) for r in fail)
-                ),
+                "by_verdict_category": by_verdict_category,
                 "by_mutation": dict(
                     Counter(
-                        r.get("mutation_type") or "n/a"
+                        str(r.get("mutation_type") or "n/a")
                         for r in fail
                         if r["verdict"] == "missed_resolution"
                     )
                 ),
                 "by_adversarial": dict(
                     Counter(
-                        r.get("adversarial_category") or "n/a"
+                        str(r.get("adversarial_category") or "n/a")
                         for r in fail
                         if r["verdict"] == "false_resolution"
                     )
                 ),
             },
             indent=2,
-            default=str,
         )
     )
     lines.append("```")
