@@ -305,6 +305,12 @@ class DmsStore:
             "ALTER TABLE catalog_parts ADD COLUMN transmission_variant TEXT DEFAULT ''",
             "ALTER TABLE catalog_parts ADD COLUMN verification_status TEXT DEFAULT 'unverified'",
             "ALTER TABLE inventory_levels ADD COLUMN condition TEXT DEFAULT 'new'",
+            "ALTER TABLE inventory_levels ADD COLUMN bin TEXT DEFAULT NULL",
+            "ALTER TABLE inventory_levels ADD COLUMN reserved_qty INTEGER NOT NULL DEFAULT 0",
+            "ALTER TABLE orders ADD COLUMN quote_id INTEGER",
+            "ALTER TABLE orders ADD COLUMN order_number TEXT DEFAULT ''",
+            "ALTER TABLE orders ADD COLUMN customer_label TEXT DEFAULT ''",
+            "ALTER TABLE orders ADD COLUMN actor TEXT DEFAULT ''",
         ):
             try:
                 conn.execute(col_sql)
@@ -312,6 +318,83 @@ class DmsStore:
                 # Column already present on upgraded DBs — expected and safe.
                 if "duplicate column" not in str(exc).lower():
                     raise
+        # Operational core: events, quotes, reservations
+        conn.executescript(
+            """
+            CREATE TABLE IF NOT EXISTS inventory_events (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                event_type TEXT NOT NULL,
+                sku TEXT NOT NULL,
+                location_id INTEGER,
+                qty_on_hand_delta INTEGER NOT NULL DEFAULT 0,
+                qty_reserved_delta INTEGER NOT NULL DEFAULT 0,
+                on_hand_before INTEGER NOT NULL DEFAULT 0,
+                on_hand_after INTEGER NOT NULL DEFAULT 0,
+                reserved_before INTEGER NOT NULL DEFAULT 0,
+                reserved_after INTEGER NOT NULL DEFAULT 0,
+                reason TEXT DEFAULT '',
+                notes TEXT DEFAULT '',
+                actor TEXT DEFAULT '',
+                ref_type TEXT DEFAULT '',
+                ref_id TEXT DEFAULT '',
+                idempotency_key TEXT UNIQUE,
+                created_at TEXT NOT NULL,
+                FOREIGN KEY (sku) REFERENCES catalog_parts(sku),
+                FOREIGN KEY (location_id) REFERENCES locations(id)
+            );
+            CREATE INDEX IF NOT EXISTS idx_inv_events_sku ON inventory_events(sku);
+            CREATE INDEX IF NOT EXISTS idx_inv_events_created ON inventory_events(created_at);
+            CREATE INDEX IF NOT EXISTS idx_inv_events_type ON inventory_events(event_type);
+
+            CREATE TABLE IF NOT EXISTS quotes (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                quote_number TEXT NOT NULL UNIQUE,
+                status TEXT NOT NULL DEFAULT 'draft',
+                customer_label TEXT NOT NULL DEFAULT '',
+                customer_contact TEXT DEFAULT '',
+                notes TEXT DEFAULT '',
+                actor TEXT DEFAULT '',
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_quotes_status ON quotes(status);
+
+            CREATE TABLE IF NOT EXISTS quote_lines (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                quote_id INTEGER NOT NULL,
+                sku TEXT NOT NULL,
+                location_id INTEGER NOT NULL,
+                qty INTEGER NOT NULL,
+                unit_price_cents INTEGER NOT NULL DEFAULT 0,
+                description TEXT DEFAULT '',
+                FOREIGN KEY (quote_id) REFERENCES quotes(id),
+                FOREIGN KEY (sku) REFERENCES catalog_parts(sku),
+                FOREIGN KEY (location_id) REFERENCES locations(id)
+            );
+            CREATE INDEX IF NOT EXISTS idx_quote_lines_quote ON quote_lines(quote_id);
+
+            CREATE TABLE IF NOT EXISTS inventory_reservations (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                sku TEXT NOT NULL,
+                location_id INTEGER NOT NULL,
+                qty INTEGER NOT NULL,
+                status TEXT NOT NULL DEFAULT 'active',
+                quote_id INTEGER,
+                quote_line_id INTEGER,
+                order_id INTEGER,
+                actor TEXT DEFAULT '',
+                notes TEXT DEFAULT '',
+                idempotency_key TEXT UNIQUE,
+                created_at TEXT NOT NULL,
+                released_at TEXT,
+                FOREIGN KEY (sku) REFERENCES catalog_parts(sku),
+                FOREIGN KEY (location_id) REFERENCES locations(id),
+                FOREIGN KEY (quote_id) REFERENCES quotes(id)
+            );
+            CREATE INDEX IF NOT EXISTS idx_reservations_status ON inventory_reservations(status);
+            CREATE INDEX IF NOT EXISTS idx_reservations_sku ON inventory_reservations(sku);
+            """
+        )
         conn.commit()
 
     def execute(self, sql: str, params: tuple[Any, ...] | list[Any] = ()) -> sqlite3.Cursor:

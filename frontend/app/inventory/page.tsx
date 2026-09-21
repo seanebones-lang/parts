@@ -9,6 +9,11 @@ import {
   type DmsInventoryRow,
   isApiUnreachable,
   listDmsInventory,
+  opsAdjust,
+  opsReceive,
+  opsStock,
+  opsTransfer,
+  type OpsStockRow,
 } from "@/lib/dms-api";
 import { EmptyState, JpPage, Panel, StockBadge, stockLevel } from "@/components/jp/ui";
 import InventoryFullPage from "./inventory-full";
@@ -40,8 +45,13 @@ function JpInventory() {
     setLoading(true);
     setError(null);
     try {
-      const inv = await listDmsInventory();
-      setRows((inv.rows || []).filter(isTx));
+      const inv = await opsStock();
+      const rows = (inv.rows || []).map((r: OpsStockRow) => ({
+        ...r,
+        qty: r.on_hand ?? r.qty,
+        location: r.location_code,
+      })) as DmsInventoryRow[];
+      setRows(rows.filter(isTx));
     } catch (e) {
       setRows([]);
       setError(
@@ -162,7 +172,9 @@ function JpInventory() {
                     <th className="py-2 pr-2 font-medium">Description</th>
                     <th className="py-2 pr-2 font-medium">Family</th>
                     <th className="py-2 pr-2 font-medium">Location</th>
-                    <th className="py-2 pr-2 font-medium">Qty</th>
+                    <th className="py-2 pr-2 font-medium">On hand</th>
+                    <th className="py-2 pr-2 font-medium">Reserved</th>
+                    <th className="py-2 pr-2 font-medium">Available</th>
                     <th className="py-2 font-medium">Status</th>
                   </tr>
                 </thead>
@@ -192,9 +204,11 @@ function JpInventory() {
                         </td>
                         <td className="py-2 pr-2 font-mono text-xs">{fam}</td>
                         <td className="py-2 pr-2 text-xs">{loc.title}</td>
-                        <td className="py-2 pr-2 tabular-nums font-medium">{qtyOf(r)}</td>
+                        <td className="py-2 pr-2 tabular-nums font-medium">{(r as any).on_hand ?? qtyOf(r)}</td>
+                        <td className="py-2 pr-2 tabular-nums">{(r as any).reserved ?? 0}</td>
+                        <td className="py-2 pr-2 tabular-nums font-medium">{(r as any).available ?? Math.max(0, qtyOf(r) - Number((r as any).reserved || 0))}</td>
                         <td className="py-2">
-                          <StockBadge qty={qtyOf(r)} />
+                          <StockBadge qty={(r as any).available ?? qtyOf(r)} />
                         </td>
                       </tr>
                     );
@@ -248,10 +262,55 @@ function JpInventory() {
                   </dd>
                 </div>
                 <div>
-                  <dt className="uppercase text-slate-500">Qty</dt>
-                  <dd className="text-base font-semibold tabular-nums">{qtyOf(selected)}</dd>
+                  <dt className="uppercase text-slate-500">On hand</dt>
+                  <dd className="text-base font-semibold tabular-nums">{(selected as any).on_hand ?? qtyOf(selected)}</dd>
+                </div>
+                <div>
+                  <dt className="uppercase text-slate-500">Reserved</dt>
+                  <dd className="tabular-nums">{(selected as any).reserved ?? 0}</dd>
+                </div>
+                <div>
+                  <dt className="uppercase text-slate-500">Available</dt>
+                  <dd className="text-base font-semibold tabular-nums">{(selected as any).available ?? qtyOf(selected)}</dd>
                 </div>
               </dl>
+              <div className="mt-4 flex flex-wrap gap-2 border-t pt-3">
+                <button type="button" className="rounded-md bg-slate-900 px-2.5 py-1.5 text-xs font-semibold text-white"
+                  onClick={async () => {
+                    const q = prompt("Receive quantity", "1");
+                    if (!q) return;
+                    const ref = prompt("Reference (PO / note)", "") || "";
+                    try {
+                      await opsReceive({ sku: String(selected.sku), location: String(selected.location || selected.location_code || "CHI-N"), qty: Number(q), reference: ref });
+                      await load();
+                    } catch (e: any) { alert(e?.message || "Receive failed"); }
+                  }}>Receive</button>
+                <button type="button" className="rounded-md border px-2.5 py-1.5 text-xs font-medium"
+                  onClick={async () => {
+                    const d = prompt("Adjust by (use negative to reduce)", "1");
+                    if (!d) return;
+                    const reason = prompt("Reason (physical_count, damaged, scrapped, found, data_correction, other)", "physical_count") || "other";
+                    if (!confirm("Apply this stock adjustment?")) return;
+                    try {
+                      await opsAdjust({ sku: String(selected.sku), location: String(selected.location || selected.location_code || "CHI-N"), delta: Number(d), reason });
+                      await load();
+                    } catch (e: any) { alert(e?.message || "Adjust failed"); }
+                  }}>Adjust</button>
+                <button type="button" className="rounded-md border px-2.5 py-1.5 text-xs font-medium"
+                  onClick={async () => {
+                    const to = prompt("Move to location code (e.g. OHARE)", "OHARE");
+                    if (!to) return;
+                    const q = prompt("Quantity to move", "1");
+                    if (!q) return;
+                    if (!confirm(`Move ${q} to ${to}?`)) return;
+                    try {
+                      await opsTransfer({ sku: String(selected.sku), from_location: String(selected.location || selected.location_code || "CHI-N"), to_location: to, qty: Number(q) });
+                      await load();
+                    } catch (e: any) { alert(e?.message || "Transfer failed"); }
+                  }}>Move</button>
+                <a className="rounded-md border px-2.5 py-1.5 text-xs font-medium"
+                  href={`/quotes?add_sku=${encodeURIComponent(String(selected.sku||""))}&location=${encodeURIComponent(String(selected.location||selected.location_code||"CHI-N"))}`}>Add to quote</a>
+              </div>
             </div>
           )}
         </Panel>

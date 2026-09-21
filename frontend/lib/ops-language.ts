@@ -96,9 +96,39 @@ export function humanAutomationKind(kind?: string | null): string {
       return "Decision observe";
     case "email_process":
       return "Email inquiry";
+    case "inventory_receive":
+      return "Inventory received";
+    case "inventory_adjust":
+      return "Stock adjusted";
+    case "inventory_transfer":
+      return "Stock transferred";
+    case "inventory_reserve":
+      return "Inventory reserved";
+    case "inventory_release":
+      return "Reservation released";
+    case "quote_created":
+      return "Quote created";
+    case "quote_reserved":
+      return "Quote reserved";
+    case "quote_cancelled":
+      return "Quote cancelled";
+    case "order_created":
+      return "Order created";
+    case "order_completed":
+      return "Order completed";
+    case "order_cancelled":
+      return "Order cancelled";
     default:
       return kind ? String(kind).replace(/_/g, " ") : "Activity";
   }
+}
+
+function cleanedSummary(s: string): string {
+  return s
+    .replace(/specialist=\S+/gi, "")
+    .replace(/\s*→\s*/g, " · ")
+    .replace(/\s{2,}/g, " ")
+    .trim();
 }
 
 /**
@@ -151,6 +181,13 @@ export function humanizeActivitySummary(
     return {
       title: humanAutomationKind(k),
       detail: cat !== "Inquiry" ? cat : s || "Recorded",
+    };
+  }
+
+  if (k.startsWith("inventory_") || k === "quote_created" || k === "quote_reserved" || k === "quote_cancelled" || k === "order_created" || k === "order_completed" || k === "order_cancelled") {
+    return {
+      title: humanAutomationKind(k),
+      detail: cleanedSummary(s) || "Recorded",
     };
   }
 

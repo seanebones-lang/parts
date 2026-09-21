@@ -484,9 +484,10 @@ class DmsService:
             rows = self.store.fetchall(
                 """
                 SELECT i.sku, i.location_id, l.code AS location_code, l.name AS location_name,
-                       i.qty, i.cost, i.price,
+                       i.qty, COALESCE(i.reserved_qty, 0) AS reserved_qty, i.cost, i.price,
+                       i.condition, i.bin,
                        c.name, c.description, c.make, c.model, c.year, c.category, c.oem_brand,
-                       c.list_price, c.msrp
+                       c.list_price, c.msrp, c.transmission_family
                 FROM inventory_levels i
                 JOIN locations l ON l.id = i.location_id
                 JOIN catalog_parts c ON c.sku = i.sku
@@ -499,16 +500,26 @@ class DmsService:
             rows = self.store.fetchall(
                 """
                 SELECT i.sku, i.location_id, l.code AS location_code, l.name AS location_name,
-                       i.qty, i.cost, i.price,
+                       i.qty, COALESCE(i.reserved_qty, 0) AS reserved_qty, i.cost, i.price,
+                       i.condition, i.bin,
                        c.name, c.description, c.make, c.model, c.year, c.category, c.oem_brand,
-                       c.list_price, c.msrp
+                       c.list_price, c.msrp, c.transmission_family
                 FROM inventory_levels i
                 JOIN locations l ON l.id = i.location_id
                 JOIN catalog_parts c ON c.sku = i.sku
                 ORDER BY l.id, i.sku
                 """
             )
-        return [dict(r) for r in rows]
+        out = []
+        for r in rows:
+            d = dict(r)
+            on_hand = int(d.get("qty") or 0)
+            reserved = int(d.get("reserved_qty") or 0)
+            d["on_hand"] = on_hand
+            d["reserved"] = reserved
+            d["available"] = max(0, on_hand - reserved)
+            out.append(d)
+        return out
 
     def list_catalog(self, q: str | None = None) -> list[dict[str, Any]]:
         """List catalog parts, optional case-insensitive substring filter on sku/name/make/model."""

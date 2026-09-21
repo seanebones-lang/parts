@@ -17,6 +17,7 @@ import {
   getDmsStatus,
   listDmsInventory,
   listTransmissionImportHistory,
+  opsOverview,
   type DmsInventoryRow,
   type TransmissionImportHistoryItem,
 } from "@/lib/dms-api";
@@ -50,12 +51,18 @@ export default function JpOverviewPage() {
   const [emailSt, setEmailSt] = useState<EmailStatus | null>(null);
   const [runs, setRuns] = useState<AutomationRun[]>([]);
   const [catalogCount, setCatalogCount] = useState<number | null>(null);
+  const [opsStats, setOpsStats] = useState<{
+    open_quotes?: number;
+    reserved_units?: number;
+    open_orders?: number;
+    completed_orders?: number;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [inv, hist, em, auto, st] = await Promise.all([
+      const [inv, hist, em, auto, st, ops] = await Promise.all([
         listDmsInventory().catch(() => ({ rows: [] as DmsInventoryRow[] })),
         listTransmissionImportHistory(5).catch(() => ({
           imports: [] as TransmissionImportHistoryItem[],
@@ -63,11 +70,13 @@ export default function JpOverviewPage() {
         getEmailStatus().catch(() => null),
         getAutomationResults(12).catch(() => ({ runs: [] as AutomationRun[] })),
         getDmsStatus().catch(() => null),
+        opsOverview().catch(() => null),
       ]);
       setRows((inv.rows || []).filter(isTransmissionRow));
       setImports(hist.imports || []);
       setEmailSt(em);
       setRuns(auto.runs || []);
+      setOpsStats(ops);
       const cc =
         st?.catalog_count ??
         (typeof st?.catalog_count === "number" ? st.catalog_count : null);
@@ -158,6 +167,16 @@ export default function JpOverviewPage() {
         />
         <StatTile label="Low stock lines" value={loading ? "…" : stats.low} />
         <StatTile label="Out of stock lines" value={loading ? "…" : stats.out} />
+      </div>
+
+      <div className="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <StatTile label="Open quotes" value={loading ? "…" : opsStats?.open_quotes ?? 0} />
+        <StatTile label="Reserved units" value={loading ? "…" : opsStats?.reserved_units ?? 0} />
+        <StatTile label="Open orders" value={loading ? "…" : opsStats?.open_orders ?? 0} />
+        <StatTile
+          label="Completed orders"
+          value={loading ? "…" : opsStats?.completed_orders ?? 0}
+        />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">

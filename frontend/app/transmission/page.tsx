@@ -10,6 +10,9 @@ import {
   transmissionInquiry,
   transmissionInquiryFeedback,
   type TransmissionInquiryResponse,
+  opsCreateQuote,
+  opsAddQuoteLine,
+  opsStock,
 } from "@/lib/dms-api";
 import {
   EmptyState,
@@ -364,6 +367,29 @@ function TransmissionInquiryInner() {
                   </div>
                 </div>
                 <StockBadge qty={result.aggregate_available ?? 0} />
+              </div>
+
+              <div className="mt-4 rounded-md border border-slate-200 bg-slate-50 p-3">
+                <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                  Business actions
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <a
+                    className="rounded-md bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white"
+                    href={`/quotes?add_sku=${encodeURIComponent(String(result.sku || ""))}&location=CHI-N`}
+                  >
+                    Add to quote
+                  </a>
+                  <a
+                    className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium"
+                    href="/inventory"
+                  >
+                    View inventory
+                  </a>
+                </div>
+                <p className="mt-2 text-[11px] text-slate-500">
+                  Needs Review results cannot be quoted until Resolve request is completed.
+                </p>
               </div>
 
               <div className="mt-4 grid grid-cols-2 gap-3 text-sm md:grid-cols-4">

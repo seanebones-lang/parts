@@ -17,7 +17,7 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
 # Transmission inquiry (Phase 4)
-from parrts.dms.service import DmsService
+from parrts.dms.service import DmsService, InsufficientStockError
 from parrts.transmission.service import answer_transmission_inquiry
 
 from app.api.deps import require_permission, require_user_if_production
@@ -1453,3 +1453,362 @@ async def transmission_import_rollback(
         ) from exc
 
 
+
+
+# ---------------------------------------------------------------------------
+# Inventory ops + quotes/orders (JP operational core)
+# ---------------------------------------------------------------------------
+
+from parrts.dms.ops import InventoryOps, OpsConflictError, OpsValidationError
+
+
+def _ops(svc: DmsService) -> InventoryOps:
+    return InventoryOps(svc)
+
+
+def _ops_http(exc: Exception) -> HTTPException:
+    if isinstance(exc, OpsConflictError):
+        return HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc))
+    if isinstance(exc, OpsValidationError):
+        return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+    if isinstance(exc, InsufficientStockError):
+        return HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc))
+    if isinstance(exc, ValueError):
+        return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+    return HTTPException(status_code=500, detail=str(exc))
+
+
+class OpsReceiveBody(BaseModel):
+    sku: str
+    location: str
+    qty: int = Field(..., gt=0)
+    notes: str = ""
+    reference: str = ""
+    actor: str = "counter"
+    idempotency_key: Optional[str] = None
+
+
+class OpsAdjustBody(BaseModel):
+    sku: str
+    location: str
+    delta: Optional[int] = None
+    final_qty: Optional[int] = None
+    reason: str
+    notes: str = ""
+    actor: str = "counter"
+    idempotency_key: Optional[str] = None
+
+
+class OpsTransferBody(BaseModel):
+    sku: str
+    from_location: str
+    to_location: str
+    qty: int = Field(..., gt=0)
+    notes: str = ""
+    actor: str = "counter"
+    idempotency_key: Optional[str] = None
+
+
+class OpsReserveBody(BaseModel):
+    sku: str
+    location: str
+    qty: int = Field(..., gt=0)
+    notes: str = ""
+    actor: str = "counter"
+    idempotency_key: Optional[str] = None
+
+
+class OpsQuoteCreateBody(BaseModel):
+    customer_label: str = "Walk-in"
+    customer_contact: str = ""
+    notes: str = ""
+    actor: str = "counter"
+
+
+class OpsQuoteLineBody(BaseModel):
+    sku: str
+    location: str
+    qty: int = Field(1, gt=0)
+    unit_price_cents: Optional[int] = None
+    description: str = ""
+
+
+class OpsQuoteLineUpdateBody(BaseModel):
+    qty: Optional[int] = None
+    unit_price_cents: Optional[int] = None
+
+
+@router.get("/ops/stock")
+async def ops_stock(
+    sku: Optional[str] = None,
+    location: Optional[str] = None,
+    current_user: Optional[User] = Depends(require_user_if_production),
+    svc: DmsService = Depends(get_dms_service),
+):
+    _ = current_user
+    return {"ok": True, "rows": _ops(svc).stock_view(sku=sku, location=location)}
+
+
+@router.get("/ops/overview")
+async def ops_overview(
+    current_user: Optional[User] = Depends(require_user_if_production),
+    svc: DmsService = Depends(get_dms_service),
+):
+    _ = current_user
+    return {"ok": True, **_ops(svc).overview_stats()}
+
+
+@router.get("/ops/events")
+async def ops_events(
+    sku: Optional[str] = None,
+    limit: int = Query(50, ge=1, le=200),
+    current_user: Optional[User] = Depends(require_user_if_production),
+    svc: DmsService = Depends(get_dms_service),
+):
+    _ = current_user
+    return {"ok": True, "events": _ops(svc).list_events(sku=sku, limit=limit)}
+
+
+@router.post("/ops/receive")
+async def ops_receive(
+    body: OpsReceiveBody,
+    current_user: Optional[User] = Depends(require_user_if_production),
+    svc: DmsService = Depends(get_dms_service),
+):
+    _ = current_user
+    try:
+        return _ops(svc).receive(**body.model_dump())
+    except Exception as exc:
+        raise _ops_http(exc) from exc
+
+
+@router.post("/ops/adjust")
+async def ops_adjust(
+    body: OpsAdjustBody,
+    current_user: Optional[User] = Depends(require_user_if_production),
+    svc: DmsService = Depends(get_dms_service),
+):
+    _ = current_user
+    try:
+        return _ops(svc).adjust(**body.model_dump())
+    except Exception as exc:
+        raise _ops_http(exc) from exc
+
+
+@router.post("/ops/transfer")
+async def ops_transfer(
+    body: OpsTransferBody,
+    current_user: Optional[User] = Depends(require_user_if_production),
+    svc: DmsService = Depends(get_dms_service),
+):
+    _ = current_user
+    try:
+        return _ops(svc).transfer(**body.model_dump())
+    except Exception as exc:
+        raise _ops_http(exc) from exc
+
+
+@router.post("/ops/reserve")
+async def ops_reserve(
+    body: OpsReserveBody,
+    current_user: Optional[User] = Depends(require_user_if_production),
+    svc: DmsService = Depends(get_dms_service),
+):
+    _ = current_user
+    try:
+        return _ops(svc).reserve(**body.model_dump())
+    except Exception as exc:
+        raise _ops_http(exc) from exc
+
+
+@router.post("/ops/reservations/{reservation_id}/release")
+async def ops_release(
+    reservation_id: int,
+    actor: str = "counter",
+    notes: str = "",
+    current_user: Optional[User] = Depends(require_user_if_production),
+    svc: DmsService = Depends(get_dms_service),
+):
+    _ = current_user
+    try:
+        return _ops(svc).release_reservation(
+            reservation_id=reservation_id, actor=actor, notes=notes
+        )
+    except Exception as exc:
+        raise _ops_http(exc) from exc
+
+
+@router.get("/ops/quotes")
+async def ops_list_quotes(
+    status_filter: Optional[str] = Query(None, alias="status"),
+    limit: int = Query(100, ge=1, le=200),
+    current_user: Optional[User] = Depends(require_user_if_production),
+    svc: DmsService = Depends(get_dms_service),
+):
+    _ = current_user
+    return {"ok": True, "quotes": _ops(svc).list_quotes(status=status_filter, limit=limit)}
+
+
+@router.post("/ops/quotes")
+async def ops_create_quote(
+    body: OpsQuoteCreateBody,
+    current_user: Optional[User] = Depends(require_user_if_production),
+    svc: DmsService = Depends(get_dms_service),
+):
+    _ = current_user
+    try:
+        return _ops(svc).create_quote(**body.model_dump())
+    except Exception as exc:
+        raise _ops_http(exc) from exc
+
+
+@router.get("/ops/quotes/{quote_id}")
+async def ops_get_quote(
+    quote_id: int,
+    current_user: Optional[User] = Depends(require_user_if_production),
+    svc: DmsService = Depends(get_dms_service),
+):
+    _ = current_user
+    try:
+        return _ops(svc).get_quote(quote_id)
+    except Exception as exc:
+        raise _ops_http(exc) from exc
+
+
+@router.post("/ops/quotes/{quote_id}/lines")
+async def ops_add_quote_line(
+    quote_id: int,
+    body: OpsQuoteLineBody,
+    current_user: Optional[User] = Depends(require_user_if_production),
+    svc: DmsService = Depends(get_dms_service),
+):
+    _ = current_user
+    try:
+        return _ops(svc).add_quote_line(quote_id=quote_id, **body.model_dump())
+    except Exception as exc:
+        raise _ops_http(exc) from exc
+
+
+@router.patch("/ops/quotes/{quote_id}/lines/{line_id}")
+async def ops_update_quote_line(
+    quote_id: int,
+    line_id: int,
+    body: OpsQuoteLineUpdateBody,
+    current_user: Optional[User] = Depends(require_user_if_production),
+    svc: DmsService = Depends(get_dms_service),
+):
+    _ = current_user
+    try:
+        return _ops(svc).update_quote_line(
+            quote_id=quote_id, line_id=line_id, **body.model_dump(exclude_none=True)
+        )
+    except Exception as exc:
+        raise _ops_http(exc) from exc
+
+
+@router.delete("/ops/quotes/{quote_id}/lines/{line_id}")
+async def ops_remove_quote_line(
+    quote_id: int,
+    line_id: int,
+    current_user: Optional[User] = Depends(require_user_if_production),
+    svc: DmsService = Depends(get_dms_service),
+):
+    _ = current_user
+    try:
+        return _ops(svc).remove_quote_line(quote_id=quote_id, line_id=line_id)
+    except Exception as exc:
+        raise _ops_http(exc) from exc
+
+
+@router.post("/ops/quotes/{quote_id}/reserve")
+async def ops_reserve_quote(
+    quote_id: int,
+    actor: str = "counter",
+    current_user: Optional[User] = Depends(require_user_if_production),
+    svc: DmsService = Depends(get_dms_service),
+):
+    _ = current_user
+    try:
+        return _ops(svc).reserve_quote(quote_id=quote_id, actor=actor)
+    except Exception as exc:
+        raise _ops_http(exc) from exc
+
+
+@router.post("/ops/quotes/{quote_id}/cancel")
+async def ops_cancel_quote(
+    quote_id: int,
+    actor: str = "counter",
+    current_user: Optional[User] = Depends(require_user_if_production),
+    svc: DmsService = Depends(get_dms_service),
+):
+    _ = current_user
+    try:
+        return _ops(svc).cancel_quote(quote_id=quote_id, actor=actor)
+    except Exception as exc:
+        raise _ops_http(exc) from exc
+
+
+@router.post("/ops/quotes/{quote_id}/convert")
+async def ops_convert_quote(
+    quote_id: int,
+    actor: str = "counter",
+    current_user: Optional[User] = Depends(require_user_if_production),
+    svc: DmsService = Depends(get_dms_service),
+):
+    _ = current_user
+    try:
+        return _ops(svc).convert_quote_to_order(quote_id=quote_id, actor=actor)
+    except Exception as exc:
+        raise _ops_http(exc) from exc
+
+
+@router.get("/ops/orders")
+async def ops_list_orders(
+    status_filter: Optional[str] = Query(None, alias="status"),
+    limit: int = Query(100, ge=1, le=200),
+    current_user: Optional[User] = Depends(require_user_if_production),
+    svc: DmsService = Depends(get_dms_service),
+):
+    _ = current_user
+    return {"ok": True, "orders": _ops(svc).list_orders(status=status_filter, limit=limit)}
+
+
+@router.get("/ops/orders/{order_id}")
+async def ops_get_order(
+    order_id: int,
+    current_user: Optional[User] = Depends(require_user_if_production),
+    svc: DmsService = Depends(get_dms_service),
+):
+    _ = current_user
+    try:
+        return _ops(svc).get_order(order_id)
+    except Exception as exc:
+        raise _ops_http(exc) from exc
+
+
+@router.post("/ops/orders/{order_id}/complete")
+async def ops_complete_order(
+    order_id: int,
+    actor: str = "counter",
+    current_user: Optional[User] = Depends(require_user_if_production),
+    svc: DmsService = Depends(get_dms_service),
+):
+    _ = current_user
+    try:
+        return _ops(svc).complete_order(order_id=order_id, actor=actor)
+    except Exception as exc:
+        raise _ops_http(exc) from exc
+
+
+@router.post("/ops/orders/{order_id}/cancel")
+async def ops_cancel_order(
+    order_id: int,
+    actor: str = "counter",
+    current_user: Optional[User] = Depends(require_user_if_production),
+    svc: DmsService = Depends(get_dms_service),
+):
+    _ = current_user
+    try:
+        return _ops(svc).cancel_order(order_id=order_id, actor=actor)
+    except Exception as exc:
+        raise _ops_http(exc) from exc

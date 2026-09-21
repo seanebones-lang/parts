@@ -105,6 +105,7 @@ export const JP_NAV: Array<{ href: string; label: string; match?: string }> = [
   { href: "/", label: "Overview", match: "^/$" },
   { href: "/transmission", label: "Parts Search", match: "^/transmission$" },
   { href: "/inventory", label: "Inventory", match: "^/inventory" },
+  { href: "/quotes", label: "Quotes & Orders", match: "^/quotes" },
   { href: "/emails", label: "Email Desk", match: "^/emails" },
   { href: "/transmission/import", label: "Data Import", match: "^/transmission/import" },
   { href: "/activity", label: "Activity", match: "^/activity" },

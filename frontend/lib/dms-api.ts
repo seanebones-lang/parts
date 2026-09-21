@@ -1212,4 +1212,178 @@ export async function commitTransmissionImportRollback(
   return dmsPost(`/transmission/import/${runId}/rollback`, {});
 }
 
+// ----- Inventory ops / quotes / orders -----
+
+export type OpsStockRow = {
+  sku?: string;
+  location_code?: string;
+  location_name?: string;
+  location_id?: number;
+  on_hand?: number;
+  reserved?: number;
+  available?: number;
+  qty?: number;
+  name?: string;
+  description?: string;
+  transmission_family?: string;
+  condition?: string;
+  bin?: string;
+  [key: string]: unknown;
+};
+
+export async function opsStock(opts?: { sku?: string; location?: string }) {
+  const sp = new URLSearchParams();
+  if (opts?.sku) sp.set("sku", opts.sku);
+  if (opts?.location) sp.set("location", opts.location);
+  const q = sp.toString();
+  return dmsGet<{ ok?: boolean; rows: OpsStockRow[] }>(`/ops/stock${q ? `?${q}` : ""}`);
+}
+
+export async function opsOverview() {
+  return dmsGet<{
+    ok?: boolean;
+    open_quotes?: number;
+    reserved_units?: number;
+    open_orders?: number;
+    completed_orders?: number;
+  }>("/ops/overview");
+}
+
+export async function opsReceive(body: {
+  sku: string;
+  location: string;
+  qty: number;
+  notes?: string;
+  reference?: string;
+  actor?: string;
+  idempotency_key?: string;
+}) {
+  return dmsPost("/ops/receive", body);
+}
+
+export async function opsAdjust(body: {
+  sku: string;
+  location: string;
+  delta?: number;
+  final_qty?: number;
+  reason: string;
+  notes?: string;
+  actor?: string;
+}) {
+  return dmsPost("/ops/adjust", body);
+}
+
+export async function opsTransfer(body: {
+  sku: string;
+  from_location: string;
+  to_location: string;
+  qty: number;
+  notes?: string;
+  actor?: string;
+}) {
+  return dmsPost("/ops/transfer", body);
+}
+
+export async function opsReserve(body: {
+  sku: string;
+  location: string;
+  qty: number;
+  notes?: string;
+  actor?: string;
+  idempotency_key?: string;
+}) {
+  return dmsPost("/ops/reserve", body);
+}
+
+export async function opsReleaseReservation(id: number, actor = "counter") {
+  return dmsPost(`/ops/reservations/${id}/release?actor=${encodeURIComponent(actor)}`, {});
+}
+
+export async function opsListQuotes(status?: string) {
+  const q = status ? `?status=${encodeURIComponent(status)}` : "";
+  return dmsGet<{ ok?: boolean; quotes: any[] }>(`/ops/quotes${q}`);
+}
+
+export async function opsCreateQuote(body?: {
+  customer_label?: string;
+  customer_contact?: string;
+  notes?: string;
+  actor?: string;
+}) {
+  return dmsPost("/ops/quotes", body || {});
+}
+
+export async function opsGetQuote(id: number) {
+  return dmsGet(`/ops/quotes/${id}`);
+}
+
+export async function opsAddQuoteLine(
+  quoteId: number,
+  body: {
+    sku: string;
+    location: string;
+    qty?: number;
+    unit_price_cents?: number;
+    description?: string;
+  }
+) {
+  return dmsPost(`/ops/quotes/${quoteId}/lines`, body);
+}
+
+export async function opsUpdateQuoteLine(
+  quoteId: number,
+  lineId: number,
+  body: { qty?: number; unit_price_cents?: number }
+) {
+  return getJson(`/api/v1/dms/ops/quotes/${quoteId}/lines/${lineId}`, {
+    baseUrl: API_BASE_URL,
+    method: "PATCH",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function opsRemoveQuoteLine(quoteId: number, lineId: number) {
+  return getJson(`/api/v1/dms/ops/quotes/${quoteId}/lines/${lineId}`, {
+    baseUrl: API_BASE_URL,
+    method: "DELETE",
+  });
+}
+
+export async function opsReserveQuote(quoteId: number, actor = "counter") {
+  return dmsPost(`/ops/quotes/${quoteId}/reserve?actor=${encodeURIComponent(actor)}`, {});
+}
+
+export async function opsCancelQuote(quoteId: number, actor = "counter") {
+  return dmsPost(`/ops/quotes/${quoteId}/cancel?actor=${encodeURIComponent(actor)}`, {});
+}
+
+export async function opsConvertQuote(quoteId: number, actor = "counter") {
+  return dmsPost(`/ops/quotes/${quoteId}/convert?actor=${encodeURIComponent(actor)}`, {});
+}
+
+export async function opsListOrders(status?: string) {
+  const q = status ? `?status=${encodeURIComponent(status)}` : "";
+  return dmsGet<{ ok?: boolean; orders: any[] }>(`/ops/orders${q}`);
+}
+
+export async function opsGetOrder(id: number) {
+  return dmsGet(`/ops/orders/${id}`);
+}
+
+export async function opsCompleteOrder(orderId: number, actor = "counter") {
+  return dmsPost(`/ops/orders/${orderId}/complete?actor=${encodeURIComponent(actor)}`, {});
+}
+
+export async function opsCancelOrder(orderId: number, actor = "counter") {
+  return dmsPost(`/ops/orders/${orderId}/cancel?actor=${encodeURIComponent(actor)}`, {});
+}
+
+export async function opsListEvents(sku?: string, limit = 50) {
+  const sp = new URLSearchParams();
+  if (sku) sp.set("sku", sku);
+  sp.set("limit", String(limit));
+  return dmsGet<{ ok?: boolean; events: any[] }>(`/ops/events?${sp}`);
+}
+
 export { API_BASE_URL, ApiError };
+
