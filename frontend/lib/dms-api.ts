@@ -1076,12 +1076,52 @@ export type TransmissionInquiryResponse = {
     notes?: string[];
   } | null;
   elapsed_ms?: number | null;
+  /** Pilot counter_search_sessions id (API layer) */
+  search_id?: string | null;
 };
 
+function pilotTelemetrySource(): string | undefined {
+  // Prefer explicit public env for browser; default omit so server env decides.
+  const v = (process.env.NEXT_PUBLIC_JP_PILOT_MODE || "").trim().toLowerCase();
+  if (v === "real" || v === "jp_real_pilot") return "jp_real_pilot";
+  if (v === "test") return "test";
+  if (v === "demo" || v === "jp_demo") return "jp_demo";
+  return undefined;
+}
+
 export async function transmissionInquiry(
-  query: string
+  query: string,
+  opts?: { search_id?: string; telemetry_source?: string }
 ): Promise<TransmissionInquiryResponse> {
-  return dmsPost<TransmissionInquiryResponse>("/transmission/inquiry", { query });
+  const body: Record<string, unknown> = { query };
+  if (opts?.search_id) body.search_id = opts.search_id;
+  const src = opts?.telemetry_source ?? pilotTelemetrySource();
+  if (src) body.telemetry_source = src;
+  return dmsPost<TransmissionInquiryResponse>("/transmission/inquiry", body);
+}
+
+export type CounterLotSelectionInput = {
+  search_id: string;
+  sku: string;
+  location: string;
+  action: "ADD_TO_QUOTE" | "RESERVE" | string;
+  quote_id?: number;
+  reservation_id?: number;
+  notes?: string;
+};
+
+export async function recordCounterLotSelection(
+  input: CounterLotSelectionInput
+): Promise<{ success?: boolean; ok?: boolean; error?: string; [k: string]: unknown }> {
+  const sid = encodeURIComponent(input.search_id);
+  return dmsPost(`/transmission/counter-search/${sid}/selection`, {
+    sku: input.sku,
+    location: input.location,
+    action: input.action,
+    quote_id: input.quote_id,
+    reservation_id: input.reservation_id,
+    notes: input.notes,
+  });
 }
 
 export type TransmissionFeedbackInput = {

@@ -403,6 +403,33 @@ class DmsStore:
                 created_at TEXT NOT NULL
             );
             CREATE INDEX IF NOT EXISTS idx_ops_idem_action ON ops_idempotency_keys(action, entity_type, entity_id);
+
+            -- JP counter pilot telemetry (operational; not resolver accuracy)
+            CREATE TABLE IF NOT EXISTS counter_search_sessions (
+                id TEXT PRIMARY KEY,
+                created_at TEXT NOT NULL,
+                query_text TEXT NOT NULL,
+                search_mode TEXT NOT NULL,
+                request_id TEXT,
+                proposed_sku TEXT,
+                transmission_family TEXT,
+                part_category TEXT,
+                candidate_count INTEGER NOT NULL DEFAULT 0,
+                total_available INTEGER NOT NULL DEFAULT 0,
+                elapsed_ms REAL,
+                source TEXT NOT NULL DEFAULT 'jp_demo',
+                finalized_at TEXT,
+                selected_sku TEXT,
+                selected_location TEXT,
+                selected_action TEXT,
+                quote_id INTEGER,
+                reservation_id INTEGER,
+                notes TEXT DEFAULT ''
+            );
+            CREATE INDEX IF NOT EXISTS idx_css_source ON counter_search_sessions(source);
+            CREATE INDEX IF NOT EXISTS idx_css_mode ON counter_search_sessions(search_mode);
+            CREATE INDEX IF NOT EXISTS idx_css_created ON counter_search_sessions(created_at);
+            CREATE INDEX IF NOT EXISTS idx_css_request ON counter_search_sessions(request_id);
             """
         )
         conn.commit()

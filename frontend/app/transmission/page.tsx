@@ -9,6 +9,7 @@ import {
 import {
   transmissionInquiry,
   transmissionInquiryFeedback,
+  recordCounterLotSelection,
   type TransmissionInquiryResponse,
   formatOpsError,
   getActiveQuoteId,
@@ -68,6 +69,8 @@ function TransmissionInquiryInner() {
   const [locFilter, setLocFilter] = useState<string>("all");
   const [availOnly, setAvailOnly] = useState(false);
 
+  const [pilotLogWarn, setPilotLogWarn] = useState<string | null>(null);
+
   const runInquiry = async (q: string) => {
     if (!q.trim()) return;
     setLoading(true);
@@ -78,6 +81,9 @@ function TransmissionInquiryInner() {
     setCorrectSku("");
     setCorrectNote("");
     setDetailsOpen(false);
+    setBizMsg(null);
+    setBizErr(null);
+    setPilotLogWarn(null);
     try {
       const res = await transmissionInquiry(q.trim());
       setResult(res);
@@ -174,6 +180,7 @@ function TransmissionInquiryInner() {
     setBizBusy(true);
     setBizErr(null);
     setBizMsg(null);
+    setPilotLogWarn(null);
     try {
       let qid = getActiveQuoteId();
       if (qid) {
@@ -203,6 +210,19 @@ function TransmissionInquiryInner() {
         setBizMsg(`Added ${c.sku} to ${updated.quote_number}`);
       }
       setActiveQuoteId(Number(updated.id));
+      if (result?.search_id) {
+        try {
+          await recordCounterLotSelection({
+            search_id: result.search_id,
+            sku: String(c.sku),
+            location: String(c.location_code),
+            action: "ADD_TO_QUOTE",
+            quote_id: Number(updated.id),
+          });
+        } catch {
+          setPilotLogWarn("Action succeeded, but pilot logging failed.");
+        }
+      }
     } catch (e) {
       setBizErr(formatOpsError(e, "Could not add to quote"));
     } finally {
@@ -223,15 +243,29 @@ function TransmissionInquiryInner() {
     setBizBusy(true);
     setBizErr(null);
     setBizMsg(null);
+    setPilotLogWarn(null);
     try {
       const key = newIdempotencyKey("disc-reserve");
-      await opsReserve({
+      const resv = (await opsReserve({
         sku: String(c.sku),
         location: String(c.location_code),
         qty: 1,
         idempotency_key: key,
-      });
+      })) as any;
       setBizMsg(`Reserved 1 of ${c.sku} at ${c.location_code}.`);
+      if (result?.search_id) {
+        try {
+          await recordCounterLotSelection({
+            search_id: result.search_id,
+            sku: String(c.sku),
+            location: String(c.location_code),
+            action: "RESERVE",
+            reservation_id: resv?.id != null ? Number(resv.id) : undefined,
+          });
+        } catch {
+          setPilotLogWarn("Action succeeded, but pilot logging failed.");
+        }
+      }
     } catch (e) {
       setBizErr(formatOpsError(e));
     } finally {
@@ -351,6 +385,11 @@ function TransmissionInquiryInner() {
           {bizMsg ? (
             <div className="rounded border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
               {bizMsg}
+            </div>
+          ) : null}
+          {pilotLogWarn ? (
+            <div className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-950">
+              {pilotLogWarn}
             </div>
           ) : null}
           {bizErr ? (

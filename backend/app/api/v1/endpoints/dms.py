@@ -1183,6 +1183,15 @@ async def dms_compliance_export(
 
 class TransmissionInquiryRequest(BaseModel):
     query: str = Field(..., min_length=3, description="Natural language or identifier inquiry")
+    # Optional client override; server env JP_PILOT_MODE / COUNTER_TELEMETRY_SOURCE still win when unset
+    telemetry_source: Optional[str] = Field(
+        default=None,
+        description="jp_real_pilot | jp_demo | test — default from env (never silent real pilot)",
+    )
+    search_id: Optional[str] = Field(
+        default=None,
+        description="Optional client-supplied id for safe API retry (idempotent insert)",
+    )
 
 
 class TransmissionInquiryResponse(BaseModel):
@@ -1216,6 +1225,8 @@ class TransmissionInquiryResponse(BaseModel):
     search_mode: Optional[str] = None  # exact_match | inventory_matches | needs_review
     discovery: Optional[dict] = None
     elapsed_ms: Optional[float] = None
+    # Pilot telemetry session id (API layer only; offline evals do not create this)
+    search_id: Optional[str] = None
 
 
 @router.post("/transmission/inquiry", response_model=TransmissionInquiryResponse)
@@ -1228,9 +1239,27 @@ async def transmission_inquiry(
     Uses frozen resolver for safety/exact identity, plus deterministic inventory
     discovery for dense multi-lot product-class searches. Does not change
     resolver semantics used by offline evals (those call the service layer).
+
+    API layer persists counter_search_sessions telemetry after counter_search returns.
     """
     try:
         result = counter_search(req.query, dms)
+        search_id: Optional[str] = None
+        try:
+            from parrts.transmission.counter_telemetry import (
+                record_counter_search_from_result,
+            )
+
+            tel = record_counter_search_from_result(
+                dms,
+                result,
+                source=req.telemetry_source,
+                search_id=req.search_id,
+            )
+            search_id = str(tel.get("search_id") or "") or None
+        except Exception:
+            # Telemetry must never fail the counter search itself
+            search_id = None
         return TransmissionInquiryResponse(
             query=result.query,
             status=result.status,
@@ -1259,6 +1288,7 @@ async def transmission_inquiry(
             search_mode=result.search_mode,
             discovery=result.discovery,
             elapsed_ms=result.elapsed_ms,
+            search_id=search_id,
         )
     except Exception as exc:
         raise HTTPException(
@@ -1290,6 +1320,7 @@ async def transmission_inquiry_feedback(
     """Record final accepted result for a transmission unit of work.
 
     Updates the existing automation ledger row. Does not mutate DMS inventory.
+    Also finalizes linked counter_search_sessions (exact ACCEPT/CORRECT, review RESOLVE).
     """
     try:
         from parrts.transmission.decision import apply_human_feedback
@@ -1312,6 +1343,16 @@ async def transmission_inquiry_feedback(
             err = str(result.get("error") or "feedback failed")
             code = status.HTTP_404_NOT_FOUND if "not found" in err.lower() else status.HTTP_400_BAD_REQUEST
             raise HTTPException(status_code=code, detail=err)
+        try:
+            from parrts.transmission.counter_telemetry import (
+                finalize_session_from_uow_feedback,
+            )
+
+            finalize_session_from_uow_feedback(
+                dms, request_id=body.request_id, feedback_action=action
+            )
+        except Exception:
+            pass
         return {"success": True, **result}
     except HTTPException:
         raise
@@ -1319,6 +1360,50 @@ async def transmission_inquiry_feedback(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"transmission feedback failed: {exc}",
+        ) from exc
+
+
+class CounterSelectionBody(BaseModel):
+    sku: str = Field(..., min_length=1)
+    location: str = Field(..., min_length=1)
+    action: str = Field(..., description="ADD_TO_QUOTE | RESERVE")
+    quote_id: Optional[int] = None
+    reservation_id: Optional[int] = None
+    notes: Optional[str] = None
+
+
+@router.post("/transmission/counter-search/{search_id}/selection")
+async def transmission_counter_selection(
+    search_id: str,
+    body: CounterSelectionBody,
+    dms: DmsService = Depends(get_dms_service),
+):
+    """Record physical lot selection after a successful quote/reserve business action.
+
+    Does not perform the business action — call ops first, then this for pilot telemetry.
+    """
+    try:
+        from parrts.transmission.counter_telemetry import record_lot_selection
+
+        out = record_lot_selection(
+            dms,
+            search_id,
+            sku=body.sku,
+            location=body.location,
+            action=body.action,
+            quote_id=body.quote_id,
+            reservation_id=body.reservation_id,
+            notes=body.notes or "",
+        )
+        return {"success": True, **out}
+    except LookupError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"counter selection failed: {exc}",
         ) from exc
 
 

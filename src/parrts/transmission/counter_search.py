@@ -234,6 +234,8 @@ def counter_search(query: str, dms: DmsService) -> CounterSearchResult:
                 disc.candidate_count >= 1 and len({c.sku for c in disc.candidates}) == 1
             ):
                 answer2 = answer_transmission_inquiry(str(row["sku"]), dms)
+                if answer2.status == "resolved" and answer2.sku and answer2.request_id:
+                    return _from_answer(answer2, "exact_match", elapsed)
                 # Build exact manually if resolver multi-hit on SKU token
                 from .repository import TransmissionRepository
 
@@ -261,13 +263,16 @@ def counter_search(query: str, dms: DmsService) -> CounterSearchResult:
                     inventory_available=agg > 0,
                     verification_status=str(cat["verification_status"]) if cat else None,
                     human_readable=f"Exact SKU {row['sku']}.",
-                    outcome="RESOLVED",
-                    confidence=0.99,
-                    recommended_action="Add to quote or reserve this SKU.",
-                    intent="exact_sku",
-                    candidate_match_quality="exact",
-                    evidence_sufficiency="sufficient",
-                    decision_source="exact_sku_lookup",
+                    outcome=answer2.outcome or "RESOLVED",
+                    confidence=answer2.confidence if answer2.confidence is not None else 0.99,
+                    recommended_action=answer2.recommended_action
+                    or "Add to quote or reserve this SKU.",
+                    intent=answer2.intent or "exact_sku",
+                    candidate_match_quality=answer2.candidate_match_quality or "exact",
+                    evidence_sufficiency=answer2.evidence_sufficiency or "sufficient",
+                    decision_source=answer2.decision_source or "exact_sku_lookup",
+                    request_id=answer2.request_id,
+                    decision=answer2.decision,
                     elapsed_ms=elapsed,
                 )
 

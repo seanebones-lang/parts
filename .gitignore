@@ -95,3 +95,4 @@ htmlcov/
 
 # Redis dump
 dump.rdb
+.pilot/
