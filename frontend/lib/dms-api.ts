@@ -1026,6 +1026,7 @@ export type TransmissionInquiryResponse = {
     identifier_value?: string;
   }>;
   interchanges: Array<{
+    source_sku?: string;
     target_sku?: string;
     relationship_type?: string;
     verification_status?: string;

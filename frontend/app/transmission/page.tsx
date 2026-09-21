@@ -52,7 +52,7 @@ export default function TransmissionInquiryPage() {
   const renderResult = () => {
     if (!result) return null;
 
-    const { status, sku, human_readable, inventory_available, aggregate_available, inventory, identifiers, interchanges, transmission_family, part_type, verification_status } = result;
+    const { status, sku, human_readable, inventory_available, aggregate_available, inventory, identifiers, interchanges, transmission_family, part_type, verification_status, fitment_status } = result;
 
     if (status === "ambiguous") {
       return (
@@ -115,6 +115,10 @@ export default function TransmissionInquiryPage() {
                 <div className="font-medium text-muted-foreground">Verification</div>
                 <Badge variant="outline">{verification_status || "unverified"}</Badge>
               </div>
+              <div>
+                <div className="font-medium text-muted-foreground">Fitment</div>
+                <div className="font-mono text-sm">{fitment_status || "—"}</div>
+              </div>
             </div>
 
             {inventory && inventory.length > 0 && (
@@ -144,10 +148,13 @@ export default function TransmissionInquiryPage() {
 
             {interchanges && interchanges.length > 0 && (
               <div>
-                <div className="mb-2 font-medium text-muted-foreground">Interchanges (unverified)</div>
-                <div className="space-y-1 text-sm text-muted-foreground">
+                <div className="mb-2 font-medium text-muted-foreground">Interchanges (directional, unverified)</div>
+                <div className="space-y-1 text-sm text-muted-foreground font-mono">
                   {interchanges.map((ic, idx) => (
-                    <div key={idx} className="font-mono">{ic.target_sku} — {ic.relationship_type}</div>
+                    <div key={idx}>
+                      {ic.source_sku} → {ic.target_sku}<br />
+                      {ic.relationship_type} · {ic.verification_status}
+                    </div>
                   ))}
                 </div>
               </div>
