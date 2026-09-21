@@ -1003,10 +1003,30 @@ export async function exportDmsCompliance(days = 90): Promise<Record<string, unk
 
 // --- Transmission Hard Parts Inquiry (Phase 5) ---
 
+export type DiscoveryCandidate = {
+  sku: string;
+  name?: string;
+  transmission_family?: string;
+  transmission_variant?: string;
+  part_type_label?: string;
+  condition?: string;
+  location_code?: string;
+  location_name?: string;
+  bin?: string;
+  on_hand?: number;
+  reserved?: number;
+  available?: number;
+  list_price?: number | null;
+  verification_status?: string;
+  casting_or_id?: string;
+  description?: string;
+};
+
 export type TransmissionInquiryResponse = {
   query: string;
   status: string;
   sku: string | null;
+  name?: string | null;
   transmission_family: string | null;
   part_type: string | null;
   fitment_status: string | null;
@@ -1042,6 +1062,19 @@ export type TransmissionInquiryResponse = {
   decision_source?: string | null;
   request_id?: string | null;
   decision?: Record<string, unknown> | null;
+  /** exact_match | inventory_matches | needs_review */
+  search_mode?: string | null;
+  discovery?: {
+    family?: string | null;
+    part_type?: string | null;
+    candidate_count?: number;
+    total_on_hand?: number;
+    total_reserved?: number;
+    total_available?: number;
+    candidates?: DiscoveryCandidate[];
+    notes?: string[];
+  } | null;
+  elapsed_ms?: number | null;
 };
 
 export async function transmissionInquiry(

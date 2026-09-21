@@ -30,10 +30,14 @@ import {
 
 const QUICK_QUERIES = [
   "Do you have a pump for a 2011 Tahoe 6L80?",
-  "Do you have 24264418?",
-  "Do you have 6L80-PUMP-01?",
-  "Do you have a 6R80 pump?",
-  "Do you have a 4L60E valve body?",
+  "6L80 pump",
+  "4L60E valve body",
+  "Need a 6L80 core",
+  "6R80 pump",
+  "6L80 torque converter",
+  "10R80 core",
+  "24264418",
+  "6L80-PUMP-01",
 ];
 
 function TransmissionInquiryInner() {
@@ -60,6 +64,9 @@ function TransmissionInquiryInner() {
   const [reserveLoc, setReserveLoc] = useState("CHI-N");
   const [reserveQty, setReserveQty] = useState("1");
   const [stockRows, setStockRows] = useState<any[]>([]);
+  const [condFilter, setCondFilter] = useState<string>("all");
+  const [locFilter, setLocFilter] = useState<string>("all");
+  const [availOnly, setAvailOnly] = useState(false);
 
   const runInquiry = async (q: string) => {
     if (!q.trim()) return;
@@ -125,11 +132,112 @@ function TransmissionInquiryInner() {
     }
   };
 
+  const searchMode =
+    result?.search_mode ||
+    (result?.status === "inventory_matches"
+      ? "inventory_matches"
+      : result?.status === "resolved"
+        ? "exact_match"
+        : result
+          ? "needs_review"
+          : null);
   const unitOutcome =
-    result?.outcome ||
-    (result?.status === "resolved" ? "RESOLVED" : result ? "NEEDS_HUMAN" : null);
+    searchMode === "inventory_matches"
+      ? null
+      : result?.outcome ||
+        (result?.status === "resolved" ? "RESOLVED" : result ? "NEEDS_HUMAN" : null);
   const needsHuman = unitOutcome === "NEEDS_HUMAN";
+  const isBrowse = searchMode === "inventory_matches";
+  const isExact = searchMode === "exact_match" || (!!unitOutcome && unitOutcome === "RESOLVED");
   const jp = isTransmissionDemo();
+  const candidates = result?.discovery?.candidates || [];
+
+  const filteredCandidates = candidates.filter((c) => {
+    if (condFilter !== "all" && String(c.condition || "").toLowerCase() !== condFilter) return false;
+    if (locFilter !== "all" && String(c.location_code || "") !== locFilter) return false;
+    if (availOnly && Number(c.available || 0) <= 0) return false;
+    return true;
+  });
+  const locOptions = Array.from(
+    new Set(candidates.map((c) => String(c.location_code || "")).filter(Boolean))
+  );
+  const condOptions = Array.from(
+    new Set(candidates.map((c) => String(c.condition || "").toLowerCase()).filter(Boolean))
+  );
+
+  const addLotToQuote = async (c: {
+    sku?: string;
+    location_code?: string;
+    available?: number;
+  }) => {
+    if (!c.sku || !c.location_code) return;
+    setBizBusy(true);
+    setBizErr(null);
+    setBizMsg(null);
+    try {
+      let qid = getActiveQuoteId();
+      if (qid) {
+        try {
+          const q = (await opsGetQuote(qid)) as any;
+          if (!["draft", "open"].includes(String(q.status || ""))) qid = null;
+        } catch {
+          qid = null;
+        }
+      }
+      let updated: any;
+      if (!qid) {
+        const q = (await opsCreateQuote({ customer_label: "Walk-in" })) as any;
+        qid = Number(q.id);
+        updated = await opsAddQuoteLine(qid, {
+          sku: String(c.sku),
+          location: String(c.location_code),
+          qty: 1,
+        });
+        setBizMsg(`Created ${updated.quote_number} and added ${c.sku}`);
+      } else {
+        updated = await opsAddQuoteLine(qid, {
+          sku: String(c.sku),
+          location: String(c.location_code),
+          qty: 1,
+        });
+        setBizMsg(`Added ${c.sku} to ${updated.quote_number}`);
+      }
+      setActiveQuoteId(Number(updated.id));
+    } catch (e) {
+      setBizErr(formatOpsError(e, "Could not add to quote"));
+    } finally {
+      setBizBusy(false);
+    }
+  };
+
+  const reserveLot = async (c: {
+    sku?: string;
+    location_code?: string;
+    available?: number;
+  }) => {
+    if (!c.sku || !c.location_code) return;
+    if (Number(c.available || 0) <= 0) {
+      setBizErr("No available quantity on this lot.");
+      return;
+    }
+    setBizBusy(true);
+    setBizErr(null);
+    setBizMsg(null);
+    try {
+      const key = newIdempotencyKey("disc-reserve");
+      await opsReserve({
+        sku: String(c.sku),
+        location: String(c.location_code),
+        qty: 1,
+        idempotency_key: key,
+      });
+      setBizMsg(`Reserved 1 of ${c.sku} at ${c.location_code}.`);
+    } catch (e) {
+      setBizErr(formatOpsError(e));
+    } finally {
+      setBizBusy(false);
+    }
+  };
 
   const body = (
     <>
@@ -212,7 +320,194 @@ function TransmissionInquiryInner() {
 
       {loading ? <EmptyState title="Searching catalog and inventory…" /> : null}
 
-      {!loading && result && unitOutcome ? (
+      {/* ---- INVENTORY MATCHES (dense catalog browse) ---- */}
+      {!loading && result && isBrowse ? (
+        <div className="space-y-4">
+          <div className="rounded-lg border-2 border-slate-800 bg-slate-900 px-5 py-4 text-white">
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <div className="text-xs font-semibold uppercase tracking-wider text-slate-300">
+                  Inventory matches
+                </div>
+                <div className="mt-1 text-2xl font-semibold tracking-tight">
+                  {[result.transmission_family, result.part_type].filter(Boolean).join(" · ") ||
+                    "Matching lots"}
+                </div>
+                <p className="mt-2 text-[15px] text-slate-200">
+                  {result.discovery?.candidate_count ?? candidates.length} inventory lot
+                  {(result.discovery?.candidate_count ?? candidates.length) === 1 ? "" : "s"}
+                  {" · "}
+                  {result.discovery?.total_available ?? 0} available
+                  {" · "}
+                  {result.discovery?.total_on_hand ?? 0} on hand
+                </p>
+              </div>
+              <div className="text-right text-sm text-slate-300">
+                Select a sellable unit — not an automatic single-SKU resolve.
+              </div>
+            </div>
+          </div>
+
+          {bizMsg ? (
+            <div className="rounded border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
+              {bizMsg}
+            </div>
+          ) : null}
+          {bizErr ? (
+            <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+              {bizErr}
+            </div>
+          ) : null}
+
+          <Panel title="Filters">
+            <div className="flex flex-wrap gap-3 text-sm">
+              <label className="flex items-center gap-2">
+                <span className="text-xs font-semibold uppercase text-slate-500">Condition</span>
+                <select
+                  value={condFilter}
+                  onChange={(e) => setCondFilter(e.target.value)}
+                  className="h-9 rounded-md border border-slate-300 px-2"
+                >
+                  <option value="all">All</option>
+                  {condOptions.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="flex items-center gap-2">
+                <span className="text-xs font-semibold uppercase text-slate-500">Location</span>
+                <select
+                  value={locFilter}
+                  onChange={(e) => setLocFilter(e.target.value)}
+                  className="h-9 rounded-md border border-slate-300 px-2"
+                >
+                  <option value="all">All</option>
+                  {locOptions.map((c) => (
+                    <option key={c} value={c}>
+                      {c === "CHI-N" ? "Main Warehouse" : c === "OHARE" ? "Front Counter" : c}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={availOnly}
+                  onChange={(e) => setAvailOnly(e.target.checked)}
+                />
+                Available only
+              </label>
+              <a href="/quotes" className="ml-auto text-sm font-semibold text-slate-700 underline">
+                Open quotes
+              </a>
+            </div>
+          </Panel>
+
+          <Panel flush title={`Lots (${filteredCandidates.length})`}>
+            {filteredCandidates.length === 0 ? (
+              <div className="p-5">
+                <EmptyState title="No lots match these filters" />
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[980px] text-left text-sm">
+                  <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                    <tr className="border-b border-slate-200">
+                      <th className="px-3 py-2.5 font-semibold">SKU</th>
+                      <th className="px-3 py-2.5 font-semibold">Description</th>
+                      <th className="px-3 py-2.5 font-semibold">Variant</th>
+                      <th className="px-3 py-2.5 font-semibold">Casting / ID</th>
+                      <th className="px-3 py-2.5 font-semibold">Condition</th>
+                      <th className="px-3 py-2.5 font-semibold">Location</th>
+                      <th className="px-3 py-2.5 font-semibold">Bin</th>
+                      <th className="px-3 py-2.5 text-right font-semibold">On hand</th>
+                      <th className="px-3 py-2.5 text-right font-semibold">Rsv</th>
+                      <th className="px-3 py-2.5 text-right font-semibold">Avail</th>
+                      <th className="px-3 py-2.5 text-right font-semibold">Demo $</th>
+                      <th className="px-3 py-2.5 font-semibold">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredCandidates.map((c, i) => {
+                      const avail = Number(c.available || 0);
+                      const locTitle =
+                        c.location_code === "CHI-N"
+                          ? "Main Warehouse"
+                          : c.location_code === "OHARE"
+                            ? "Front Counter"
+                            : c.location_name || c.location_code;
+                      return (
+                        <tr
+                          key={`${c.sku}-${c.location_code}-${i}`}
+                          className="border-b border-slate-100 hover:bg-slate-50/80"
+                        >
+                          <td className="px-3 py-2 font-mono text-[13px] font-medium">{c.sku}</td>
+                          <td className="px-3 py-2 text-[13px] text-slate-800">
+                            <div className="font-medium">{c.name}</div>
+                            {c.description && c.description !== c.name ? (
+                              <div className="mt-0.5 max-w-xs truncate text-xs text-slate-500" title={c.description}>
+                                {c.description}
+                              </div>
+                            ) : null}
+                          </td>
+                          <td className="px-3 py-2 font-mono text-xs">{c.transmission_variant || "—"}</td>
+                          <td className="px-3 py-2 font-mono text-xs">{c.casting_or_id || "—"}</td>
+                          <td className="px-3 py-2 text-xs capitalize">{c.condition || "—"}</td>
+                          <td className="px-3 py-2 text-[13px]">
+                            <div>{locTitle}</div>
+                            <div className="font-mono text-[11px] text-slate-400">{c.location_code}</div>
+                          </td>
+                          <td className="px-3 py-2 font-mono text-xs">{c.bin || "—"}</td>
+                          <td className="px-3 py-2 text-right tabular-nums">{c.on_hand ?? 0}</td>
+                          <td className="px-3 py-2 text-right tabular-nums">{c.reserved ?? 0}</td>
+                          <td className="px-3 py-2 text-right tabular-nums font-semibold">{avail}</td>
+                          <td className="px-3 py-2 text-right tabular-nums text-xs text-slate-600">
+                            {c.list_price != null ? `$${Number(c.list_price).toFixed(2)}` : "—"}
+                          </td>
+                          <td className="px-3 py-2">
+                            <div className="flex flex-wrap gap-1">
+                              <button
+                                type="button"
+                                disabled={bizBusy}
+                                className="h-8 rounded bg-slate-900 px-2 text-xs font-semibold text-white disabled:opacity-50"
+                                onClick={() => void addLotToQuote(c)}
+                              >
+                                Quote
+                              </button>
+                              <button
+                                type="button"
+                                disabled={bizBusy || avail <= 0}
+                                className="h-8 rounded border border-amber-400 bg-amber-50 px-2 text-xs font-semibold text-amber-950 disabled:opacity-40"
+                                onClick={() => void reserveLot(c)}
+                              >
+                                Reserve
+                              </button>
+                              <a
+                                href="/inventory"
+                                className="inline-flex h-8 items-center rounded border border-slate-300 px-2 text-xs font-medium"
+                              >
+                                Inv
+                              </a>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </Panel>
+          <p className="text-xs text-slate-500">
+            Application notes in descriptions are unverified source text — not DMS fitment.
+            {result.elapsed_ms != null ? ` · ${Math.round(result.elapsed_ms)} ms` : ""}
+          </p>
+        </div>
+      ) : null}
+
+      {!loading && result && unitOutcome && !isBrowse ? (
         <div className="space-y-4">
           <div
             className={

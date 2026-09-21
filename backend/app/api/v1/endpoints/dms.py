@@ -19,6 +19,7 @@ from pydantic import BaseModel, Field
 # Transmission inquiry (Phase 4)
 from parrts.dms.service import DmsService, InsufficientStockError
 from parrts.transmission.service import answer_transmission_inquiry
+from parrts.transmission.counter_search import counter_search
 
 from app.api.deps import require_permission, require_user_if_production
 from app.models.user import User
@@ -1188,6 +1189,7 @@ class TransmissionInquiryResponse(BaseModel):
     query: str
     status: str
     sku: Optional[str] = None
+    name: Optional[str] = None
     transmission_family: Optional[str] = None
     part_type: Optional[str] = None
     fitment_status: Optional[str] = None
@@ -1210,6 +1212,10 @@ class TransmissionInquiryResponse(BaseModel):
     decision_source: Optional[str] = None
     request_id: Optional[str] = None
     decision: Optional[dict] = None
+    # Dense-catalog discovery (counter path)
+    search_mode: Optional[str] = None  # exact_match | inventory_matches | needs_review
+    discovery: Optional[dict] = None
+    elapsed_ms: Optional[float] = None
 
 
 @router.post("/transmission/inquiry", response_model=TransmissionInquiryResponse)
@@ -1217,36 +1223,42 @@ async def transmission_inquiry(
     req: TransmissionInquiryRequest,
     dms: DmsService = Depends(get_dms_service)
 ):
-    """Read-only transmission inquiry endpoint.
+    """Transmission counter search: exact match, inventory browse, or needs review.
 
-    Delegates entirely to the accepted service layer.
+    Uses frozen resolver for safety/exact identity, plus deterministic inventory
+    discovery for dense multi-lot product-class searches. Does not change
+    resolver semantics used by offline evals (those call the service layer).
     """
     try:
-        answer = answer_transmission_inquiry(req.query, dms)
+        result = counter_search(req.query, dms)
         return TransmissionInquiryResponse(
-            query=answer.query,
-            status=answer.status,
-            sku=answer.sku,
-            transmission_family=answer.transmission_family,
-            part_type=answer.part_type,
-            fitment_status=answer.fitment_status,
-            inventory_available=answer.inventory_available,
-            aggregate_available=answer.aggregate_available,
-            verification_status=answer.verification_status,
-            human_readable=answer.human_readable,
-            inventory=answer.inventory,
-            identifiers=answer.identifiers,
-            interchanges=answer.interchanges,
-            outcome=answer.outcome,
-            confidence=answer.confidence,
-            recommended_action=answer.recommended_action,
-            ambiguity_reason=answer.ambiguity_reason,
-            intent=answer.intent,
-            candidate_match_quality=answer.candidate_match_quality,
-            evidence_sufficiency=answer.evidence_sufficiency,
-            decision_source=answer.decision_source,
-            request_id=answer.request_id,
-            decision=answer.decision,
+            query=result.query,
+            status=result.status,
+            sku=result.sku,
+            name=result.name,
+            transmission_family=result.transmission_family,
+            part_type=result.part_type,
+            fitment_status=result.fitment_status,
+            inventory_available=result.inventory_available,
+            aggregate_available=result.aggregate_available,
+            verification_status=result.verification_status,
+            human_readable=result.human_readable,
+            inventory=result.inventory,
+            identifiers=result.identifiers,
+            interchanges=result.interchanges,
+            outcome=result.outcome,
+            confidence=result.confidence,
+            recommended_action=result.recommended_action,
+            ambiguity_reason=result.ambiguity_reason,
+            intent=result.intent,
+            candidate_match_quality=result.candidate_match_quality,
+            evidence_sufficiency=result.evidence_sufficiency,
+            decision_source=result.decision_source,
+            request_id=result.request_id,
+            decision=result.decision,
+            search_mode=result.search_mode,
+            discovery=result.discovery,
+            elapsed_ms=result.elapsed_ms,
         )
     except Exception as exc:
         raise HTTPException(
