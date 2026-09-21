@@ -1,9 +1,34 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { EmptyState, JpPage, Panel } from "@/components/jp/ui";
+import { EmptyState, JpPage, Panel, StatusPill } from "@/components/jp/ui";
 import { getAutomationResults, type AutomationRun } from "@/lib/automation-api";
 import { humanizeActivitySummary } from "@/lib/ops-language";
+
+function activityTone(
+  kind: string | undefined,
+  requiresHuman: boolean
+): "warn" | "success" | "danger" | "neutral" | null {
+  if (requiresHuman) return "warn";
+  const k = String(kind || "").toLowerCase();
+  if (k.includes("fail") || k.includes("error") || k.includes("conflict")) return "danger";
+  if (
+    k.includes("order_completed") ||
+    k.includes("sale") ||
+    k.includes("completed") ||
+    k.includes("finalized")
+  )
+    return "success";
+  // Ordinary inventory/import/quote events: no badge noise
+  return null;
+}
+
+function activityBadgeLabel(tone: string, requiresHuman: boolean): string {
+  if (requiresHuman || tone === "warn") return "Needs Review";
+  if (tone === "danger") return "Failed";
+  if (tone === "success") return "Completed";
+  return "";
+}
 
 export default function ActivityPage() {
   const [runs, setRuns] = useState<AutomationRun[]>([]);
@@ -32,12 +57,13 @@ export default function ActivityPage() {
   return (
     <JpPage
       title="Activity"
-      description="Operational log of inquiries, imports, email processing, and related events."
+      description="Operational log of inquiries, inventory moves, quotes, sales, imports, and email processing."
+      fullBleed
       actions={
         <button
           type="button"
           onClick={() => void load()}
-          className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium"
+          className="h-10 rounded-md border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-800 hover:bg-slate-50"
         >
           Refresh
         </button>
@@ -48,14 +74,18 @@ export default function ActivityPage() {
           {error}
         </div>
       ) : null}
-      <Panel>
+      <Panel flush>
         {loading ? (
-          <EmptyState title="Loading activity…" />
+          <div className="p-6">
+            <EmptyState title="Loading activity…" />
+          </div>
         ) : runs.length === 0 ? (
-          <EmptyState
-            title="No activity yet"
-            body="Counter searches, imports, and email processing will appear here."
-          />
+          <div className="p-6">
+            <EmptyState
+              title="No activity yet"
+              body="Counter searches, inventory operations, quotes, imports, and email processing will appear here."
+            />
+          </div>
         ) : (
           <ul className="divide-y divide-slate-100">
             {runs.map((r) => {
@@ -73,23 +103,26 @@ export default function ActivityPage() {
                 Boolean(r.requires_human)
               );
               const isOpen = openId === r.id;
+              const tone = activityTone(r.kind, Boolean(r.requires_human));
               return (
-                <li key={r.id} className="py-3">
-                  <div className="flex flex-wrap items-start justify-between gap-2">
+                <li key={r.id} className="px-5 py-4 hover:bg-slate-50/60">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
-                      <div className="text-sm font-medium text-slate-900">{hum.title}</div>
+                      <div className="text-[15px] font-semibold text-slate-900">
+                        {hum.title}
+                      </div>
                       <div className="mt-0.5 text-sm text-slate-600">{hum.detail}</div>
                       {query ? (
-                        <div className="mt-0.5 truncate font-mono text-xs text-slate-500">
+                        <div className="mt-1 truncate font-mono text-xs text-slate-500">
                           {query}
                         </div>
                       ) : null}
-                      <div className="mt-0.5 text-[11px] text-slate-400">
+                      <div className="mt-1 text-xs text-slate-400">
                         {r.created_at ? new Date(r.created_at).toLocaleString() : ""}
                       </div>
                       <button
                         type="button"
-                        className="mt-1 text-[11px] font-medium text-slate-500 hover:underline"
+                        className="mt-1.5 text-xs font-medium text-slate-500 underline-offset-2 hover:underline"
                         onClick={() =>
                           setOpenId(isOpen ? null : r.id != null ? Number(r.id) : null)
                         }
@@ -97,7 +130,7 @@ export default function ActivityPage() {
                         {isOpen ? "Hide technical detail" : "Technical detail"}
                       </button>
                       {isOpen ? (
-                        <pre className="mt-1 overflow-x-auto rounded bg-slate-950 p-2 text-[10px] text-slate-200">
+                        <pre className="mt-2 max-h-64 overflow-auto rounded bg-slate-950 p-3 text-[11px] text-slate-200">
                           {JSON.stringify(
                             {
                               kind: r.kind,
@@ -111,15 +144,11 @@ export default function ActivityPage() {
                         </pre>
                       ) : null}
                     </div>
-                    {r.requires_human ? (
-                      <span className="rounded bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-950">
-                        Needs review
-                      </span>
-                    ) : (
-                      <span className="rounded bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-900">
-                        Recorded
-                      </span>
-                    )}
+                    {tone ? (
+                      <StatusPill tone={tone}>
+                        {activityBadgeLabel(tone, Boolean(r.requires_human))}
+                      </StatusPill>
+                    ) : null}
                   </div>
                 </li>
               );

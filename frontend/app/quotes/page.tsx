@@ -281,13 +281,13 @@ export default function QuotesOrdersPage() {
   return (
     <JpPage
       title="Quotes & Orders"
-      description="Create quotes, reserve inventory, convert to orders, and complete sales."
-      dense
+      description="Create multi-line quotes, reserve inventory, convert to orders, and complete sales."
+      fullBleed
       actions={
         <button
           type="button"
           disabled={busy}
-          className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50"
+          className="h-10 rounded-md bg-slate-900 px-4 text-sm font-semibold text-white disabled:opacity-50"
           onClick={() =>
             void run(async () => {
               const q = await opsCreateQuote({ customer_label: customer || "Walk-in" });
@@ -298,24 +298,24 @@ export default function QuotesOrdersPage() {
             }, "Quote created")
           }
         >
-          New quote
+          New Quote
         </button>
       }
     >
-      <div className="mb-3 flex flex-wrap items-center gap-2">
+      <div className="mb-4 flex flex-wrap items-center gap-2">
         <input
           value={customer}
           onChange={(e) => setCustomer(e.target.value)}
           placeholder="Customer / reference"
-          className="h-9 rounded-md border border-slate-300 bg-white px-3 text-sm"
+          className="h-10 rounded-md border border-slate-300 bg-white px-3 text-sm"
         />
-        <div className="flex rounded-md border border-slate-300 bg-white text-sm">
+        <div className="flex rounded-md border border-slate-300 bg-white text-sm font-medium">
           {(["quotes", "orders"] as Tab[]).map((t) => (
             <button
               key={t}
               type="button"
-              className={`px-3 py-1.5 capitalize ${
-                tab === t ? "bg-slate-900 text-white" : "text-slate-700"
+              className={`px-4 py-2 capitalize ${
+                tab === t ? "bg-slate-900 text-white" : "text-slate-700 hover:bg-slate-50"
               }`}
               onClick={() => setTab(t)}
             >
@@ -323,7 +323,7 @@ export default function QuotesOrdersPage() {
             </button>
           ))}
         </div>
-        <button type="button" className="rounded-md border px-3 py-1.5 text-sm" onClick={() => void load()}>
+        <button type="button" className="h-10 rounded-md border border-slate-300 px-4 text-sm font-semibold" onClick={() => void load()}>
           Refresh
         </button>
       </div>
@@ -338,14 +338,14 @@ export default function QuotesOrdersPage() {
       ) : null}
 
       {confirm ? (
-        <div className="mb-3 rounded border border-slate-300 bg-white p-3 text-sm shadow-sm">
-          <div className="font-semibold">{confirm.title}</div>
+        <div className="mb-3 rounded-lg border border-slate-300 bg-white p-4 text-sm shadow-sm">
+          <div className="text-base font-semibold">{confirm.title}</div>
           <p className="mt-1 text-slate-600">{confirm.body}</p>
-          <div className="mt-2 flex gap-2">
+          <div className="mt-3 flex gap-2">
             <button
               type="button"
               disabled={busy}
-              className="rounded-md bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
+              className="h-10 rounded-md bg-slate-900 px-4 text-sm font-semibold text-white disabled:opacity-50"
               onClick={() => void confirm.action()}
             >
               {busy ? "Working…" : "Confirm"}
@@ -353,7 +353,7 @@ export default function QuotesOrdersPage() {
             <button
               type="button"
               disabled={busy}
-              className="rounded-md border px-3 py-1.5 text-xs"
+              className="h-10 rounded-md border border-slate-300 px-4 text-sm font-medium"
               onClick={() => setConfirm(null)}
             >
               Cancel
@@ -362,15 +362,15 @@ export default function QuotesOrdersPage() {
         </div>
       ) : null}
 
-      <div className="grid gap-4 lg:grid-cols-[1fr_400px]">
-        <Panel>
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(420px,1.1fr)]">
+        <Panel flush title={tab === "quotes" ? "Quotes" : "Orders"}>
           {loading ? (
-            <EmptyState title="Loading…" />
+            <div className="p-5"><EmptyState title="Loading…" /></div>
           ) : tab === "quotes" ? (
             quotes.length === 0 ? (
-              <EmptyState title="No quotes yet" body="Create a quote or add a part from Parts Search." />
+              <div className="p-5"><EmptyState title="No quotes yet" body="Create a quote or add a part from Parts Search." /></div>
             ) : (
-              <table className="w-full text-left text-sm">
+              <table className="w-full min-w-[640px] text-left text-sm">
                 <thead>
                   <tr className="border-b text-[11px] uppercase text-slate-500">
                     <th className="py-2">Number</th>

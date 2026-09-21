@@ -222,25 +222,25 @@ export default function EmailsPage() {
   };
 
   const shellClass = jp
-    ? "mx-auto w-full max-w-6xl px-6 py-5"
+    ? "mx-auto w-full max-w-[1600px] px-5 py-5 sm:px-6 lg:px-8"
     : "mx-auto flex max-w-6xl flex-col gap-6 p-6";
 
   return (
     <div className={shellClass}>
-      <div className="mb-4 flex flex-col gap-2">
+      <div className="mb-5 flex flex-col gap-2">
         <div className="flex flex-wrap items-center gap-2">
           {!jp ? <Mail className="h-6 w-6" /> : null}
           <h1
             className={
               jp
-                ? "text-xl font-semibold tracking-tight text-slate-900"
+                ? "text-2xl font-semibold tracking-tight text-slate-900 sm:text-[26px]"
                 : "text-2xl font-bold tracking-tight"
             }
           >
             Email Desk
           </h1>
         </div>
-        <p className="max-w-3xl text-sm text-slate-500">
+        <p className="max-w-3xl text-[15px] text-slate-500">
           {jp
             ? "Customer inquiry → identify request → check inventory → prepare response → human review when needed."
             : "Inbound parts questions graded green (handled) / yellow (review) / red (urgent)."}
@@ -328,9 +328,8 @@ export default function EmailsPage() {
         </div>
       )}
 
-      <div className="grid gap-4 lg:grid-cols-5">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
         <Panel
-          className="lg:col-span-2"
           title="Queue"
           right={
             <span className="text-[11px] text-slate-400">Urgent → review → handled</span>
@@ -387,9 +386,7 @@ export default function EmailsPage() {
           </div>
         </Panel>
 
-        <Panel
-          className="lg:col-span-3"
-          title="Inquiry detail"
+        <Panel title="Inquiry"
           right={
             selected ? (
               <TrafficPill color={trafficColor(selected)} />

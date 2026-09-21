@@ -229,13 +229,13 @@ export default function TransmissionImportPage() {
   const rows: TransmissionImportRowPlan[] = preview?.rows || [];
 
   return (
-    <div className={isTransmissionDemo() ? "mx-auto w-full max-w-6xl px-6 py-5" : "container mx-auto max-w-6xl p-6"}>
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+    <div className={isTransmissionDemo() ? "mx-auto w-full max-w-[1600px] px-5 py-5 sm:px-6 lg:px-8" : "container mx-auto max-w-6xl p-6"}>
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight text-slate-900">
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-[26px]">
             {isTransmissionDemo() ? "Data Import" : "Pilot Data Import"}
           </h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1.5 text-[15px] text-slate-500">
             {isTransmissionDemo()
               ? "Preview inventory files before anything is written. Rollback stays available when stock has not changed since import."
               : "Manager/operator inventory onboarding · preview first · explicit commit"}

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import {
   EmptyState,
   JpPage,
+  MetricGroup,
   Panel,
   StatTile,
   StockBadge,
@@ -122,91 +123,113 @@ export default function JpOverviewPage() {
   return (
     <JpPage
       title="Overview"
-      description="Counter-ready parts intelligence for transmission hard parts."
+      description="JP Transmission Parts Intelligence — start a counter search, then work inventory, quotes, email, and import from one place."
+      fullBleed
     >
-      <form onSubmit={onSearch} className="mb-5">
-        <div className="flex gap-2">
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Search SKU, OEM, casting number, vehicle, or natural-language request"
-            className="h-12 flex-1 rounded-md border border-slate-300 bg-white px-4 text-sm shadow-sm placeholder:text-slate-400 focus:border-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-900/10"
-          />
-          <button
-            type="submit"
-            className="h-12 rounded-md bg-slate-900 px-5 text-sm font-semibold text-white hover:bg-slate-800"
-          >
-            Search
-          </button>
-        </div>
-        <div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-500">
-          {[
-            "2011 Tahoe 6L80 pump",
-            "24264418",
-            "6L80-PUMP-01",
-            "6R80 pump",
-          ].map((ex) => (
+      <form onSubmit={onSearch} className="mb-6">
+        <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+          <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
+            Counter search
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="SKU, OEM, casting number, vehicle, or what the customer asked for"
+              className="h-12 flex-1 rounded-md border border-slate-300 bg-white px-4 text-[15px] shadow-sm placeholder:text-slate-400 focus:border-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-900/10"
+            />
             <button
-              key={ex}
-              type="button"
-              className="rounded border border-slate-200 bg-white px-2 py-1 hover:border-slate-400"
-              onClick={() => router.push(`/transmission?q=${encodeURIComponent(ex)}`)}
+              type="submit"
+              className="h-12 rounded-md bg-slate-900 px-6 text-[15px] font-semibold text-white hover:bg-slate-800"
             >
-              {ex}
+              Search
             </button>
-          ))}
+          </div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {[
+              "2011 Tahoe 6L80 pump",
+              "24264418",
+              "6L80-PUMP-01",
+              "6R80 pump",
+            ].map((ex) => (
+              <button
+                key={ex}
+                type="button"
+                className="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:border-slate-400 hover:bg-white"
+                onClick={() => router.push(`/transmission?q=${encodeURIComponent(ex)}`)}
+              >
+                {ex}
+              </button>
+            ))}
+          </div>
         </div>
       </form>
 
-      <div className="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <StatTile label="Indexed SKUs" value={loading ? "…" : stats.skus} />
+      <MetricGroup label="Inventory">
+        <StatTile label="Indexed SKUs" value={loading ? "…" : stats.skus} tone="neutral" />
         <StatTile
-          label="In stock lines"
+          label="In Stock"
           value={loading ? "…" : stats.available}
           hint={`${stats.units} units on hand`}
+          tone="success"
         />
-        <StatTile label="Low stock lines" value={loading ? "…" : stats.low} />
-        <StatTile label="Out of stock lines" value={loading ? "…" : stats.out} />
-      </div>
+        <StatTile label="Low Stock" value={loading ? "…" : stats.low} tone="warn" />
+        <StatTile label="Out of Stock" value={loading ? "…" : stats.out} tone="danger" />
+      </MetricGroup>
 
-      <div className="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <StatTile label="Open quotes" value={loading ? "…" : opsStats?.open_quotes ?? 0} />
-        <StatTile label="Reserved units" value={loading ? "…" : opsStats?.reserved_units ?? 0} />
-        <StatTile label="Open orders" value={loading ? "…" : opsStats?.open_orders ?? 0} />
+      <MetricGroup label="Operations">
+        <StatTile label="Open Quotes" value={loading ? "…" : opsStats?.open_quotes ?? 0} />
+        <StatTile label="Reserved Units" value={loading ? "…" : opsStats?.reserved_units ?? 0} tone="warn" />
+        <StatTile label="Open Orders" value={loading ? "…" : opsStats?.open_orders ?? 0} />
         <StatTile
-          label="Completed orders"
+          label="Completed Orders"
           value={loading ? "…" : opsStats?.completed_orders ?? 0}
+          tone="success"
         />
-      </div>
+      </MetricGroup>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Panel
           title="Email Desk"
           right={
-            <Link href="/emails" className="text-xs font-medium text-slate-600 hover:underline">
-              Open desk
+            <Link href="/emails" className="text-xs font-semibold text-slate-600 hover:underline">
+              Open desk →
             </Link>
           }
         >
           {emailSt ? (
-            <div className="grid grid-cols-3 gap-3 text-center">
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
               <div>
-                <div className="text-2xl font-semibold tabular-nums">
+                <div className="text-[28px] font-semibold tabular-nums leading-none text-slate-900">
                   {emailSt.total ?? 0}
                 </div>
-                <div className="text-[11px] uppercase text-slate-500">Total</div>
+                <div className="mt-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Total
+                </div>
               </div>
               <div>
-                <div className={`text-2xl font-semibold tabular-nums ${trafficCountClass("yellow")}`}>
+                <div className={`text-[28px] font-semibold tabular-nums leading-none ${trafficCountClass("yellow")}`}>
                   {emailSt.requires_human ?? emailSt.by_traffic_light?.yellow ?? 0}
                 </div>
-                <div className="text-[11px] uppercase text-slate-500">Needs review</div>
+                <div className="mt-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Needs Review
+                </div>
               </div>
               <div>
-                <div className={`text-2xl font-semibold tabular-nums ${trafficCountClass("green")}`}>
+                <div className={`text-[28px] font-semibold tabular-nums leading-none ${trafficCountClass("green")}`}>
                   {emailSt.by_traffic_light?.green ?? 0}
                 </div>
-                <div className="text-[11px] uppercase text-slate-500">Handled</div>
+                <div className="mt-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Handled
+                </div>
+              </div>
+              <div>
+                <div className={`text-[28px] font-semibold tabular-nums leading-none ${trafficCountClass("red")}`}>
+                  {emailSt.by_traffic_light?.red ?? 0}
+                </div>
+                <div className="mt-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Urgent
+                </div>
               </div>
             </div>
           ) : (
@@ -218,23 +241,24 @@ export default function JpOverviewPage() {
         </Panel>
 
         <Panel
-          title="Latest inventory import"
+          title="Latest Inventory Import"
           right={
             <Link
               href="/transmission/import"
-              className="text-xs font-medium text-slate-600 hover:underline"
+              className="text-xs font-semibold text-slate-600 hover:underline"
             >
-              Data Import
+              Data Import →
             </Link>
           }
         >
           {latestImport ? (
-            <div className="space-y-1 text-sm">
+            <div className="space-y-1.5 text-sm">
               {(() => {
                 const h = humanizeImportHistoryItem(latestImport);
                 return (
                   <>
-                    <div className="font-medium text-slate-900">{h.title}</div>
+                    <div className="text-base font-semibold text-slate-900">{h.title}</div>
+                    <div className="text-sm text-slate-600">{h.stats}</div>
                     <div className="text-xs text-slate-500">
                       {latestImport.created_at
                         ? new Date(latestImport.created_at).toLocaleString()
@@ -243,7 +267,6 @@ export default function JpOverviewPage() {
                         ? ` · Rollback: ${latestImport.rollback_status}`
                         : ""}
                     </div>
-                    <div className="text-xs text-slate-600">{h.stats}</div>
                   </>
                 );
               })()}
@@ -257,40 +280,54 @@ export default function JpOverviewPage() {
         </Panel>
       </div>
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-2">
+      <div className="mt-4 grid gap-4 xl:grid-cols-5">
         <Panel
-          title="Inventory snapshot"
+          className="xl:col-span-3"
+          title="Inventory Snapshot"
           right={
-            <Link href="/inventory" className="text-xs font-medium text-slate-600 hover:underline">
-              Browse
+            <Link href="/inventory" className="text-xs font-semibold text-slate-600 hover:underline">
+              Browse inventory →
             </Link>
           }
+          flush
         >
           {rows.length === 0 ? (
-            <EmptyState title={loading ? "Loading…" : "No inventory rows"} />
+            <div className="p-5">
+              <EmptyState title={loading ? "Loading…" : "No inventory rows"} />
+            </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead className="text-[11px] uppercase text-slate-500">
-                  <tr className="border-b">
-                    <th className="py-2 pr-2 font-medium">SKU</th>
-                    <th className="py-2 pr-2 font-medium">Location</th>
-                    <th className="py-2 font-medium">Status</th>
+              <table className="w-full min-w-[640px] text-left text-sm">
+                <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                  <tr className="border-b border-slate-200">
+                    <th className="px-4 py-2.5 font-semibold">SKU</th>
+                    <th className="px-4 py-2.5 font-semibold">Location</th>
+                    <th className="px-4 py-2.5 font-semibold text-right">On Hand</th>
+                    <th className="px-4 py-2.5 font-semibold">Status</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {rows.slice(0, 8).map((r, i) => {
+                  {rows.slice(0, 10).map((r, i) => {
                     const loc = formatTransmissionLocationLine({
                       location: r.location || r.location_code,
                       location_name: r.location_name,
                       bin: (r as { bin?: string }).bin,
                     });
+                    const qn = qtyOf(r);
                     return (
-                      <tr key={`${r.sku}-${i}`} className="border-b border-slate-50">
-                        <td className="py-2 pr-2 font-mono text-xs">{r.sku}</td>
-                        <td className="py-2 pr-2 text-xs text-slate-600">{loc.title}</td>
-                        <td className="py-2">
-                          <StockBadge qty={qtyOf(r)} />
+                      <tr
+                        key={`${r.sku}-${i}`}
+                        className="border-b border-slate-100 hover:bg-slate-50/80"
+                      >
+                        <td className="px-4 py-2.5 font-mono text-[13px] font-medium text-slate-900">
+                          {r.sku}
+                        </td>
+                        <td className="px-4 py-2.5 text-[13px] text-slate-700">{loc.title}</td>
+                        <td className="px-4 py-2.5 text-right tabular-nums text-[13px] font-medium">
+                          {qn}
+                        </td>
+                        <td className="px-4 py-2.5">
+                          <StockBadge qty={qn} />
                         </td>
                       </tr>
                     );
@@ -302,10 +339,11 @@ export default function JpOverviewPage() {
         </Panel>
 
         <Panel
-          title="Recent activity"
+          className="xl:col-span-2"
+          title="Recent Activity"
           right={
-            <Link href="/activity" className="text-xs font-medium text-slate-600 hover:underline">
-              All activity
+            <Link href="/activity" className="text-xs font-semibold text-slate-600 hover:underline">
+              All activity →
             </Link>
           }
         >
@@ -315,7 +353,7 @@ export default function JpOverviewPage() {
               body="Searches, imports, and email processing appear here."
             />
           ) : (
-            <ul className="space-y-2">
+            <ul className="space-y-3">
               {runs.slice(0, 8).map((r) => {
                 const hum = humanizeActivitySummary(
                   r.kind,
@@ -325,20 +363,20 @@ export default function JpOverviewPage() {
                 return (
                 <li
                   key={r.id}
-                  className="flex items-start justify-between gap-2 border-b border-slate-50 pb-2 text-sm last:border-0"
+                  className="flex items-start justify-between gap-2 border-b border-slate-100 pb-3 text-sm last:border-0 last:pb-0"
                 >
                   <div className="min-w-0">
-                    <div className="truncate font-medium text-slate-800">
+                    <div className="truncate text-[14px] font-semibold text-slate-900">
                       {hum.title}
                     </div>
-                    <div className="truncate text-xs text-slate-500">{hum.detail}</div>
-                    <div className="text-[11px] text-slate-400">
+                    <div className="truncate text-[13px] text-slate-600">{hum.detail}</div>
+                    <div className="mt-0.5 text-xs text-slate-400">
                       {r.created_at ? new Date(r.created_at).toLocaleString() : ""}
                     </div>
                   </div>
                   {r.requires_human ? (
-                    <span className="shrink-0 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-900">
-                      Review
+                    <span className="shrink-0 rounded bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-900">
+                      Needs Review
                     </span>
                   ) : null}
                 </li>
@@ -349,7 +387,7 @@ export default function JpOverviewPage() {
         </Panel>
       </div>
 
-      <p className="mt-6 text-[11px] text-slate-400">
+      <p className="mt-6 text-xs text-slate-400">
         Pilot evaluation build. Synthetic data is labeled in the header and is not JP production inventory.
       </p>
     </JpPage>
