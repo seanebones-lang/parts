@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -185,9 +186,14 @@ export default function TransmissionInquiryPage() {
         <strong>DEMO DATA — UNVERIFIED</strong> — This page demonstrates the transmission hard-parts inquiry workflow and architecture for JP Transmission evaluation. All fitment, interchange, and compatibility data is synthetic demo data and not an authoritative catalog.
       </div>
 
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight">Transmission Hard Parts</h1>
-        <p className="mt-2 text-muted-foreground">Internal counter intelligence tool • Read-only DMS inquiry</p>
+      <div className="mb-8 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Transmission Hard Parts</h1>
+          <p className="mt-2 text-muted-foreground">Internal counter intelligence tool • Read-only DMS inquiry</p>
+        </div>
+        <Button asChild variant="outline">
+          <Link href="/transmission/import">Pilot Data Import</Link>
+        </Button>
       </div>
 
       <Card className="mb-8">

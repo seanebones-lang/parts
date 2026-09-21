@@ -1234,3 +1234,82 @@ async def transmission_inquiry(
         ) from exc
 
 
+# ---------------------------------------------------------------------------
+# Transmission Pilot Import API (Phase 10)
+# ---------------------------------------------------------------------------
+
+
+class TransmissionImportBody(BaseModel):
+    csv_text: str = Field(..., min_length=1, description="Full CSV text contents")
+    source: Optional[str] = Field(
+        default=None,
+        description="Optional import source label (normalized to pilot_csv:...)",
+    )
+    allow_new_locations: bool = Field(
+        default=False,
+        description="When true, unknown location codes may be created on commit",
+    )
+
+
+@router.post("/transmission/import/preview")
+async def transmission_import_preview(
+    body: TransmissionImportBody,
+    current_user: Optional[User] = Depends(require_permission("catalog.import")),
+    dms: DmsService = Depends(get_dms_service),
+):
+    """Preview a transmission pilot CSV without mutating DMS.
+
+    Requires catalog.import (manager+).
+    """
+    _ = current_user
+    try:
+        from parrts.transmission.importer import preview_transmission_import
+
+        result = preview_transmission_import(
+            body.csv_text,
+            dms,
+            source=body.source or "pilot_csv:api",
+            allow_new_locations=bool(body.allow_new_locations),
+        )
+        # Preserve importer structure; success flag mirrors catalog import style
+        return {"success": bool(result.get("ok")), **result}
+    except HTTPException:
+        raise
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"transmission import preview failed: {exc}",
+        ) from exc
+
+
+@router.post("/transmission/import/commit")
+async def transmission_import_commit(
+    body: TransmissionImportBody,
+    current_user: Optional[User] = Depends(require_permission("catalog.import")),
+    dms: DmsService = Depends(get_dms_service),
+):
+    """Commit a transmission pilot CSV after server-side revalidation.
+
+    Requires catalog.import (manager+). Always re-parses; never trusts client.
+    Validation refusals return HTTP 200 with committed=false (operator-readable).
+    """
+    _ = current_user
+    try:
+        from parrts.transmission.importer import commit_transmission_import
+
+        result = commit_transmission_import(
+            body.csv_text,
+            dms,
+            source=body.source or "pilot_csv:api",
+            allow_new_locations=bool(body.allow_new_locations),
+        )
+        return {"success": bool(result.get("committed")), **result}
+    except HTTPException:
+        raise
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"transmission import commit failed: {exc}",
+        ) from exc
+
+

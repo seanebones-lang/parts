@@ -1039,4 +1039,79 @@ export async function transmissionInquiry(
   return dmsPost<TransmissionInquiryResponse>("/transmission/inquiry", { query });
 }
 
+// --- Transmission Pilot Import (Phase 10) ---
+
+export type TransmissionImportRowPlan = {
+  row_number?: number;
+  status?: "valid" | "warning" | "invalid" | string;
+  errors?: string[];
+  warnings?: string[];
+  sku?: string;
+  name?: string;
+  transmission_family?: string;
+  location?: string;
+  qty?: number;
+  condition?: string;
+  bin?: string;
+  catalog_action?: string;
+  inventory_action?: string;
+  identifier_action?: string;
+  location_action?: string;
+  existing_sku?: boolean;
+};
+
+export type TransmissionImportResult = {
+  success?: boolean;
+  ok?: boolean;
+  mode?: "preview" | "commit" | string;
+  source_label?: string;
+  allow_new_locations?: boolean;
+  total_rows?: number;
+  valid_rows?: number;
+  warning_rows?: number;
+  invalid_rows?: number;
+  new_sku_count?: number;
+  existing_sku_count?: number;
+  catalog_inserts?: number;
+  catalog_updates?: number;
+  inventory_inserts?: number;
+  inventory_updates?: number;
+  identifier_inserts?: number;
+  locations_to_create?: number;
+  locations_referenced?: string[];
+  unknown_locations?: string[];
+  file_errors?: string[];
+  committed?: boolean;
+  commit_result?: Record<string, unknown>;
+  rows?: TransmissionImportRowPlan[];
+  rows_truncated?: number;
+  [key: string]: unknown;
+};
+
+export type TransmissionImportInput = {
+  csv_text: string;
+  source?: string;
+  allow_new_locations?: boolean;
+};
+
+export async function previewTransmissionImport(
+  input: TransmissionImportInput
+): Promise<TransmissionImportResult> {
+  return dmsPost<TransmissionImportResult>("/transmission/import/preview", {
+    csv_text: input.csv_text,
+    source: input.source,
+    allow_new_locations: Boolean(input.allow_new_locations),
+  });
+}
+
+export async function commitTransmissionImport(
+  input: TransmissionImportInput
+): Promise<TransmissionImportResult> {
+  return dmsPost<TransmissionImportResult>("/transmission/import/commit", {
+    csv_text: input.csv_text,
+    source: input.source,
+    allow_new_locations: Boolean(input.allow_new_locations),
+  });
+}
+
 export { API_BASE_URL, ApiError };
