@@ -1050,6 +1050,41 @@ export async function transmissionInquiry(
   return dmsPost<TransmissionInquiryResponse>("/transmission/inquiry", { query });
 }
 
+export type TransmissionFeedbackInput = {
+  request_id: string;
+  action: "accept" | "correct" | "resolve" | string;
+  final_sku?: string;
+  note?: string;
+};
+
+export type TransmissionFeedbackResult = {
+  success?: boolean;
+  ok?: boolean;
+  request_id?: string;
+  final_result_recorded?: boolean;
+  human_override?: boolean;
+  final_accepted_outcome?: string;
+  final_accepted_sku?: string | null;
+  final_accepted_at?: string;
+  system_outcome?: string;
+  system_sku?: string | null;
+  system_confidence?: number | null;
+  feedback_action?: string;
+  error?: string;
+  [key: string]: unknown;
+};
+
+export async function transmissionInquiryFeedback(
+  input: TransmissionFeedbackInput
+): Promise<TransmissionFeedbackResult> {
+  return dmsPost<TransmissionFeedbackResult>("/transmission/inquiry/feedback", {
+    request_id: input.request_id,
+    action: input.action,
+    final_sku: input.final_sku,
+    note: input.note,
+  });
+}
+
 // --- Transmission Pilot Import (Phase 10) ---
 
 export type TransmissionImportRowPlan = {

@@ -119,9 +119,18 @@ class TransmissionUnitOfWork:
             "status": self.status,
             "sku": self.sku,
             "human_readable": self.human_readable,
+            # Immutable system snapshot (retained after human feedback)
+            "system_outcome": self.decision.outcome,
+            "system_confidence": self.decision.confidence,
+            "system_sku": self.sku,
+            "system_status": self.status,
+            "system_result": self.human_readable,
             "human_override": self.human_override,
             "final_accepted_outcome": self.final_accepted_outcome,
             "final_accepted_sku": self.final_accepted_sku,
+            "final_accepted_at": None,
+            "final_accepted_note": None,
+            "final_result_recorded": False,
             "outcome": self.decision.outcome,
             "confidence": self.decision.confidence,
             "recommended_action": self.decision.recommended_action,
@@ -342,18 +351,279 @@ def persist_unit_of_work(
         from parrts.automation.service import AutomationService
 
         detail = uow.to_dict()
+        # Prefer request_id as source_ref so feedback can locate the row reliably.
         summary = (
             f"{uow.decision.outcome} conf={uow.decision.confidence:.2f} "
             f"status={uow.status} sku={uow.sku or '—'}"
         )
-        return AutomationService(root).record_run(
+        run = AutomationService(root).record_run(
             kind=KIND,
-            source_ref=uow.sku or uow.request_id,
+            source_ref=uow.request_id,
             status="ok" if uow.decision.outcome == "RESOLVED" else "needs_human",
             summary=summary,
             detail=detail,
             requires_human=uow.decision.outcome == "NEEDS_HUMAN",
         )
+        if isinstance(run, dict) and run.get("id") is not None:
+            detail["automation_run_id"] = run["id"]
+            try:
+                import json
+
+                svc = AutomationService(root)
+                svc.store.execute(
+                    "UPDATE automation_runs SET detail_json = ? WHERE id = ? AND kind = ?",
+                    (json.dumps(detail), int(run["id"]), KIND),
+                )
+                svc.store.commit()
+                run["detail"] = detail
+            except Exception:
+                pass
+        return run
     except Exception as exc:
         logger.warning("transmission_uow_persist_failed: %s", exc)
         return None
+
+
+def _detail_of(run: dict[str, Any]) -> dict[str, Any]:
+    d = run.get("detail")
+    if isinstance(d, dict):
+        return dict(d)
+    raw = run.get("detail_json")
+    if isinstance(raw, str):
+        import json
+
+        try:
+            parsed = json.loads(raw)
+            return parsed if isinstance(parsed, dict) else {}
+        except Exception:
+            return {}
+    return {}
+
+
+def find_unit_of_work_run(
+    root: Path | str,
+    request_id: str,
+    *,
+    limit: int = 500,
+) -> dict[str, Any] | None:
+    """Locate a transmission_request_uow run by request_id. None if missing."""
+    from parrts.automation.service import AutomationService
+
+    rid = str(request_id or "").strip()
+    if not rid:
+        return None
+    runs = AutomationService(root).list_runs(kind=KIND, limit=int(limit))
+    for run in runs:
+        d = _detail_of(run)
+        if str(d.get("request_id") or "") == rid:
+            return run
+        if str(run.get("source_ref") or "") == rid:
+            return run
+    return None
+
+
+def apply_human_feedback(
+    root: Path | str,
+    request_id: str,
+    *,
+    action: Literal["accept", "correct", "resolve"],
+    final_sku: str | None = None,
+    note: str | None = None,
+    actor: str = "counter",
+) -> dict[str, Any]:
+    """
+    Accept, correct, or manually resolve a transmission unit of work.
+
+    Updates the existing automation ledger row in place. Never mutates DMS.
+    Never creates a parallel feedback store.
+    """
+    import json
+
+    from parrts.automation.service import AutomationService
+
+    rid = str(request_id or "").strip()
+    if not rid:
+        return {
+            "ok": False,
+            "error": "request_id required",
+            "final_result_recorded": False,
+        }
+
+    run = find_unit_of_work_run(root, rid)
+    if run is None:
+        return {
+            "ok": False,
+            "error": "request not found",
+            "request_id": rid,
+            "final_result_recorded": False,
+        }
+
+    run_id = int(run.get("id") or 0)
+    detail = _detail_of(run)
+    if detail.get("final_result_recorded"):
+        return {
+            "ok": False,
+            "error": "final result already recorded",
+            "request_id": rid,
+            "automation_run_id": run_id,
+            "final_result_recorded": True,
+            "detail": detail,
+        }
+
+    system_outcome = detail.get("system_outcome") or detail.get("outcome")
+    system_sku = detail.get("system_sku") if "system_sku" in detail else detail.get("sku")
+    system_confidence = detail.get("system_confidence")
+    if system_confidence is None:
+        system_confidence = detail.get("confidence")
+    system_status = detail.get("system_status") or detail.get("status")
+    system_result = detail.get("system_result") or detail.get("human_readable")
+
+    # Ensure immutable system snapshot is retained
+    detail["system_outcome"] = system_outcome
+    detail["system_sku"] = system_sku
+    detail["system_confidence"] = system_confidence
+    detail["system_status"] = system_status
+    detail["system_result"] = system_result
+
+    action_l = str(action or "").strip().lower()
+    sku_in = (final_sku or "").strip() or None
+    note_in = (note or "").strip() or None
+    now = _utcnow()
+
+    if action_l == "accept":
+        if system_outcome != "RESOLVED":
+            return {
+                "ok": False,
+                "error": "accept is only valid for RESOLVED system outcomes",
+                "request_id": rid,
+                "system_outcome": system_outcome,
+                "final_result_recorded": False,
+            }
+        detail["human_override"] = False
+        detail["final_accepted_outcome"] = "RESOLVED"
+        detail["final_accepted_sku"] = system_sku
+        detail["final_accepted_at"] = now
+        detail["final_accepted_note"] = note_in
+        detail["final_accepted_by"] = actor
+        detail["final_result_recorded"] = True
+        detail["feedback_action"] = "accept"
+    elif action_l == "correct":
+        if system_outcome != "RESOLVED":
+            return {
+                "ok": False,
+                "error": "correct is only valid for RESOLVED system outcomes; use resolve for NEEDS_HUMAN",
+                "request_id": rid,
+                "system_outcome": system_outcome,
+                "final_result_recorded": False,
+            }
+        if not sku_in:
+            return {
+                "ok": False,
+                "error": "final_sku required for correct",
+                "request_id": rid,
+                "final_result_recorded": False,
+            }
+        detail["human_override"] = True
+        detail["final_accepted_outcome"] = "RESOLVED"
+        detail["final_accepted_sku"] = sku_in
+        detail["final_accepted_at"] = now
+        detail["final_accepted_note"] = note_in
+        detail["final_accepted_by"] = actor
+        detail["final_result_recorded"] = True
+        detail["feedback_action"] = "correct"
+        detail["original_system_sku"] = system_sku
+        detail["original_system_outcome"] = system_outcome
+    elif action_l == "resolve":
+        if system_outcome == "RESOLVED" and not detail.get("human_override"):
+            # Allow resolve on NEEDS_HUMAN primarily; if already RESOLVED without feedback,
+            # treat like correct when sku provided, else reject.
+            if not sku_in:
+                return {
+                    "ok": False,
+                    "error": "resolve requires final_sku when system already RESOLVED; use accept or correct",
+                    "request_id": rid,
+                    "final_result_recorded": False,
+                }
+        if not sku_in:
+            return {
+                "ok": False,
+                "error": "final_sku required to manually resolve",
+                "request_id": rid,
+                "final_result_recorded": False,
+            }
+        detail["human_override"] = True
+        detail["final_accepted_outcome"] = "RESOLVED"
+        detail["final_accepted_sku"] = sku_in
+        detail["final_accepted_at"] = now
+        detail["final_accepted_note"] = note_in
+        detail["final_accepted_by"] = actor
+        detail["final_result_recorded"] = True
+        detail["feedback_action"] = "resolve"
+        detail["original_system_sku"] = system_sku
+        detail["original_system_outcome"] = system_outcome
+    else:
+        return {
+            "ok": False,
+            "error": f"unknown action: {action}",
+            "request_id": rid,
+            "final_result_recorded": False,
+        }
+
+    # Keep top-level mirrors for list/report consumers
+    detail["outcome"] = detail.get("system_outcome")  # system decision stays
+    detail["sku"] = detail.get("system_sku")
+    detail["human_feedback_at"] = now
+
+    summary = (
+        f"FINAL {detail['final_accepted_outcome']} "
+        f"sku={detail.get('final_accepted_sku') or '—'} "
+        f"override={detail.get('human_override')} "
+        f"action={detail.get('feedback_action')}"
+    )
+
+    svc = AutomationService(root)
+    svc.store.execute(
+        """
+        UPDATE automation_runs
+        SET detail_json = ?, summary = ?, status = ?, requires_human = ?
+        WHERE id = ? AND kind = ?
+        """,
+        (
+            json.dumps(detail),
+            summary,
+            "finalized",
+            0,
+            run_id,
+            KIND,
+        ),
+    )
+    # Verify row count — do not silently update wrong kinds
+    row = svc.store.fetchone(
+        "SELECT id, kind, detail_json, summary, status FROM automation_runs WHERE id = ?",
+        (run_id,),
+    )
+    svc.store.commit()
+    if row is None or str(row["kind"]) != KIND:
+        return {
+            "ok": False,
+            "error": "update target mismatch",
+            "request_id": rid,
+            "final_result_recorded": False,
+        }
+
+    return {
+        "ok": True,
+        "request_id": rid,
+        "automation_run_id": run_id,
+        "final_result_recorded": True,
+        "human_override": detail.get("human_override"),
+        "final_accepted_outcome": detail.get("final_accepted_outcome"),
+        "final_accepted_sku": detail.get("final_accepted_sku"),
+        "final_accepted_at": detail.get("final_accepted_at"),
+        "final_accepted_note": detail.get("final_accepted_note"),
+        "system_outcome": detail.get("system_outcome"),
+        "system_sku": detail.get("system_sku"),
+        "system_confidence": detail.get("system_confidence"),
+        "feedback_action": detail.get("feedback_action"),
+        "detail": detail,
+    }

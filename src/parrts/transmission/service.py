@@ -151,8 +151,14 @@ def _finalize_unit_of_work(
         answer.evidence_sufficiency = d.evidence_sufficiency
         answer.decision_source = d.decision_source
         answer.request_id = uow.request_id
-        answer.decision = uow.to_dict()
-        persist_unit_of_work(root, uow)
+        run = persist_unit_of_work(root, uow)
+        decision_blob = uow.to_dict()
+        if isinstance(run, dict):
+            if run.get("id") is not None:
+                decision_blob["automation_run_id"] = run["id"]
+            if isinstance(run.get("detail"), dict):
+                decision_blob = run["detail"]
+        answer.decision = decision_blob
     except Exception as exc:
         logger.warning("transmission_uow_finalize_failed: %s", exc)
         # Fail closed toward human review rather than silent resolve.

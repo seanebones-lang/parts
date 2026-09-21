@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { transmissionInquiry, TransmissionInquiryResponse } from "@/lib/dms-api";
+import { transmissionInquiry, transmissionInquiryFeedback, TransmissionInquiryResponse } from "@/lib/dms-api";
 import {
   formatTransmissionLocationLine,
   isTransmissionDemo,
@@ -27,6 +27,15 @@ export default function TransmissionInquiryPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  const [feedbackBusy, setFeedbackBusy] = useState(false);
+  const [feedbackDone, setFeedbackDone] = useState<{
+    final_accepted_sku?: string | null;
+    human_override?: boolean;
+    feedback_action?: string;
+  } | null>(null);
+  const [correctOpen, setCorrectOpen] = useState(false);
+  const [correctSku, setCorrectSku] = useState("");
+  const [correctNote, setCorrectNote] = useState("");
 
   const runInquiry = async (q: string) => {
     if (!q.trim()) return;
@@ -34,6 +43,10 @@ export default function TransmissionInquiryPage() {
     setLoading(true);
     setError(null);
     setResult(null);
+    setFeedbackDone(null);
+    setCorrectOpen(false);
+    setCorrectSku("");
+    setCorrectNote("");
 
     try {
       const res = await transmissionInquiry(q.trim());
@@ -47,6 +60,37 @@ export default function TransmissionInquiryPage() {
       setError(e?.message || "API request failed");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const submitFeedback = async (
+    action: "accept" | "correct" | "resolve",
+    finalSku?: string,
+    note?: string
+  ) => {
+    if (!result?.request_id) {
+      setError("Missing request id — run inquiry again.");
+      return;
+    }
+    setFeedbackBusy(true);
+    setError(null);
+    try {
+      const res = await transmissionInquiryFeedback({
+        request_id: result.request_id,
+        action,
+        final_sku: finalSku,
+        note,
+      });
+      setFeedbackDone({
+        final_accepted_sku: res.final_accepted_sku,
+        human_override: res.human_override,
+        feedback_action: res.feedback_action,
+      });
+      setCorrectOpen(false);
+    } catch (e: any) {
+      setError(e?.message || "Failed to record final result");
+    } finally {
+      setFeedbackBusy(false);
     }
   };
 
@@ -119,6 +163,136 @@ export default function TransmissionInquiryPage() {
             <strong>Why:</strong> {ambiguity_reason}
           </p>
         ) : null}
+        {result.request_id ? (
+          <p className="mt-1 font-mono text-[10px] text-muted-foreground">
+            request {result.request_id}
+          </p>
+        ) : null}
+      </div>
+    );
+
+    const feedbackPanel = (
+      <div className="mb-4 rounded-lg border bg-white px-4 py-3 text-sm">
+        {feedbackDone ? (
+          <div className="space-y-1">
+            <Badge className="bg-slate-900 text-sm px-3 py-1">FINAL RESULT RECORDED</Badge>
+            <p className="text-slate-800">
+              Accepted SKU:{" "}
+              <span className="font-mono font-semibold">
+                {feedbackDone.final_accepted_sku || "—"}
+              </span>
+              {feedbackDone.human_override ? " · human override" : " · accepted as-is"}
+            </p>
+          </div>
+        ) : needsHuman ? (
+          <div className="space-y-2">
+            <div className="font-medium">Counter resolution required</div>
+            {!correctOpen ? (
+              <Button
+                size="sm"
+                disabled={feedbackBusy || !result.request_id}
+                onClick={() => {
+                  setCorrectOpen(true);
+                  setCorrectSku("");
+                }}
+              >
+                Resolve request
+              </Button>
+            ) : (
+              <div className="space-y-2">
+                <input
+                  value={correctSku}
+                  onChange={(e) => setCorrectSku(e.target.value)}
+                  placeholder="Final SKU (e.g. 6L80-PUMP-01)"
+                  className="w-full rounded-md border px-3 py-2 font-mono text-sm"
+                />
+                <input
+                  value={correctNote}
+                  onChange={(e) => setCorrectNote(e.target.value)}
+                  placeholder="Optional note"
+                  className="w-full rounded-md border px-3 py-2 text-sm"
+                />
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    size="sm"
+                    disabled={feedbackBusy || !correctSku.trim()}
+                    onClick={() =>
+                      void submitFeedback("resolve", correctSku.trim(), correctNote.trim() || undefined)
+                    }
+                  >
+                    Save final result
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={feedbackBusy}
+                    onClick={() => setCorrectOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <div className="flex flex-wrap gap-2">
+              <Button
+                size="sm"
+                disabled={feedbackBusy || !result.request_id}
+                onClick={() => void submitFeedback("accept")}
+              >
+                Accept result
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={feedbackBusy || !result.request_id}
+                onClick={() => {
+                  setCorrectOpen(true);
+                  setCorrectSku(result.sku || "");
+                }}
+              >
+                Correct result
+              </Button>
+            </div>
+            {correctOpen ? (
+              <div className="space-y-2 border-t pt-2">
+                <input
+                  value={correctSku}
+                  onChange={(e) => setCorrectSku(e.target.value)}
+                  placeholder="Correct SKU"
+                  className="w-full rounded-md border px-3 py-2 font-mono text-sm"
+                />
+                <input
+                  value={correctNote}
+                  onChange={(e) => setCorrectNote(e.target.value)}
+                  placeholder="Optional note"
+                  className="w-full rounded-md border px-3 py-2 text-sm"
+                />
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    size="sm"
+                    disabled={feedbackBusy || !correctSku.trim()}
+                    onClick={() =>
+                      void submitFeedback("correct", correctSku.trim(), correctNote.trim() || undefined)
+                    }
+                  >
+                    Save correction
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={feedbackBusy}
+                    onClick={() => setCorrectOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        )}
       </div>
     );
 
@@ -126,6 +300,7 @@ export default function TransmissionInquiryPage() {
       return (
         <div>
           {decisionBanner}
+          {feedbackPanel}
           <Card className="border-amber-200 bg-amber-50">
             <CardHeader>
               <CardTitle className="text-amber-900">More information needed</CardTitle>
@@ -143,6 +318,7 @@ export default function TransmissionInquiryPage() {
       return (
         <div>
           {decisionBanner}
+          {feedbackPanel}
           <Card className="border-slate-200">
             <CardHeader>
               <CardTitle>Part not identified</CardTitle>
@@ -159,6 +335,7 @@ export default function TransmissionInquiryPage() {
     return (
       <div className="space-y-6">
         {decisionBanner}
+        {feedbackPanel}
         <Card>
           <CardHeader>
             <div>

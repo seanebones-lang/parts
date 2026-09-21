@@ -1255,6 +1255,61 @@ async def transmission_inquiry(
         ) from exc
 
 
+class TransmissionFeedbackBody(BaseModel):
+    """Counter accept / correct / resolve for one unit of work."""
+
+    request_id: str = Field(..., min_length=8)
+    action: str = Field(
+        ...,
+        description="accept | correct | resolve",
+    )
+    final_sku: Optional[str] = Field(
+        default=None,
+        description="Required for correct/resolve",
+    )
+    note: Optional[str] = None
+
+
+@router.post("/transmission/inquiry/feedback")
+async def transmission_inquiry_feedback(
+    body: TransmissionFeedbackBody,
+    dms: DmsService = Depends(get_dms_service),
+):
+    """Record final accepted result for a transmission unit of work.
+
+    Updates the existing automation ledger row. Does not mutate DMS inventory.
+    """
+    try:
+        from parrts.transmission.decision import apply_human_feedback
+
+        action = (body.action or "").strip().lower()
+        if action not in ("accept", "correct", "resolve"):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="action must be accept, correct, or resolve",
+            )
+        result = apply_human_feedback(
+            dms.root,
+            body.request_id,
+            action=action,  # type: ignore[arg-type]
+            final_sku=body.final_sku,
+            note=body.note,
+            actor="api",
+        )
+        if not result.get("ok"):
+            err = str(result.get("error") or "feedback failed")
+            code = status.HTTP_404_NOT_FOUND if "not found" in err.lower() else status.HTTP_400_BAD_REQUEST
+            raise HTTPException(status_code=code, detail=err)
+        return {"success": True, **result}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"transmission feedback failed: {exc}",
+        ) from exc
+
+
 # ---------------------------------------------------------------------------
 # Transmission Pilot Import API (Phase 10)
 # ---------------------------------------------------------------------------
