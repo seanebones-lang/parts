@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,9 +14,14 @@ import {
 import {
   ApiError,
   commitTransmissionImport,
+  commitTransmissionImportRollback,
   isApiUnreachable,
+  listTransmissionImportHistory,
   previewTransmissionImport,
+  previewTransmissionImportRollback,
+  type TransmissionImportHistoryItem,
   type TransmissionImportResult,
+  type TransmissionImportRollbackPreview,
   type TransmissionImportRowPlan,
 } from "@/lib/dms-api";
 
@@ -63,6 +68,25 @@ export default function TransmissionImportPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [history, setHistory] = useState<TransmissionImportHistoryItem[]>([]);
+  const [rbPreview, setRbPreview] = useState<TransmissionImportRollbackPreview | null>(
+    null
+  );
+  const [rbRunId, setRbRunId] = useState<number | null>(null);
+  const [rbConfirm, setRbConfirm] = useState(false);
+
+  async function refreshHistory() {
+    try {
+      const res = await listTransmissionImportHistory(30);
+      setHistory(res.imports || []);
+    } catch {
+      // history is best-effort on this page
+    }
+  }
+
+  useEffect(() => {
+    void refreshHistory();
+  }, []);
 
   const currentKey = useMemo(
     () =>
@@ -161,6 +185,8 @@ export default function TransmissionImportPage() {
             String((res.commit_result as { reason?: string }).reason)) ||
             "Commit refused. Nothing was written."
         );
+      } else {
+        await refreshHistory();
       }
     } catch (e: unknown) {
       if (isApiUnreachable(e)) {
@@ -472,11 +498,27 @@ export default function TransmissionImportPage() {
           <CardContent className="space-y-3 text-sm">
             <div className="grid grid-cols-2 gap-3 md:grid-cols-4 font-mono">
               <div>committed: {String(Boolean(commitResult.committed))}</div>
+              <div>
+                import run:{" "}
+                {String(
+                  (commitResult.commit_result as { import_run_id?: number } | undefined)
+                    ?.import_run_id ?? "—"
+                )}
+              </div>
               <div>catalog inserts: {commitResult.catalog_inserts ?? 0}</div>
               <div>inventory inserts: {commitResult.inventory_inserts ?? 0}</div>
               <div>inventory updates: {commitResult.inventory_updates ?? 0}</div>
               <div>identifier inserts: {commitResult.identifier_inserts ?? 0}</div>
               <div>locations created: {commitResult.locations_to_create ?? 0}</div>
+              <div>
+                rollback available:{" "}
+                {String(
+                  Boolean(
+                    (commitResult.commit_result as { rollback_available?: boolean } | undefined)
+                      ?.rollback_available
+                  )
+                )}
+              </div>
             </div>
             <div className="flex flex-wrap gap-2">
               <Button asChild>
@@ -500,6 +542,144 @@ export default function TransmissionImportPage() {
           </CardContent>
         </Card>
       ) : null}
+
+      <Card className="mb-6">
+        <CardHeader>
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <CardTitle>Import History</CardTitle>
+              <CardDescription>
+                Successful pilot imports with rollback eligibility
+              </CardDescription>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => void refreshHistory()}>
+              Refresh
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {history.length === 0 ? (
+            <div className="text-sm text-muted-foreground">No import runs yet.</div>
+          ) : (
+            <div className="space-y-2">
+              {history.map((h) => (
+                <div
+                  key={String(h.import_run_id)}
+                  className="flex flex-wrap items-center justify-between gap-3 rounded border px-3 py-2 text-sm"
+                >
+                  <div className="font-mono text-xs">
+                    #{h.import_run_id} · {h.created_at} · {h.source_label}
+                    <div className="text-muted-foreground">
+                      rows {h.valid_rows ?? "—"} · inv+{h.inventory_inserts ?? 0}/upd
+                      {h.inventory_updates ?? 0} · skus+{h.catalog_inserts ?? 0} ·{" "}
+                      {h.rollback_status || "—"}
+                    </div>
+                  </div>
+                  {h.rollback_available ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={busy}
+                      onClick={async () => {
+                        if (!h.import_run_id) return;
+                        setBusy(true);
+                        setError(null);
+                        try {
+                          const p = await previewTransmissionImportRollback(
+                            Number(h.import_run_id)
+                          );
+                          setRbPreview(p);
+                          setRbRunId(Number(h.import_run_id));
+                          setRbConfirm(false);
+                        } catch (e: unknown) {
+                          setError(
+                            e instanceof Error ? e.message : "Rollback preview failed"
+                          );
+                        } finally {
+                          setBusy(false);
+                        }
+                      }}
+                    >
+                      Review rollback
+                    </Button>
+                  ) : (
+                    <Badge variant="outline">{h.rollback_status || "unavailable"}</Badge>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {rbPreview && rbRunId != null ? (
+            <div className="rounded border bg-slate-50 p-4 text-sm">
+              <div className="mb-2 font-medium">
+                Rollback preview for import #{rbRunId}
+              </div>
+              <div className="mb-2 font-mono text-xs">
+                eligible: {String(Boolean(rbPreview.eligible))} · restores:{" "}
+                {rbPreview.inventory_restores ?? 0} · deletes:{" "}
+                {rbPreview.rows_to_delete ?? 0}
+              </div>
+              {rbPreview.reason ? (
+                <div className="mb-2 text-red-800">{rbPreview.reason}</div>
+              ) : null}
+              {(rbPreview.conflicts || []).length > 0 ? (
+                <div className="mb-3 space-y-1">
+                  <div className="font-medium">Conflicts</div>
+                  {(rbPreview.conflicts || []).map((c, i) => (
+                    <div key={i} className="rounded border border-red-200 bg-red-50 p-2 font-mono text-[11px]">
+                      {JSON.stringify(c)}
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+              {rbPreview.eligible ? (
+                <div className="space-y-2">
+                  <p className="text-muted-foreground">
+                    Restore the DMS values that existed immediately before import #{rbRunId}.
+                    Rollback will refuse if affected data changed after the import.
+                  </p>
+                  {!rbConfirm ? (
+                    <Button size="sm" onClick={() => setRbConfirm(true)}>
+                      Confirm rollback review
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      disabled={busy}
+                      onClick={async () => {
+                        setBusy(true);
+                        setError(null);
+                        try {
+                          const res = await commitTransmissionImportRollback(rbRunId);
+                          if (!res.rolled_back) {
+                            setError(String(res.reason || "Rollback refused"));
+                            const p = await previewTransmissionImportRollback(rbRunId);
+                            setRbPreview(p);
+                          } else {
+                            setRbPreview(null);
+                            setRbRunId(null);
+                            setRbConfirm(false);
+                            await refreshHistory();
+                          }
+                        } catch (e: unknown) {
+                          setError(
+                            e instanceof Error ? e.message : "Rollback failed"
+                          );
+                        } finally {
+                          setBusy(false);
+                        }
+                      }}
+                    >
+                      Execute rollback
+                    </Button>
+                  )}
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+        </CardContent>
+      </Card>
     </div>
   );
 }

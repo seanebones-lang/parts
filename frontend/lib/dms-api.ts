@@ -1114,4 +1114,56 @@ export async function commitTransmissionImport(
   });
 }
 
+export type TransmissionImportHistoryItem = {
+  import_run_id?: number;
+  created_at?: string;
+  source_label?: string;
+  status?: string;
+  summary?: string;
+  valid_rows?: number;
+  warning_rows?: number;
+  catalog_inserts?: number;
+  inventory_inserts?: number;
+  inventory_updates?: number;
+  identifier_inserts?: number;
+  locations_created?: number;
+  mutation_count?: number;
+  rollback_status?: string;
+  rollback_available?: boolean;
+  rolled_back_at?: string;
+  backend?: string;
+  [key: string]: unknown;
+};
+
+export type TransmissionImportRollbackPreview = {
+  eligible?: boolean;
+  import_run_id?: number;
+  source_label?: string;
+  reason?: string | null;
+  conflicts?: Array<Record<string, unknown>>;
+  actions?: Array<Record<string, unknown>>;
+  preserve?: Array<Record<string, unknown>>;
+  inventory_restores?: number;
+  rows_to_delete?: number;
+  [key: string]: unknown;
+};
+
+export async function listTransmissionImportHistory(
+  limit = 50
+): Promise<{ success?: boolean; count?: number; imports: TransmissionImportHistoryItem[] }> {
+  return dmsGet(`/transmission/import/history?limit=${encodeURIComponent(String(limit))}`);
+}
+
+export async function previewTransmissionImportRollback(
+  runId: number
+): Promise<TransmissionImportRollbackPreview> {
+  return dmsPost(`/transmission/import/${runId}/rollback/preview`, {});
+}
+
+export async function commitTransmissionImportRollback(
+  runId: number
+): Promise<Record<string, unknown>> {
+  return dmsPost(`/transmission/import/${runId}/rollback`, {});
+}
+
 export { API_BASE_URL, ApiError };

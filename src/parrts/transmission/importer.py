@@ -601,14 +601,17 @@ def commit_import_plan(plan: ImportPlan, dms: DmsService) -> ImportPlan:
 
     store = dms.store
     conn = store.connect()
+    backend = str(getattr(dms, "backend", None) or getattr(store, "backend_name", "sqlite"))
 
     catalog_inserts = catalog_updates = 0
     inventory_inserts = inventory_updates = 0
     identifier_inserts = locations_created = 0
+    mutations: list[dict[str, Any]] = []
+    created_families: set[str] = set()
+    created_locations: set[str] = set()
 
     try:
         conn.execute("BEGIN")
-        # location map may grow
         loc_rows = store.fetchall("SELECT id, code FROM locations")
         loc_by_code = {str(r["code"]): int(r["id"]) for r in loc_rows}
 
@@ -630,6 +633,14 @@ def commit_import_plan(plan: ImportPlan, dms: DmsService) -> ImportPlan:
                         "(family, manufacturer, notes, created_at) VALUES (?, ?, ?, ?)",
                         (r.transmission_family, "", "pilot import", _now()),
                     )
+                    if r.transmission_family not in created_families:
+                        created_families.add(r.transmission_family)
+                        mutations.append(
+                            {
+                                "type": "family_insert",
+                                "family": r.transmission_family,
+                            }
+                        )
 
             # location create
             if r.location_action == "create" and r.location not in loc_by_code:
@@ -637,8 +648,18 @@ def commit_import_plan(plan: ImportPlan, dms: DmsService) -> ImportPlan:
                     "INSERT INTO locations (code, name) VALUES (?, ?)",
                     (r.location, r.location),
                 )
-                loc_by_code[r.location] = int(cur.lastrowid or 0)
+                lid_new = int(cur.lastrowid or 0)
+                loc_by_code[r.location] = lid_new
                 locations_created += 1
+                if r.location not in created_locations:
+                    created_locations.add(r.location)
+                    mutations.append(
+                        {
+                            "type": "location_insert",
+                            "location_code": r.location,
+                            "location_id": lid_new,
+                        }
+                    )
 
             lid = loc_by_code.get(r.location)
             if lid is None:
@@ -673,14 +694,31 @@ def commit_import_plan(plan: ImportPlan, dms: DmsService) -> ImportPlan:
                         ),
                     )
                     catalog_inserts += 1
+                    mutations.append(
+                        {
+                            "type": "catalog_insert",
+                            "sku": r.sku,
+                            "after": {
+                                "name": r.name,
+                                "description": r.description,
+                                "category": r.category,
+                                "oem_brand": r.oem_brand,
+                                "list_price": float(r.list_price or 0),
+                                "source": r.source,
+                                "transmission_family": r.transmission_family,
+                                "transmission_variant": r.transmission_variant,
+                                "verification_status": r.verification_status,
+                            },
+                        }
+                    )
                 else:
                     # Existing compatible SKU: never rewrite canonical catalog metadata.
-                    # Inventory/identifiers may still update below.
                     pass
 
             # inventory
             existing_inv = store.fetchone(
-                "SELECT qty FROM inventory_levels WHERE sku = ? AND location_id = ?",
+                "SELECT qty, condition, bin FROM inventory_levels "
+                "WHERE sku = ? AND location_id = ?",
                 (r.sku, lid),
             )
             if existing_inv is None:
@@ -693,7 +731,32 @@ def commit_import_plan(plan: ImportPlan, dms: DmsService) -> ImportPlan:
                     (r.sku, lid, int(r.qty), r.condition, r.bin or None),
                 )
                 inventory_inserts += 1
+                mutations.append(
+                    {
+                        "type": "inventory_insert",
+                        "sku": r.sku,
+                        "location_code": r.location,
+                        "location_id": lid,
+                        "after": {
+                            "qty": int(r.qty),
+                            "condition": r.condition,
+                            "bin": r.bin or None,
+                        },
+                    }
+                )
             else:
+                before = {
+                    "qty": int(existing_inv["qty"] or 0),
+                    "condition": str(existing_inv["condition"] or "new"),
+                    "bin": existing_inv["bin"],
+                }
+                # Match apply semantics for bin when incoming blank
+                after_bin = r.bin if r.bin else before["bin"]
+                after = {
+                    "qty": int(r.qty),
+                    "condition": r.condition,
+                    "bin": after_bin,
+                }
                 store.execute(
                     """
                     UPDATE inventory_levels
@@ -703,6 +766,16 @@ def commit_import_plan(plan: ImportPlan, dms: DmsService) -> ImportPlan:
                     (int(r.qty), r.condition, r.bin, r.sku, lid),
                 )
                 inventory_updates += 1
+                mutations.append(
+                    {
+                        "type": "inventory_update",
+                        "sku": r.sku,
+                        "location_code": r.location,
+                        "location_id": lid,
+                        "before": before,
+                        "after": after,
+                    }
+                )
 
             # identifier
             if r.identifier_action == "insert" and r.identifier_type and r.identifier_value:
@@ -729,9 +802,63 @@ def commit_import_plan(plan: ImportPlan, dms: DmsService) -> ImportPlan:
                         ),
                     )
                     identifier_inserts += 1
+                    mutations.append(
+                        {
+                            "type": "identifier_insert",
+                            "sku": r.sku,
+                            "identifier_type": r.identifier_type,
+                            "identifier_value": r.identifier_value,
+                        }
+                    )
 
         conn.commit()
         plan.committed = True
+
+        import_run_id = None
+        rollback_available = False
+        try:
+            from parrts.automation.service import AutomationService
+            from parrts.transmission.import_rollback import SCHEMA_VERSION, KIND
+
+            detail = {
+                "schema": SCHEMA_VERSION,
+                "source_label": plan.source_label,
+                "backend": backend,
+                "valid_rows": plan.valid_rows,
+                "warning_rows": plan.warning_rows,
+                "counts": {
+                    "catalog_inserts": catalog_inserts,
+                    "catalog_updates": catalog_updates,
+                    "inventory_inserts": inventory_inserts,
+                    "inventory_updates": inventory_updates,
+                    "identifier_inserts": identifier_inserts,
+                    "locations_created": locations_created,
+                },
+                "mutations": mutations,
+                "rollback_status": "available" if backend == "sqlite" and mutations else "unavailable",
+                "rolled_back_at": None,
+            }
+            if backend != "sqlite":
+                detail["rollback_status"] = "unavailable"
+                detail["rollback_note"] = "rollback supported for sqlite pilot backend only"
+
+            run = AutomationService(dms.root).record_run(
+                kind=KIND,
+                source_ref=plan.source_label,
+                status="ok",
+                summary=(
+                    f"import ok rows={plan.valid_rows} "
+                    f"cat+={catalog_inserts} inv+={inventory_inserts}"
+                ),
+                detail=detail,
+                requires_human=False,
+            )
+            import_run_id = run.get("id")
+            rollback_available = detail["rollback_status"] == "available"
+        except Exception:
+            import_run_id = None
+            rollback_available = False
+
         plan.commit_result = {
             "committed": True,
             "catalog_inserts": catalog_inserts,
@@ -741,42 +868,17 @@ def commit_import_plan(plan: ImportPlan, dms: DmsService) -> ImportPlan:
             "identifier_inserts": identifier_inserts,
             "locations_created": locations_created,
             "rows_processed": plan.valid_rows,
+            "import_run_id": import_run_id,
+            "rollback_available": rollback_available,
+            "mutation_count": len(mutations),
+            "backend": backend,
         }
-        # refresh plan tallies to actuals
         plan.catalog_inserts = catalog_inserts
         plan.catalog_updates = catalog_updates
         plan.inventory_inserts = inventory_inserts
         plan.inventory_updates = inventory_updates
         plan.identifier_inserts = identifier_inserts
         plan.locations_to_create = locations_created
-
-        # best-effort automation audit (non-authoritative)
-        try:
-            from parrts.automation.service import AutomationService
-
-            AutomationService(dms.root).record_run(
-                kind="transmission_import",
-                source_ref=plan.source_label,
-                status="ok",
-                summary=(
-                    f"import ok rows={plan.valid_rows} "
-                    f"cat+={catalog_inserts} inv+={inventory_inserts}"
-                ),
-                detail={
-                    "source_label": plan.source_label,
-                    "valid_rows": plan.valid_rows,
-                    "warning_rows": plan.warning_rows,
-                    "catalog_inserts": catalog_inserts,
-                    "catalog_updates": catalog_updates,
-                    "inventory_inserts": inventory_inserts,
-                    "inventory_updates": inventory_updates,
-                    "identifier_inserts": identifier_inserts,
-                    "locations_created": locations_created,
-                },
-                requires_human=False,
-            )
-        except Exception:
-            pass
 
     except Exception as exc:
         try:
@@ -803,6 +905,7 @@ def commit_import_plan(plan: ImportPlan, dms: DmsService) -> ImportPlan:
             pass
 
     return plan
+
 
 
 def preview_transmission_import(

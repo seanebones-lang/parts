@@ -1313,3 +1313,67 @@ async def transmission_import_commit(
         ) from exc
 
 
+@router.get("/transmission/import/history")
+async def transmission_import_history(
+    limit: int = Query(50, ge=1, le=500),
+    current_user: Optional[User] = Depends(require_permission("catalog.import")),
+    dms: DmsService = Depends(get_dms_service),
+):
+    """List recent transmission pilot import runs (manager+)."""
+    _ = current_user
+    try:
+        from parrts.transmission.import_rollback import list_transmission_import_history
+
+        items = list_transmission_import_history(dms.root, limit=limit)
+        return {"success": True, "count": len(items), "imports": items}
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"import history failed: {exc}",
+        ) from exc
+
+
+@router.post("/transmission/import/{run_id}/rollback/preview")
+async def transmission_import_rollback_preview(
+    run_id: int,
+    current_user: Optional[User] = Depends(require_permission("catalog.import")),
+    dms: DmsService = Depends(get_dms_service),
+):
+    """Read-only rollback safety preview for one import run."""
+    _ = current_user
+    try:
+        from parrts.transmission.import_rollback import (
+            preview_transmission_import_rollback,
+        )
+
+        preview = preview_transmission_import_rollback(dms, int(run_id))
+        return {"success": True, **preview}
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"rollback preview failed: {exc}",
+        ) from exc
+
+
+@router.post("/transmission/import/{run_id}/rollback")
+async def transmission_import_rollback(
+    run_id: int,
+    current_user: Optional[User] = Depends(require_permission("catalog.import")),
+    dms: DmsService = Depends(get_dms_service),
+):
+    """Execute safe rollback for one import run (manager+). Re-checks eligibility."""
+    _ = current_user
+    try:
+        from parrts.transmission.import_rollback import rollback_transmission_import
+
+        result = rollback_transmission_import(
+            dms, int(run_id), actor="api"
+        )
+        return {"success": bool(result.get("rolled_back")), **result}
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"rollback failed: {exc}",
+        ) from exc
+
+
