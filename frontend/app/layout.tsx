@@ -1,40 +1,53 @@
-import type { Metadata, Viewport } from 'next'
-import { Inter } from 'next/font/google'
-import './globals.css'
-import { Navigation } from './navigation'
-import { OfflineQueueBanner } from '@/components/offline-queue-banner'
-import { PwaRegister } from '@/components/pwa-register'
-import { getBrand } from '@/lib/demo-vertical'
+import type { Metadata, Viewport } from "next";
+import { Inter } from "next/font/google";
+import "./globals.css";
+import { Navigation } from "./navigation";
+import { OfflineQueueBanner } from "@/components/offline-queue-banner";
+import { PwaRegister } from "@/components/pwa-register";
+import { JpShell } from "@/components/jp/shell";
+import { getBrand, isTransmissionDemo } from "@/lib/demo-vertical";
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({ subsets: ["latin"] });
 
-const brand = getBrand()
+const brand = getBrand();
+const jp = isTransmissionDemo();
 
 export const metadata: Metadata = {
   title: brand.documentTitle,
   description: brand.documentDescription,
   applicationName: brand.applicationName,
-  manifest: '/manifest.webmanifest',
+  manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
-    statusBarStyle: 'default',
+    statusBarStyle: "default",
     title: brand.applicationName,
   },
-}
+};
 
 export const viewport: Viewport = {
-  width: 'device-width',
+  width: "device-width",
   initialScale: 1,
   maximumScale: 1,
-  themeColor: '#0f172a',
-  viewportFit: 'cover',
-}
+  themeColor: jp ? "#020617" : "#0f172a",
+  viewportFit: "cover",
+};
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
+  if (jp) {
+    return (
+      <html lang="en">
+        <body className={inter.className}>
+          <PwaRegister />
+          <JpShell>{children}</JpShell>
+        </body>
+      </html>
+    );
+  }
+
   return (
     <html lang="en">
       <body className={inter.className}>
@@ -48,9 +61,7 @@ export default function RootLayout({
                   </div>
                   <div>
                     <h1 className="text-lg font-bold leading-tight">{brand.title}</h1>
-                    <p className="text-xs text-muted-foreground">
-                      {brand.subtitle}
-                    </p>
+                    <p className="text-xs text-muted-foreground">{brand.subtitle}</p>
                   </div>
                 </div>
                 <Navigation />
@@ -63,5 +74,5 @@ export default function RootLayout({
         </div>
       </body>
     </html>
-  )
+  );
 }

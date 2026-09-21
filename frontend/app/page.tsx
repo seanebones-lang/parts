@@ -1,15 +1,14 @@
-import Link from 'next/link'
-import { redirect } from 'next/navigation'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { MapPin, Search, Shield, Database, Truck, Mail } from 'lucide-react'
-import { isTransmissionDemo } from '@/lib/demo-vertical'
+import Link from "next/link";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { MapPin, Search, Shield, Database, Truck, Mail } from "lucide-react";
+import { isTransmissionDemo } from "@/lib/demo-vertical";
+import JpOverviewClient from "./jp-overview-client";
 
 export default function HomePage() {
-  // JP presentation mode: land on the transmission counter, not the generic dealership home.
   if (isTransmissionDemo()) {
-    redirect('/transmission')
+    return <JpOverviewClient />;
   }
 
   return (
@@ -64,11 +63,11 @@ export default function HomePage() {
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
             {[
-              'brake pads for 2019 Honda Civic',
-              'oil filter Toyota Camry 2020',
-              'spark plugs NGK Civic',
-              'front rotors 2018 Ford F-150',
-              'battery group 51R Honda',
+              "brake pads for 2019 Honda Civic",
+              "oil filter Toyota Camry 2020",
+              "spark plugs NGK Civic",
+              "front rotors 2018 Ford F-150",
+              "battery group 51R Honda",
             ].map((q) => (
               <Link
                 key={q}
@@ -121,7 +120,7 @@ export default function HomePage() {
         </CardHeader>
         <CardContent className="space-y-1 text-sm text-muted-foreground">
           <p>
-            · Set <code className="text-xs">AUTH_MODE=production</code>, strong{' '}
+            · Set <code className="text-xs">AUTH_MODE=production</code>, strong{" "}
             <code className="text-xs">SECRET_KEY</code>, <code className="text-xs">DEBUG=false</code>.
           </p>
           <p>
@@ -133,5 +132,5 @@ export default function HomePage() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

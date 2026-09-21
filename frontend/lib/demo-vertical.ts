@@ -38,7 +38,6 @@ export function transmissionLocationLabel(
   if (TRANSMISSION_LOCATION_LABELS[key]) {
     return TRANSMISSION_LOCATION_LABELS[key];
   }
-  // Some APIs return the friendly name already (e.g. "Chicago North")
   const upper = key.toUpperCase();
   if (upper.includes("CHI") && upper.includes("N")) {
     return TRANSMISSION_LOCATION_LABELS["CHI-N"];
@@ -46,7 +45,6 @@ export function transmissionLocationLabel(
   if (upper.includes("OHARE") || upper.includes("O'HARE") || upper.includes("O’HARE")) {
     return TRANSMISSION_LOCATION_LABELS.OHARE;
   }
-  // Known seed display names
   if (/chicago\s*north/i.test(key)) return "Main Warehouse";
   if (/o'?hare/i.test(key)) return "Front Counter";
   return null;
@@ -74,23 +72,40 @@ export function formatTransmissionLocationLine(inv: {
 export const JP_BRAND = {
   mark: "JP",
   title: "JP Transmission",
-  subtitle: "Inventory Pilot · Built by NextEleven",
-  documentTitle: "JP Transmission — Inventory Pilot | NextEleven",
+  productLine: "Parts Intelligence",
+  subtitle: "Built by NextEleven",
+  documentTitle: "JP Transmission — Parts Intelligence | NextEleven",
   documentDescription:
-    "JP Transmission inventory pilot: counter lookup, pilot data import, and safe reversible imports. Evaluation demo by NextEleven.",
-  applicationName: "JP Transmission Pilot",
+    "JP Transmission Parts Intelligence pilot: counter search, inventory, email desk, and safe inventory import. Evaluation build by NextEleven — synthetic pilot data.",
+  applicationName: "JP Transmission",
+  pilotLabel: "PILOT · SYNTHETIC DATA",
+  pilotDetail:
+    "This pilot uses synthetic evaluation inventory and is not live JP production stock. Fitment and interchange are demo-grade unless verified against a real export.",
 } as const;
 
 export const PARTS_BRAND = {
   mark: "P",
   title: "Parts",
+  productLine: "Dealership parts system",
   subtitle: "NextEleven · dealership parts system",
   documentTitle: "Parts — Dealership Parts System | NextEleven",
   documentDescription:
     "Multi-location dealership parts system: AI search, DMS inventory/orders, OEM feed ingest.",
   applicationName: "Parts",
+  pilotLabel: "",
+  pilotDetail: "",
 } as const;
 
 export function getBrand() {
   return isTransmissionDemo() ? JP_BRAND : PARTS_BRAND;
 }
+
+/** JP application navigation (presentation shell only). */
+export const JP_NAV: Array<{ href: string; label: string; match?: string }> = [
+  { href: "/", label: "Overview", match: "^/$" },
+  { href: "/transmission", label: "Parts Search", match: "^/transmission$" },
+  { href: "/inventory", label: "Inventory", match: "^/inventory" },
+  { href: "/emails", label: "Email Desk", match: "^/emails" },
+  { href: "/transmission/import", label: "Data Import", match: "^/transmission/import" },
+  { href: "/activity", label: "Activity", match: "^/activity" },
+];

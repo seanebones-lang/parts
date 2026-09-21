@@ -31,6 +31,8 @@ import {
   trafficColor,
 } from "@/lib/email-api";
 import { emailToOrder } from "@/lib/automation-api";
+import { isTransmissionDemo } from "@/lib/demo-vertical";
+import { JpPage } from "@/components/jp/ui";
 
 function tlBadge(
   color: string
@@ -55,6 +57,7 @@ function preview(text?: string, n = 140): string {
 }
 
 export default function EmailsPage() {
+  const jp = isTransmissionDemo();
   const [emails, setEmails] = useState<DeskEmail[]>([]);
   const [status, setStatus] = useState<EmailStatus | null>(null);
   const [selected, setSelected] = useState<DeskEmail | null>(null);
@@ -179,20 +182,28 @@ export default function EmailsPage() {
   };
 
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-6 p-6">
+    <div className={jp ? "mx-auto w-full max-w-6xl px-6 py-5" : "mx-auto flex max-w-6xl flex-col gap-6 p-6"}>
       <div className="flex flex-col gap-2">
         <div className="flex flex-wrap items-center gap-2">
-          <Mail className="h-6 w-6" />
-          <h1 className="text-2xl font-bold tracking-tight">Email Desk</h1>
-          <Badge variant="default">Live · selling point</Badge>
+          {!jp ? <Mail className="h-6 w-6" /> : null}
+          <h1 className={jp ? "text-xl font-semibold tracking-tight text-slate-900" : "text-2xl font-bold tracking-tight"}>
+            Email Desk
+          </h1>
+          {!jp ? <Badge variant="default">Live · selling point</Badge> : null}
         </div>
         <p className="max-w-3xl text-sm text-muted-foreground">
+          {jp
+            ? "Customer parts inquiries → identify the request → check inventory → prepare a response → human review when needed."
+            : (
+              <>
           Inbound parts questions are classified, answered by section specialists,
           and graded{" "}
           <span className="font-medium text-emerald-600">green</span> (handled) /{" "}
           <span className="font-medium text-amber-600">yellow</span> (review) /{" "}
           <span className="font-medium text-red-600">red</span> (urgent). Full-text
           searchable archive for the team.
+              </>
+            )}
         </p>
       </div>
 

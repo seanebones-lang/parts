@@ -29,7 +29,7 @@ import { isTransmissionDemo } from "@/lib/demo-vertical";
 function catalogActionLabel(action?: string): string {
   switch (action) {
     case "insert":
-      return "New catalog SKU";
+      return "New SKU";
     case "preserve":
       return "Existing catalog preserved";
     case "conflict":
@@ -39,6 +39,28 @@ function catalogActionLabel(action?: string): string {
     default:
       return action || "—";
   }
+}
+
+function humanImportTitle(item: TransmissionImportHistoryItem): string {
+  const src = String(item.source_label || item.source || "").replace(/^pilot_csv:/i, "");
+  if (src) return src;
+  if (item.summary) return String(item.summary);
+  const id = item.import_run_id ?? item.id;
+  return id != null ? `Import #${id}` : "Inventory import";
+}
+
+function humanImportStats(item: TransmissionImportHistoryItem): string {
+  const parts: string[] = [];
+  const v = item.valid_rows;
+  const invIns = item.inventory_inserts;
+  const invUpd = item.inventory_updates;
+  const catIns = item.catalog_inserts;
+  if (typeof v === "number") parts.push(`${v} records processed`);
+  if (typeof invIns === "number" && invIns) parts.push(`${invIns} inventory added`);
+  if (typeof invUpd === "number" && invUpd) parts.push(`${invUpd} inventory updated`);
+  if (typeof catIns === "number" && catIns) parts.push(`${catIns} SKUs added`);
+  if (!parts.length && item.summary) return String(item.summary);
+  return parts.join(" · ") || "Import recorded";
 }
 
 function statusBadge(status?: string) {
@@ -207,22 +229,26 @@ export default function TransmissionImportPage() {
   const rows: TransmissionImportRowPlan[] = preview?.rows || [];
 
   return (
-    <div className="container mx-auto max-w-6xl p-6">
+    <div className={isTransmissionDemo() ? "mx-auto w-full max-w-6xl px-6 py-5" : "container mx-auto max-w-6xl p-6"}>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Pilot Data Import</h1>
-          <p className="mt-1 text-muted-foreground">
+          <h1 className="text-xl font-semibold tracking-tight text-slate-900">
+            {isTransmissionDemo() ? "Data Import" : "Pilot Data Import"}
+          </h1>
+          <p className="mt-1 text-sm text-slate-500">
             {isTransmissionDemo()
-              ? "Preview inventory data before anything is written to the system."
+              ? "Preview inventory files before anything is written. Rollback stays available when stock has not changed since import."
               : "Manager/operator inventory onboarding · preview first · explicit commit"}
           </p>
         </div>
-        <Button asChild variant="outline">
-          <Link href="/transmission">Open Transmission Counter</Link>
-        </Button>
+        {!isTransmissionDemo() ? (
+          <Button asChild variant="outline">
+            <Link href="/transmission">Open Transmission Counter</Link>
+          </Button>
+        ) : null}
       </div>
 
-      <div className="mb-6 rounded-lg border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-800">
+      <div className="mb-6 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm">
         Existing catalog identity is preserved for matching SKUs. This workflow loads
         physical inventory and new pilot SKUs only. Fitment and interchange are not
         invented from the CSV.
@@ -556,7 +582,7 @@ export default function TransmissionImportPage() {
         <CardHeader>
           <div className="flex items-center justify-between gap-3">
             <div>
-              <CardTitle>Import History</CardTitle>
+              <CardTitle>Import history</CardTitle>
               <CardDescription>
                 {isTransmissionDemo()
                   ? "Review and safely reverse a pilot import when the affected inventory has not changed since."
@@ -578,12 +604,17 @@ export default function TransmissionImportPage() {
                   key={String(h.import_run_id)}
                   className="flex flex-wrap items-center justify-between gap-3 rounded border px-3 py-2 text-sm"
                 >
-                  <div className="font-mono text-xs">
-                    #{h.import_run_id} · {h.created_at} · {h.source_label}
-                    <div className="text-muted-foreground">
-                      rows {h.valid_rows ?? "—"} · inv+{h.inventory_inserts ?? 0}/upd
-                      {h.inventory_updates ?? 0} · skus+{h.catalog_inserts ?? 0} ·{" "}
-                      {h.rollback_status || "—"}
+                  <div>
+                    <div className="font-medium text-slate-900">{humanImportTitle(h)}</div>
+                    <div className="text-xs text-slate-500">
+                      {h.created_at
+                        ? new Date(h.created_at).toLocaleString()
+                        : "—"}
+                      {h.import_run_id != null ? ` · #${h.import_run_id}` : ""}
+                    </div>
+                    <div className="text-xs text-slate-600">{humanImportStats(h)}</div>
+                    <div className="text-[11px] text-muted-foreground">
+                      Rollback: {h.rollback_status || "—"}
                     </div>
                   </div>
                   {h.rollback_available ? (
