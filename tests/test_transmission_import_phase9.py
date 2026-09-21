@@ -286,3 +286,143 @@ def test_phase9_cli_explicit_commit(dms_root, tmp_path, capsys):
         "SELECT sku FROM catalog_parts WHERE sku = ?", ("PILOT-PUMP-01",)
     )
     assert row is not None
+
+
+def test_phase9_fresh_root_preview_does_not_initialize_dms(tmp_path: Path):
+    """Preview on a never-initialized root must not create DMS files/tables."""
+    before = {p.name for p in tmp_path.rglob("*")} if tmp_path.exists() else set()
+    dms = DmsService(tmp_path)  # construct only; no ensure_schema
+    result = preview_transmission_import(VALID_CSV, dms)
+    assert result["ok"] is False
+    assert any("not initialized" in e.lower() for e in result["file_errors"])
+    assert result["mode"] == "preview"
+    assert result["committed"] is False
+    # No dms.db created
+    assert not (tmp_path / ".parrts" / "dms.db").exists()
+    after = {p.name for p in tmp_path.rglob("*")} if any(tmp_path.iterdir()) else set()
+    # Allow empty dirs only if something else appeared — dms.db must stay absent
+    assert "dms.db" not in after
+
+
+def test_phase9_existing_verified_sku_stays_verified(seeded):
+    _, dms = seeded
+    dms.store.execute(
+        "UPDATE catalog_parts SET verification_status = ? WHERE sku = ?",
+        ("verified", "6L80-PUMP-01"),
+    )
+    dms.store.commit()
+    csv_text = """sku,name,transmission_family,location,qty,condition,bin
+6L80-PUMP-01,6L80 Transmission Pump Assembly,6L80,CHI-N,7,new,A-99
+"""
+    result = commit_transmission_import(csv_text, dms)
+    assert result["committed"] is True
+    row = dms.store.fetchone(
+        "SELECT verification_status, source FROM catalog_parts WHERE sku = ?",
+        ("6L80-PUMP-01",),
+    )
+    assert row["verification_status"] == "verified"
+    inv = dms.store.fetchone(
+        """
+        SELECT i.qty, i.bin FROM inventory_levels i
+        JOIN locations l ON l.id = i.location_id
+        WHERE i.sku = ? AND l.code = ?
+        """,
+        ("6L80-PUMP-01", "CHI-N"),
+    )
+    assert inv["qty"] == 7
+    assert inv["bin"] == "A-99"
+
+
+def test_phase9_existing_source_preserved(seeded):
+    _, dms = seeded
+    dms.store.execute(
+        "UPDATE catalog_parts SET source = ? WHERE sku = ?",
+        ("trusted_existing_source", "6L80-PUMP-01"),
+    )
+    dms.store.commit()
+    csv_text = """sku,name,transmission_family,location,qty
+6L80-PUMP-01,6L80 Transmission Pump Assembly,6L80,CHI-N,2
+"""
+    result = commit_transmission_import(csv_text, dms, source="jp-pilot")
+    assert result["committed"] is True
+    row = dms.store.fetchone(
+        "SELECT source FROM catalog_parts WHERE sku = ?",
+        ("6L80-PUMP-01",),
+    )
+    assert row["source"] == "trusted_existing_source"
+    assert "pilot_csv" not in str(row["source"])
+
+
+def test_phase9_existing_category_description_preserved(seeded):
+    _, dms = seeded
+    dms.store.execute(
+        "UPDATE catalog_parts SET category = ?, description = ? WHERE sku = ?",
+        ("resolver_category", "original pump description", "6L80-PUMP-01"),
+    )
+    dms.store.commit()
+    csv_text = """sku,name,transmission_family,location,qty,category,description
+6L80-PUMP-01,6L80 Transmission Pump Assembly,6L80,CHI-N,3,other_category,incoming overwrite attempt
+"""
+    result = commit_transmission_import(csv_text, dms)
+    assert result["committed"] is True
+    row = dms.store.fetchone(
+        "SELECT category, description FROM catalog_parts WHERE sku = ?",
+        ("6L80-PUMP-01",),
+    )
+    assert row["category"] == "resolver_category"
+    assert row["description"] == "original pump description"
+
+
+def test_phase9_existing_compatible_sku_catalog_preserved_in_preview(seeded):
+    _, dms = seeded
+    csv_text = """sku,name,transmission_family,location,qty
+6L80-PUMP-01,6L80 Transmission Pump Assembly,6L80,CHI-N,5
+"""
+    result = preview_transmission_import(csv_text, dms)
+    assert result["ok"] is True
+    assert result["catalog_updates"] == 0
+    assert result["catalog_inserts"] == 0
+    row = result["rows"][0]
+    assert row["catalog_action"] == "preserve"
+    assert row["existing_sku"] is True
+    assert row["inventory_action"] in ("insert", "update")
+
+
+def test_phase9_new_sku_still_imports_normally(dms_root):
+    _, dms = dms_root
+    result = commit_transmission_import(VALID_CSV, dms, source="jp-new")
+    assert result["committed"] is True
+    row = dms.store.fetchone(
+        "SELECT source, verification_status, transmission_family FROM catalog_parts "
+        "WHERE sku = ?",
+        ("PILOT-PUMP-01",),
+    )
+    assert row["verification_status"] == "unverified"
+    assert "pilot_csv" in str(row["source"])
+    assert row["transmission_family"] == "6L80"
+
+
+def test_phase9_existing_sku_new_identifier_without_catalog_rewrite(seeded):
+    _, dms = seeded
+    before = dms.store.fetchone(
+        "SELECT name, source, verification_status, category, description "
+        "FROM catalog_parts WHERE sku = ?",
+        ("6L80-PUMP-01",),
+    )
+    csv_text = """sku,name,transmission_family,location,qty,identifier_type,identifier_value
+6L80-PUMP-01,6L80 Transmission Pump Assembly,6L80,CHI-N,1,oem,NEW-IDENT-PHASE9
+"""
+    result = commit_transmission_import(csv_text, dms)
+    assert result["committed"] is True
+    after = dms.store.fetchone(
+        "SELECT name, source, verification_status, category, description "
+        "FROM catalog_parts WHERE sku = ?",
+        ("6L80-PUMP-01",),
+    )
+    assert dict(after) == dict(before)
+    ident = dms.store.fetchone(
+        "SELECT identifier_value FROM part_identifiers "
+        "WHERE sku = ? AND identifier_value = ?",
+        ("6L80-PUMP-01", "NEW-IDENT-PHASE9"),
+    )
+    assert ident is not None

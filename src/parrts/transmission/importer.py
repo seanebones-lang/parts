@@ -18,6 +18,7 @@ import io
 import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, Literal
 
 from parrts.dms.service import DmsService
@@ -34,6 +35,47 @@ REQUIRED_COLUMNS = ("sku", "name", "transmission_family", "location", "qty")
 
 def _now() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+
+
+def dms_initialization_error(dms: DmsService) -> str | None:
+    """Return an error message if DMS is not ready for import ops.
+
+    Must not create DB files, tables, or default locations.
+    """
+    store = dms.store
+    db_path = getattr(store, "db_path", None)
+    if db_path is not None:
+        path = Path(db_path)
+        if not path.exists():
+            return "DMS is not initialized"
+        # Read-only open: do not mkdir; file already exists.
+        try:
+            import sqlite3
+
+            conn = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
+            try:
+                row = conn.execute(
+                    "SELECT 1 FROM sqlite_master WHERE type='table' AND name='catalog_parts'"
+                ).fetchone()
+                if row is None:
+                    return "DMS is not initialized"
+                row2 = conn.execute(
+                    "SELECT 1 FROM sqlite_master WHERE type='table' AND name='locations'"
+                ).fetchone()
+                if row2 is None:
+                    return "DMS is not initialized"
+            finally:
+                conn.close()
+        except Exception:
+            return "DMS is not initialized"
+        return None
+
+    # Non-SQLite backends: attempt a non-mutating probe via existing connection.
+    try:
+        dms.store.fetchone("SELECT 1 AS ok")
+    except Exception:
+        return "DMS is not initialized"
+    return None
 
 
 def _norm_header(h: str) -> str:
@@ -97,7 +139,7 @@ class RowPlan:
     bin: str = ""
     identifier_type: str = ""
     identifier_value: str = ""
-    catalog_action: str = "none"  # insert | update | none | conflict
+    catalog_action: str = "none"  # insert | preserve | none | conflict
     inventory_action: str = "none"  # insert | update | none
     identifier_action: str = "none"  # insert | none
     location_action: str = "none"  # create | none
@@ -219,13 +261,16 @@ def build_import_plan(
     mode: str = "preview",
 ) -> ImportPlan:
     """Parse + validate CSV against current DMS. Never writes."""
-    dms.ensure_schema()
+    init_err = dms_initialization_error(dms)
     source_label = source if source.startswith("pilot_csv") else f"pilot_csv:{source}"
     plan = ImportPlan(
         mode=mode,
         source_label=source_label,
         allow_new_locations=allow_new_locations,
     )
+    if init_err:
+        plan.file_errors.append(init_err)
+        return plan
 
     try:
         reader = csv.DictReader(io.StringIO(csv_text))
@@ -250,7 +295,7 @@ def build_import_plan(
     # Existing catalog
     cat_rows = dms.store.fetchall(
         "SELECT sku, name, transmission_family, transmission_variant, category, "
-        "verification_status, source FROM catalog_parts"
+        "description, verification_status, source FROM catalog_parts"
     )
     cat_by_sku = {str(r["sku"]): dict(r) for r in cat_rows}
 
@@ -385,6 +430,7 @@ def build_import_plan(
             ex_fam = str(existing.get("transmission_family") or "")
             ex_var = str(existing.get("transmission_variant") or "")
             ex_name = str(existing.get("name") or "")
+            ex_cat = str(existing.get("category") or "")
             conflicts = []
             if ex_fam and row.transmission_family and ex_fam != row.transmission_family:
                 conflicts.append(
@@ -395,7 +441,6 @@ def build_import_plan(
                     f"transmission_variant conflict existing={ex_var!r} incoming={row.transmission_variant!r}"
                 )
             if ex_name and row.name and ex_name.lower() != row.name.lower():
-                # name mismatch is a warning/conflict — block for safety
                 conflicts.append(
                     f"name conflict existing={ex_name!r} incoming={row.name!r}"
                 )
@@ -403,7 +448,26 @@ def build_import_plan(
                 row.errors.extend(conflicts)
                 row.catalog_action = "conflict"
             else:
-                row.catalog_action = "update"
+                # Compatible existing SKU: preserve all canonical catalog metadata.
+                row.catalog_action = "preserve"
+                if (
+                    headers.get("category")
+                    and row.category
+                    and ex_cat
+                    and row.category != ex_cat
+                ):
+                    row.warnings.append(
+                        f"incoming category {row.category!r} ignored; "
+                        f"existing canonical category {ex_cat!r} preserved"
+                    )
+                if headers.get("description") and row.description:
+                    row.warnings.append(
+                        "incoming description ignored; existing canonical description preserved"
+                    )
+                if headers.get("verification_status"):
+                    row.warnings.append(
+                        "incoming verification_status ignored; existing verification preserved"
+                    )
         elif row.sku:
             row.catalog_action = "insert"
 
@@ -492,8 +556,7 @@ def build_import_plan(
                 plan.new_sku_count += 1
             if r.catalog_action == "insert":
                 plan.catalog_inserts += 1
-            elif r.catalog_action == "update":
-                plan.catalog_updates += 1
+            # preserve/none/conflict: no catalog mutation planned
         if r.inventory_action == "insert":
             plan.inventory_inserts += 1
         elif r.inventory_action == "update":
@@ -527,7 +590,15 @@ def commit_import_plan(plan: ImportPlan, dms: DmsService) -> ImportPlan:
         }
         return plan
 
-    dms.ensure_schema()
+    init_err = dms_initialization_error(dms)
+    if init_err:
+        plan.committed = False
+        plan.commit_result = {
+            "committed": False,
+            "reason": init_err,
+        }
+        return plan
+
     store = dms.store
     conn = store.connect()
 
@@ -603,36 +674,9 @@ def commit_import_plan(plan: ImportPlan, dms: DmsService) -> ImportPlan:
                     )
                     catalog_inserts += 1
                 else:
-                    # compatible update only (plan already blocked conflicts)
-                    store.execute(
-                        """
-                        UPDATE catalog_parts SET
-                            name = ?,
-                            description = COALESCE(NULLIF(?, ''), description),
-                            category = COALESCE(NULLIF(?, ''), category),
-                            oem_brand = COALESCE(NULLIF(?, ''), oem_brand),
-                            list_price = CASE WHEN ? > 0 THEN ? ELSE list_price END,
-                            source = ?,
-                            transmission_family = COALESCE(NULLIF(?, ''), transmission_family),
-                            transmission_variant = COALESCE(NULLIF(?, ''), transmission_variant),
-                            verification_status = COALESCE(NULLIF(?, ''), verification_status)
-                        WHERE sku = ?
-                        """,
-                        (
-                            r.name,
-                            r.description,
-                            r.category,
-                            r.oem_brand,
-                            float(r.list_price or 0),
-                            float(r.list_price or 0),
-                            r.source,
-                            r.transmission_family,
-                            r.transmission_variant,
-                            r.verification_status,
-                            r.sku,
-                        ),
-                    )
-                    catalog_updates += 1
+                    # Existing compatible SKU: never rewrite canonical catalog metadata.
+                    # Inventory/identifiers may still update below.
+                    pass
 
             # inventory
             existing_inv = store.fetchone(
