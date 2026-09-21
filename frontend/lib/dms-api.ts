@@ -1269,6 +1269,7 @@ export async function opsAdjust(body: {
   reason: string;
   notes?: string;
   actor?: string;
+  idempotency_key?: string;
 }) {
   return dmsPost("/ops/adjust", body);
 }
@@ -1280,6 +1281,7 @@ export async function opsTransfer(body: {
   qty: number;
   notes?: string;
   actor?: string;
+  idempotency_key?: string;
 }) {
   return dmsPost("/ops/transfer", body);
 }
@@ -1295,8 +1297,30 @@ export async function opsReserve(body: {
   return dmsPost("/ops/reserve", body);
 }
 
-export async function opsReleaseReservation(id: number, actor = "counter") {
-  return dmsPost(`/ops/reservations/${id}/release?actor=${encodeURIComponent(actor)}`, {});
+export async function opsListReservations(opts?: {
+  sku?: string;
+  location?: string;
+  status?: string;
+  limit?: number;
+}) {
+  const sp = new URLSearchParams();
+  if (opts?.sku) sp.set("sku", opts.sku);
+  if (opts?.location) sp.set("location", opts.location);
+  if (opts?.status) sp.set("status", opts.status);
+  if (opts?.limit != null) sp.set("limit", String(opts.limit));
+  const q = sp.toString();
+  return dmsGet<{ ok?: boolean; reservations: any[] }>(`/ops/reservations${q ? `?${q}` : ""}`);
+}
+
+export async function opsReleaseReservation(
+  id: number,
+  opts?: { actor?: string; notes?: string; idempotency_key?: string }
+) {
+  const actor = opts?.actor || "counter";
+  const sp = new URLSearchParams({ actor });
+  if (opts?.notes) sp.set("notes", opts.notes);
+  if (opts?.idempotency_key) sp.set("idempotency_key", opts.idempotency_key);
+  return dmsPost(`/ops/reservations/${id}/release?${sp.toString()}`, {});
 }
 
 export async function opsListQuotes(status?: string) {
@@ -1349,16 +1373,34 @@ export async function opsRemoveQuoteLine(quoteId: number, lineId: number) {
   });
 }
 
-export async function opsReserveQuote(quoteId: number, actor = "counter") {
-  return dmsPost(`/ops/quotes/${quoteId}/reserve?actor=${encodeURIComponent(actor)}`, {});
+export async function opsReserveQuote(
+  quoteId: number,
+  opts?: { actor?: string; idempotency_key?: string }
+) {
+  const actor = opts?.actor || "counter";
+  const sp = new URLSearchParams({ actor });
+  if (opts?.idempotency_key) sp.set("idempotency_key", opts.idempotency_key);
+  return dmsPost(`/ops/quotes/${quoteId}/reserve?${sp.toString()}`, {});
 }
 
-export async function opsCancelQuote(quoteId: number, actor = "counter") {
-  return dmsPost(`/ops/quotes/${quoteId}/cancel?actor=${encodeURIComponent(actor)}`, {});
+export async function opsCancelQuote(
+  quoteId: number,
+  opts?: { actor?: string; idempotency_key?: string }
+) {
+  const actor = opts?.actor || "counter";
+  const sp = new URLSearchParams({ actor });
+  if (opts?.idempotency_key) sp.set("idempotency_key", opts.idempotency_key);
+  return dmsPost(`/ops/quotes/${quoteId}/cancel?${sp.toString()}`, {});
 }
 
-export async function opsConvertQuote(quoteId: number, actor = "counter") {
-  return dmsPost(`/ops/quotes/${quoteId}/convert?actor=${encodeURIComponent(actor)}`, {});
+export async function opsConvertQuote(
+  quoteId: number,
+  opts?: { actor?: string; idempotency_key?: string }
+) {
+  const actor = opts?.actor || "counter";
+  const sp = new URLSearchParams({ actor });
+  if (opts?.idempotency_key) sp.set("idempotency_key", opts.idempotency_key);
+  return dmsPost(`/ops/quotes/${quoteId}/convert?${sp.toString()}`, {});
 }
 
 export async function opsListOrders(status?: string) {
@@ -1370,12 +1412,24 @@ export async function opsGetOrder(id: number) {
   return dmsGet(`/ops/orders/${id}`);
 }
 
-export async function opsCompleteOrder(orderId: number, actor = "counter") {
-  return dmsPost(`/ops/orders/${orderId}/complete?actor=${encodeURIComponent(actor)}`, {});
+export async function opsCompleteOrder(
+  orderId: number,
+  opts?: { actor?: string; idempotency_key?: string }
+) {
+  const actor = opts?.actor || "counter";
+  const sp = new URLSearchParams({ actor });
+  if (opts?.idempotency_key) sp.set("idempotency_key", opts.idempotency_key);
+  return dmsPost(`/ops/orders/${orderId}/complete?${sp.toString()}`, {});
 }
 
-export async function opsCancelOrder(orderId: number, actor = "counter") {
-  return dmsPost(`/ops/orders/${orderId}/cancel?actor=${encodeURIComponent(actor)}`, {});
+export async function opsCancelOrder(
+  orderId: number,
+  opts?: { actor?: string; idempotency_key?: string }
+) {
+  const actor = opts?.actor || "counter";
+  const sp = new URLSearchParams({ actor });
+  if (opts?.idempotency_key) sp.set("idempotency_key", opts.idempotency_key);
+  return dmsPost(`/ops/orders/${orderId}/cancel?${sp.toString()}`, {});
 }
 
 export async function opsListEvents(sku?: string, limit = 50) {
@@ -1383,6 +1437,73 @@ export async function opsListEvents(sku?: string, limit = 50) {
   if (sku) sp.set("sku", sku);
   sp.set("limit", String(limit));
   return dmsGet<{ ok?: boolean; events: any[] }>(`/ops/events?${sp}`);
+}
+
+
+/** Stable key for one user gesture; reuse on retry of the same action. */
+export function newIdempotencyKey(prefix = "op"): string {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return `${prefix}-${crypto.randomUUID()}`;
+  }
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+const ACTIVE_QUOTE_KEY = "jp_active_quote_id";
+
+export function getActiveQuoteId(): number | null {
+  if (typeof window === "undefined") return null;
+  const v = window.sessionStorage.getItem(ACTIVE_QUOTE_KEY);
+  if (!v) return null;
+  const n = Number(v);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+export function setActiveQuoteId(id: number | null) {
+  if (typeof window === "undefined") return;
+  if (id == null) window.sessionStorage.removeItem(ACTIVE_QUOTE_KEY);
+  else window.sessionStorage.setItem(ACTIVE_QUOTE_KEY, String(id));
+}
+
+/** Operator-facing message from API / network errors. */
+export function formatOpsError(e: unknown, fallback = "Action failed"): string {
+  if (e == null) return fallback;
+  const any = e as any;
+  const status = any?.status ?? any?.statusCode;
+  const raw =
+    (typeof any?.message === "string" && any.message) ||
+    (typeof any?.detail === "string" && any.detail) ||
+    (typeof any?.error === "string" && any.error) ||
+    (typeof e === "string" ? e : "") ||
+    fallback;
+  let msg = String(raw || fallback).trim();
+  // unwrap FastAPI {"detail":"..."}
+  try {
+    if (msg.startsWith("{") && msg.includes("detail")) {
+      const j = JSON.parse(msg);
+      if (typeof j.detail === "string") msg = j.detail;
+    }
+  } catch {
+    /* ignore */
+  }
+  const lower = msg.toLowerCase();
+  if (status === 409 || lower.includes("available") || lower.includes("attempted to reserve")) {
+    return msg;
+  }
+  if (lower.includes("already been released") || lower.includes("already released")) {
+    return "This reservation has already been released.";
+  }
+  if (lower.includes("state changed") || lower.includes("while you were") || lower.includes("refresh and try")) {
+    return "Inventory changed while you were working. Refresh and try again.";
+  }
+  if (lower.includes("location") && (lower.includes("not found") || lower.includes("unknown"))) {
+    return "That inventory location could not be found.";
+  }
+  if (lower.includes("sku") && lower.includes("not found")) {
+    return "That part SKU could not be found.";
+  }
+  // strip python exception prefixes
+  msg = msg.replace(/^.*Error:\s*/i, "").replace(/^HTTP \d+:\s*/i, "");
+  return msg || fallback;
 }
 
 export { API_BASE_URL, ApiError };

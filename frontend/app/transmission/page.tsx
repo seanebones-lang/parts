@@ -10,9 +10,15 @@ import {
   transmissionInquiry,
   transmissionInquiryFeedback,
   type TransmissionInquiryResponse,
-  opsCreateQuote,
+  formatOpsError,
+  getActiveQuoteId,
+  newIdempotencyKey,
   opsAddQuoteLine,
+  opsCreateQuote,
+  opsGetQuote,
+  opsReserve,
   opsStock,
+  setActiveQuoteId,
 } from "@/lib/dms-api";
 import {
   EmptyState,
@@ -47,6 +53,13 @@ function TransmissionInquiryInner() {
   const [correctSku, setCorrectSku] = useState("");
   const [correctNote, setCorrectNote] = useState("");
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [bizBusy, setBizBusy] = useState(false);
+  const [bizMsg, setBizMsg] = useState<string | null>(null);
+  const [bizErr, setBizErr] = useState<string | null>(null);
+  const [reserveOpen, setReserveOpen] = useState(false);
+  const [reserveLoc, setReserveLoc] = useState("CHI-N");
+  const [reserveQty, setReserveQty] = useState("1");
+  const [stockRows, setStockRows] = useState<any[]>([]);
 
   const runInquiry = async (q: string) => {
     if (!q.trim()) return;
@@ -373,22 +386,188 @@ function TransmissionInquiryInner() {
                 <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
                   Business actions
                 </div>
+                {bizMsg ? (
+                  <div className="mb-2 rounded border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs text-emerald-900">
+                    {bizMsg}
+                  </div>
+                ) : null}
+                {bizErr ? (
+                  <div className="mb-2 rounded border border-red-200 bg-red-50 px-2 py-1 text-xs text-red-800">
+                    {bizErr}
+                  </div>
+                ) : null}
                 <div className="flex flex-wrap gap-2">
-                  <a
-                    className="rounded-md bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white"
-                    href={`/quotes?add_sku=${encodeURIComponent(String(result.sku || ""))}&location=CHI-N`}
+                  <button
+                    type="button"
+                    disabled={bizBusy}
+                    className="rounded-md bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
+                    onClick={async () => {
+                      if (!result.sku) return;
+                      setBizBusy(true);
+                      setBizErr(null);
+                      setBizMsg(null);
+                      try {
+                        let rows = stockRows;
+                        if (!rows.length) {
+                          const st = await opsStock({ sku: String(result.sku) });
+                          rows = st.rows || [];
+                          setStockRows(rows);
+                        }
+                        const withStock = rows.filter((r: any) => Number(r.available ?? r.on_hand ?? 0) > 0);
+                        const loc =
+                          withStock.length === 1
+                            ? String(withStock[0].location_code || "CHI-N")
+                            : withStock[0]
+                              ? String(withStock[0].location_code || "CHI-N")
+                              : "CHI-N";
+                        let qid = getActiveQuoteId();
+                        if (qid) {
+                          try {
+                            const q = (await opsGetQuote(qid)) as any;
+                            if (!["draft", "open"].includes(String(q.status || ""))) qid = null;
+                          } catch {
+                            qid = null;
+                          }
+                        }
+                        let updated: any;
+                        if (!qid) {
+                          const q = (await opsCreateQuote({ customer_label: "Walk-in" })) as any;
+                          qid = Number(q.id);
+                          updated = await opsAddQuoteLine(qid, { sku: String(result.sku), location: loc, qty: 1 });
+                          setBizMsg(`Created ${updated.quote_number} and added ${result.sku}`);
+                        } else {
+                          updated = await opsAddQuoteLine(qid, { sku: String(result.sku), location: loc, qty: 1 });
+                          setBizMsg(`Added ${result.sku} to ${updated.quote_number}`);
+                        }
+                        setActiveQuoteId(Number(updated.id));
+                      } catch (e) {
+                        setBizErr(formatOpsError(e, "Could not add to quote"));
+                      } finally {
+                        setBizBusy(false);
+                      }
+                    }}
                   >
                     Add to quote
-                  </a>
+                  </button>
+                  <button
+                    type="button"
+                    disabled={bizBusy}
+                    className="rounded-md border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-950 disabled:opacity-50"
+                    onClick={async () => {
+                      if (!result.sku) return;
+                      setBizErr(null);
+                      setBizMsg(null);
+                      try {
+                        const st = await opsStock({ sku: String(result.sku) });
+                        const rows = st.rows || [];
+                        setStockRows(rows);
+                        const withStock = rows.filter((r: any) => Number(r.available ?? 0) > 0);
+                        if (withStock.length === 1) {
+                          setReserveLoc(String(withStock[0].location_code || "CHI-N"));
+                        } else if (withStock[0]) {
+                          setReserveLoc(String(withStock[0].location_code || "CHI-N"));
+                        }
+                        setReserveQty("1");
+                        setReserveOpen(true);
+                      } catch (e) {
+                        setBizErr(formatOpsError(e, "Could not load stock for reserve"));
+                      }
+                    }}
+                  >
+                    Reserve
+                  </button>
                   <a
                     className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium"
-                    href="/inventory"
+                    href={`/inventory`}
                   >
                     View inventory
                   </a>
+                  <a
+                    className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium"
+                    href="/quotes"
+                  >
+                    Open quotes
+                  </a>
                 </div>
+                {reserveOpen ? (
+                  <div className="mt-3 space-y-2 rounded border border-amber-200 bg-white p-2">
+                    <div className="text-[11px] font-semibold uppercase text-slate-500">Reserve inventory</div>
+                    <label className="block text-xs">
+                      Location
+                      <select
+                        value={reserveLoc}
+                        onChange={(e) => setReserveLoc(e.target.value)}
+                        className="mt-1 h-8 w-full rounded border px-2 text-sm"
+                      >
+                        {(stockRows.length ? stockRows : [{ location_code: "CHI-N", available: 0 }]).map(
+                          (r: any, i: number) => (
+                            <option key={i} value={String(r.location_code)}>
+                              {formatTransmissionLocationLine({ location: r.location_code }).title} · avail{" "}
+                              {r.available ?? 0}
+                            </option>
+                          )
+                        )}
+                      </select>
+                    </label>
+                    <label className="block text-xs">
+                      Quantity
+                      <input
+                        type="number"
+                        min={1}
+                        value={reserveQty}
+                        onChange={(e) => setReserveQty(e.target.value)}
+                        className="mt-1 h-8 w-full rounded border px-2 text-sm"
+                      />
+                    </label>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        disabled={bizBusy}
+                        className="rounded bg-amber-500 px-3 py-1.5 text-xs font-semibold text-amber-950 disabled:opacity-50"
+                        onClick={async () => {
+                          if (!result.sku) return;
+                          setBizBusy(true);
+                          setBizErr(null);
+                          try {
+                            const n = Number(reserveQty);
+                            if (!Number.isFinite(n) || n <= 0) throw new Error("Enter a positive quantity.");
+                            const row = stockRows.find((r: any) => String(r.location_code) === reserveLoc);
+                            const avail = Number(row?.available ?? 0);
+                            if (n > avail) {
+                              throw new Error(
+                                `Only ${avail} units are available. You attempted to reserve ${n}.`
+                              );
+                            }
+                            const key = newIdempotencyKey("search-reserve");
+                            await opsReserve({
+                              sku: String(result.sku),
+                              location: reserveLoc,
+                              qty: n,
+                              idempotency_key: key,
+                            });
+                            setBizMsg(`Reserved ${n} of ${result.sku} at ${reserveLoc}.`);
+                            setReserveOpen(false);
+                          } catch (e) {
+                            setBizErr(formatOpsError(e));
+                          } finally {
+                            setBizBusy(false);
+                          }
+                        }}
+                      >
+                        {bizBusy ? "Working…" : "Confirm reserve"}
+                      </button>
+                      <button
+                        type="button"
+                        className="rounded border px-3 py-1.5 text-xs"
+                        onClick={() => setReserveOpen(false)}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
                 <p className="mt-2 text-[11px] text-slate-500">
-                  Needs Review results cannot be quoted until Resolve request is completed.
+                  Needs Review results cannot be quoted or reserved until Resolve request is completed.
                 </p>
               </div>
 

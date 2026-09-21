@@ -1621,6 +1621,25 @@ async def ops_reserve(
         raise _ops_http(exc) from exc
 
 
+
+@router.get("/ops/reservations")
+async def ops_list_reservations(
+    sku: Optional[str] = None,
+    location: Optional[str] = None,
+    status_filter: Optional[str] = Query("active", alias="status"),
+    limit: int = Query(50, ge=1, le=200),
+    current_user: Optional[User] = Depends(require_user_if_production),
+    svc: DmsService = Depends(get_dms_service),
+):
+    _ = current_user
+    return {
+        "ok": True,
+        "reservations": _ops(svc).list_reservations(
+            sku=sku, location=location, status=status_filter, limit=limit
+        ),
+    }
+
+
 @router.post("/ops/reservations/{reservation_id}/release")
 async def ops_release(
     reservation_id: int,

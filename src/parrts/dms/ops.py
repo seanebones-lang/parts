@@ -641,7 +641,7 @@ class InventoryOps:
             if row is None:
                 raise OpsValidationError("Reservation not found")
             if str(row["status"]) != RES_ACTIVE:
-                raise OpsConflictError("This reservation was already released or used.")
+                raise OpsConflictError("This reservation has already been released.")
             sku = str(row["sku"])
             lid = int(row["location_id"])
             q = int(row["qty"])
@@ -876,6 +876,11 @@ class InventoryOps:
     def reserve_quote(self, *, quote_id: int, actor: str = "counter") -> dict[str, Any]:
         self.ensure()
         q = self.get_quote(quote_id)
+        if q["status"] == QUOTE_RESERVED:
+            q = dict(q)
+            q["ok"] = True
+            q["idempotent"] = True
+            return q
         if q["status"] not in (QUOTE_OPEN, QUOTE_DRAFT):
             raise OpsConflictError("Only open quotes can reserve inventory.")
         if not q["lines"]:
@@ -1124,7 +1129,12 @@ class InventoryOps:
             if o is None:
                 raise OpsValidationError("Order not found")
             if str(o["status"]) == ORDER_COMPLETED:
-                raise OpsConflictError("This order is already completed.")
+                # Double-submit safe: inventory already consumed once.
+                self._commit()
+                out = self.get_order(order_id)
+                out["ok"] = True
+                out["idempotent"] = True
+                return out
             if str(o["status"]) == ORDER_CANCELLED:
                 raise OpsConflictError("Cancelled orders cannot be completed.")
             # consume reservations if any
@@ -1260,6 +1270,48 @@ class InventoryOps:
             {"order_id": order_id},
         )
         return order
+
+
+    def list_reservations(
+        self,
+        *,
+        sku: str | None = None,
+        location: str | int | None = None,
+        status: str | None = "active",
+        limit: int = 50,
+    ) -> list[dict[str, Any]]:
+        self.ensure()
+        lim = max(1, min(int(limit or 50), 200))
+        clauses: list[str] = []
+        params: list[Any] = []
+        if sku:
+            clauses.append("r.sku = ?")
+            params.append(str(sku).strip())
+        if location is not None and str(location).strip() != "":
+            lid = self._loc(location)
+            clauses.append("r.location_id = ?")
+            params.append(lid)
+        if status:
+            clauses.append("r.status = ?")
+            params.append(str(status))
+        where = ("WHERE " + " AND ".join(clauses)) if clauses else ""
+        params.append(lim)
+        rows = self.store.fetchall(
+            f"""
+            SELECT r.*, l.code AS location_code,
+                   q.quote_number AS quote_number,
+                   o.order_number AS order_number
+            FROM inventory_reservations r
+            LEFT JOIN locations l ON l.id = r.location_id
+            LEFT JOIN quotes q ON q.id = r.quote_id
+            LEFT JOIN orders o ON o.id = r.order_id
+            {where}
+            ORDER BY r.id DESC
+            LIMIT ?
+            """,
+            tuple(params),
+        )
+        return [dict(r) for r in rows]
 
     def list_events(
         self,
