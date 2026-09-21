@@ -56,6 +56,6 @@ def test_shadow_does_not_override_production(email_root: Path):
         sender_email="test@example.com",
         process=True,
     )
-    assert result.get("email_type") == "price_request"  # production value
+    assert result.get("email_type") == "quote_request"  # production value
     # Shadow data, if present, must be in a separate field
     assert result.get("email_type") != result.get("_jev_shadow", {}).get("label")
