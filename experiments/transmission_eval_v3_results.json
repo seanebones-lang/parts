@@ -1,0 +1,60 @@
+{
+  "eval": "v3",
+  "generated_at": "2026-09-21T16:16:54+00:00",
+  "frozen_sut_sha": "932af65d58201a3e2be50fa4ed9262f136ce3598",
+  "root": "/Users/nexteleven/Desktop/Parrts-Dist-RAG",
+  "since": null,
+  "until": null,
+  "date_range": {
+    "first": null,
+    "last": null
+  },
+  "real_request_count": 0,
+  "synthetic_count": 0,
+  "metrics": {
+    "total": 0,
+    "resolved_count": 0,
+    "needs_human_count": 0,
+    "with_feedback_count": 0,
+    "resolved_with_feedback_count": 0,
+    "resolved_precision": null,
+    "false_resolution_count": 0,
+    "false_resolution_ids": [],
+    "false_resolution_queries": [],
+    "missed_resolution_count": 0,
+    "missed_resolution_ids": [],
+    "autonomous_accepted_count": 0,
+    "autonomous_accepted_coverage": 0.0,
+    "human_escalation_rate": 0.0,
+    "override_rate": null,
+    "unresolved_or_pending_count": 0,
+    "verdict_counts": {}
+  },
+  "rows": [],
+  "jev_shadow_false_resolve_observations": [],
+  "baseline": {
+    "eval": "v3",
+    "kind": "real_jp_counter_holdout",
+    "status": "collection_open",
+    "frozen_sut_sha": "932af65d58201a3e2be50fa4ed9262f136ce3598",
+    "branch": "vertical/transmission-hard-parts",
+    "resolver_policy": "frozen \u2014 no resolver/normalization/fitment/JEV/confidence/decision-policy changes during collection",
+    "prior_suites": {
+      "eval_v1": "regression_only",
+      "eval_v2_freeze_sha": "643ce5c6d91164932effd55c3f92ee68997787db",
+      "eval_v2_role": "regression_only"
+    },
+    "source_of_truth": "automation_runs kind=transmission_request_uow (no parallel eval DB)",
+    "target_n": {
+      "min": 50,
+      "ideal": 100
+    },
+    "synthetic_allowed": false,
+    "jev_decision_enabled_default": false,
+    "jev_shadow_optional": true,
+    "privacy": "no customer names/phones/addresses/payment; parts request language only",
+    "collection_opened_at": "2026-09-21T16:16:54+00:00",
+    "collection_closed_at": null,
+    "notes": "collection_opened_at is stamped by the first successful report run that sees the freeze file after live traffic starts, or by operator export EVAL_V3_OPENED_AT"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "eval": "v3",
+  "kind": "real_jp_counter_holdout",
+  "status": "collection_open",
+  "frozen_sut_sha": "932af65d58201a3e2be50fa4ed9262f136ce3598",
+  "branch": "vertical/transmission-hard-parts",
+  "resolver_policy": "frozen \u2014 no resolver/normalization/fitment/JEV/confidence/decision-policy changes during collection",
+  "prior_suites": {
+    "eval_v1": "regression_only",
+    "eval_v2_freeze_sha": "643ce5c6d91164932effd55c3f92ee68997787db",
+    "eval_v2_role": "regression_only"
+  },
+  "source_of_truth": "automation_runs kind=transmission_request_uow (no parallel eval DB)",
+  "target_n": {
+    "min": 50,
+    "ideal": 100
+  },
+  "synthetic_allowed": false,
+  "jev_decision_enabled_default": false,
+  "jev_shadow_optional": true,
+  "privacy": "no customer names/phones/addresses/payment; parts request language only",
+  "collection_opened_at": "2026-09-21T16:16:54+00:00",
+  "collection_closed_at": null,
+  "notes": "collection_opened_at is stamped by the first successful report run that sees the freeze file after live traffic starts, or by operator export EVAL_V3_OPENED_AT"
+}
