@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { transmissionInquiry, TransmissionInquiryResponse } from "@/lib/dms-api";
 
@@ -175,11 +174,11 @@ export default function TransmissionInquiryPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="flex gap-3">
-            <Input
+            <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Do you have a pump for a 2011 Tahoe 6L80?"
-              className="flex-1 font-mono"
+              className="flex-1 rounded-md border bg-background px-3 py-2 font-mono text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               disabled={loading}
             />
             <Button type="submit" disabled={loading || !query.trim()}>
