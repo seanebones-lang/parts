@@ -21,6 +21,7 @@ export default function TransmissionInquiryPage() {
   const [result, setResult] = useState<TransmissionInquiryResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
 
   const runInquiry = async (q: string) => {
     if (!q.trim()) return;
@@ -32,6 +33,11 @@ export default function TransmissionInquiryPage() {
     try {
       const res = await transmissionInquiry(q.trim());
       setResult(res);
+
+      setRecentSearches(prev => {
+        const next = [q.trim(), ...prev.filter(x => x !== q.trim())];
+        return next.slice(0, 5);
+      });
     } catch (e: any) {
       setError(e?.message || "API request failed");
     } finally {
@@ -83,18 +89,20 @@ export default function TransmissionInquiryPage() {
       <div className="space-y-6">
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-2xl">{sku}</CardTitle>
-                <CardDescription className="mt-1 text-base">{human_readable}</CardDescription>
+            <div>
+              <div className="flex items-baseline justify-between">
+                <CardTitle className="text-3xl font-mono tracking-tight">{sku}</CardTitle>
+                <div>
+                  {isZeroStock ? (
+                    <Badge variant="destructive" className="text-sm px-3 py-1">OUT OF STOCK</Badge>
+                  ) : aggregate_available === 1 ? (
+                    <Badge className="bg-amber-600 text-sm px-3 py-1">LOW STOCK — 1 AVAILABLE</Badge>
+                  ) : (
+                    <Badge className="bg-emerald-600 text-sm px-3 py-1">IN STOCK — {aggregate_available} AVAILABLE</Badge>
+                  )}
+                </div>
               </div>
-              <div className="text-right">
-                {isZeroStock ? (
-                  <Badge variant="destructive" className="text-sm">OUT OF STOCK</Badge>
-                ) : (
-                  <Badge variant="default" className="bg-emerald-600 text-sm">IN STOCK</Badge>
-                )}
-              </div>
+              <div className="mt-1 text-lg text-muted-foreground">{human_readable}</div>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -126,9 +134,15 @@ export default function TransmissionInquiryPage() {
                 <div className="mb-2 font-medium text-muted-foreground">Inventory Locations</div>
                 <div className="space-y-1 text-sm">
                   {inventory.map((inv, idx) => (
-                    <div key={idx} className="flex justify-between rounded border bg-muted/40 px-3 py-1.5 font-mono text-xs">
-                      <span>{inv.location_name || inv.location} • {inv.bin}</span>
-                      <span className={inv.qty === 0 ? "text-red-600" : ""}>{inv.qty} {inv.condition}</span>
+                    <div key={idx} className="flex justify-between items-center rounded border bg-muted/40 px-3 py-2 text-sm">
+                      <div>
+                        <div className="font-medium">{inv.location_name || inv.location}</div>
+                        <div className="font-mono text-xs text-muted-foreground">Bin {inv.bin}</div>
+                      </div>
+                      <div className="text-right font-mono">
+                        <div className={inv.qty === 0 ? "text-red-600 font-semibold" : "font-semibold"}>{inv.qty}</div>
+                        <div className="text-[10px] text-muted-foreground">{inv.condition}</div>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -186,8 +200,8 @@ export default function TransmissionInquiryPage() {
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Do you have a pump for a 2011 Tahoe 6L80?"
-              className="flex-1 rounded-md border bg-background px-3 py-2 font-mono text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              placeholder="Enter SKU, OEM number, casting, or natural language query..."
+              className="flex-1 rounded-md border-2 border-slate-300 bg-white px-4 py-3 text-base font-mono placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               disabled={loading}
             />
             <Button type="submit" disabled={loading || !query.trim()}>
@@ -209,6 +223,12 @@ export default function TransmissionInquiryPage() {
               </Button>
             ))}
           </div>
+
+          {recentSearches.length > 0 && (
+            <div className="mt-3 text-xs text-muted-foreground">
+              Recent: {recentSearches.slice(0, 3).join("  ·  ")}
+            </div>
+          )}
         </CardContent>
       </Card>
 
