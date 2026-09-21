@@ -109,7 +109,10 @@ def answer_transmission_inquiry(query: str, dms: DmsService) -> TransmissionInqu
         human_readable=human
     )
 
-    _observe_jev_shadow(query, answer)
+    try:
+        _observe_jev_shadow(query, answer)
+    except Exception:
+        pass  # Shadow failure must never affect deterministic result
     return answer
 
 def _build_human_readable(

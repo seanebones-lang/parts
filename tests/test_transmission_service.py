@@ -199,9 +199,12 @@ def test_jev_shadow_exception_is_isolated(monkeypatch, seeded_dms):
         fake_observe,
     )
 
-    answer = answer_transmission_inquiry(
-        "Do you have a pump for a 2011 Tahoe 6L80?", seeded_dms
-    )
+    try:
+        answer = answer_transmission_inquiry(
+            "Do you have a pump for a 2011 Tahoe 6L80?", seeded_dms
+        )
+    except RuntimeError:
+        pytest.fail("Exception from JEV shadow helper leaked to caller")
 
     assert answer.status == "resolved"
     assert answer.sku == "6L80-PUMP-01"
