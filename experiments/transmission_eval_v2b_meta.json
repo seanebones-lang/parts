@@ -1,0 +1,174 @@
+{
+  "eval": "v2b",
+  "title": "Transmission Eval v2b \u2014 Synthetic Pressure Test",
+  "rng_seed": 20260921,
+  "target_n": 1000,
+  "actual_n": 1000,
+  "sut_intended": "932af65d58201a3e2be50fa4ed9262f136ce3598",
+  "ground_truth_rule": "canonical seed catalog/identifiers/fitments only; no LLM SKUs",
+  "synthetic": true,
+  "not_live_jp_traffic": true,
+  "distribution": {
+    "total": 1000,
+    "cohort": {
+      "B": 290,
+      "C": 319,
+      "A": 391
+    },
+    "category": {
+      "counter_language_mutation": 290,
+      "adversarial_multi_family": 144,
+      "adversarial_no_fitment": 28,
+      "clean_family_part": 110,
+      "identifier_oem": 31,
+      "adversarial_vehicle_conflict": 41,
+      "exact_sku": 88,
+      "inventory_phrasing": 66,
+      "adversarial_nonsense": 34,
+      "vehicle_family_part": 72,
+      "adversarial_unknown_identifier": 19,
+      "adversarial_multi_part": 34,
+      "identifier_casting": 24,
+      "adversarial_contradiction": 5,
+      "adversarial_insufficient": 14
+    },
+    "expected_outcome": {
+      "RESOLVED": 681,
+      "NEEDS_HUMAN": 319
+    },
+    "mutation_type": {
+      "filler_please": 37,
+      "none": 710,
+      "plural_pumps": 19,
+      "word_order_part_for_family": 33,
+      "terse": 15,
+      "urgency_asap": 37,
+      "abbrev_vb": 12,
+      "misspell_valv": 12,
+      "filler_hey": 37,
+      "urgency_waiting": 37,
+      "abbrev_pmp": 19,
+      "punctuation_stripped": 26,
+      "plural_drums": 6
+    },
+    "adversarial_category": {
+      "none": 681,
+      "which_one": 21,
+      "no_fitment_vehicle": 28,
+      "vehicle_family_conflict": 41,
+      "which_one_multi": 20,
+      "instead_of": 42,
+      "or_family": 20,
+      "same_as_symmetric": 21,
+      "nonsense": 34,
+      "unknown_identifier": 19,
+      "multi_part_type": 34,
+      "crossover": 20,
+      "contradictory_parts": 5,
+      "family_only": 7,
+      "vehicle_only": 4,
+      "part_only": 3
+    },
+    "expected_sku": {
+      "6R80-PUMP-01": 82,
+      "NEEDS_HUMAN": 319,
+      "6L80-PUMP-01": 109,
+      "8HP70-VB-01": 54,
+      "4L60E-PUMP-01": 82,
+      "4L80E-DRUM-01": 45,
+      "4L60E-VB-01": 48,
+      "6L90-PUMP-01": 56,
+      "8HP70-PUMP-01": 48,
+      "6L80-VB-01": 56,
+      "6R80-VB-01": 48,
+      "10R80-DRUM-01": 53
+    },
+    "family_from_source": {
+      "6R80": 144,
+      "10R80": 102,
+      "6L80": 184,
+      "8HP70": 111,
+      "4L60E": 173,
+      "n/a": 122,
+      "4L80E": 87,
+      "6L90": 77
+    },
+    "part_type_from_source": {
+      "pump": 345,
+      "n/a": 371,
+      "valve body": 193,
+      "drum": 91
+    }
+  },
+  "canonical_part_count": 11,
+  "canonical_identifier_count": 8,
+  "canonical_fitment_count": 4,
+  "parts": [
+    {
+      "sku": "6L80-PUMP-01",
+      "family": "6L80",
+      "part_type": "pump",
+      "name": "6L80 Transmission Pump Assembly"
+    },
+    {
+      "sku": "6L80-VB-01",
+      "family": "6L80",
+      "part_type": "valve body",
+      "name": "6L80 Valve Body"
+    },
+    {
+      "sku": "6L90-PUMP-01",
+      "family": "6L90",
+      "part_type": "pump",
+      "name": "6L90 Heavy Duty Pump"
+    },
+    {
+      "sku": "4L60E-PUMP-01",
+      "family": "4L60E",
+      "part_type": "pump",
+      "name": "4L60E Pump Assembly"
+    },
+    {
+      "sku": "4L60E-VB-01",
+      "family": "4L60E",
+      "part_type": "valve body",
+      "name": "4L60E Valve Body"
+    },
+    {
+      "sku": "4L80E-DRUM-01",
+      "family": "4L80E",
+      "part_type": "drum",
+      "name": "4L80E Input Drum"
+    },
+    {
+      "sku": "6R80-PUMP-01",
+      "family": "6R80",
+      "part_type": "pump",
+      "name": "6R80 Pump Assembly"
+    },
+    {
+      "sku": "6R80-VB-01",
+      "family": "6R80",
+      "part_type": "valve body",
+      "name": "6R80 Valve Body"
+    },
+    {
+      "sku": "10R80-DRUM-01",
+      "family": "10R80",
+      "part_type": "drum",
+      "name": "10R80 Reaction Drum"
+    },
+    {
+      "sku": "8HP70-VB-01",
+      "family": "8HP70",
+      "part_type": "valve body",
+      "name": "8HP70 Valve Body"
+    },
+    {
+      "sku": "8HP70-PUMP-01",
+      "family": "8HP70",
+      "part_type": "pump",
+      "name": "8HP70 Pump"
+    }
+  ]
+}
