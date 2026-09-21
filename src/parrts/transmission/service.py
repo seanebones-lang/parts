@@ -13,7 +13,6 @@ from .models import TransmissionInquiryResult
 from .resolver import resolve_inquiry
 from .repository import TransmissionRepository
 
-from parrts.email.jev_shadow import is_shadow_enabled, classify_shadow
 import logging
 import os
 
