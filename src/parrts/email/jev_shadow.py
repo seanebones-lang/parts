@@ -88,3 +88,17 @@ def classify_shadow(subject: str, body: str, sender_email: str = "") -> dict[str
     except Exception:
         # Never let Jev failure affect production
         return None
+
+
+def classify_decision(subject: str, body: str, sender_email: str = "") -> dict[str, Any] | None:
+    """Run Jev for an explicit decision gate (JEV_DECISION_ENABLED).
+
+    Unlike classify_shadow, this does **not** require JEV_SHADOW_ENABLED.
+    Still no-ops without TYPESAFE_API_KEY. Never raises.
+    """
+    if not os.environ.get("TYPESAFE_API_KEY"):
+        return None
+    try:
+        return asyncio.run(_run_jev(subject, body, sender_email))
+    except Exception:
+        return None

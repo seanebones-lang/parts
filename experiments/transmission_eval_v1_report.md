@@ -1,7 +1,7 @@
 # Transmission Counter Evaluation v1
 
 - Baseline commit: `39797b6f9366de9b2fecd86013c895238e9deccf`
-- Generated: 2026-09-21T03:25:30+00:00
+- Generated: 2026-09-21T03:44:00+00:00
 - Cases: 20
 - System frozen: no resolver/policy changes during run
 
@@ -79,7 +79,15 @@
 
 ## Pass B — deterministic + JEV gate
 
-Not run (set `JEV_DECISION_ENABLED=1` and `TYPESAFE_API_KEY` to enable).
+| Metric | Pass A | Pass B |
+|--------|--------|--------|
+| Resolved precision | 1.0 | 1.0 |
+| Escalation rate | 0.300 | 0.300 |
+| False resolutions | 0 | 0 |
+| Autonomous coverage | 0.700 | 0.700 |
+| JEV escalations | 0 | 0 |
+
+Outcome/SKU flips A→B: 0
 
 ## Recommendations (do not implement yet)
 

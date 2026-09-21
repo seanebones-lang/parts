@@ -267,9 +267,9 @@ def _maybe_consult_jev(query: str, decision: TransmissionDecision) -> Transmissi
         return decision
 
     try:
-        from parrts.email.jev_shadow import classify_shadow
+        from parrts.email.jev_shadow import classify_decision
 
-        shadow = classify_shadow(subject=query[:200], body=query, sender_email="")
+        shadow = classify_decision(subject=query[:200], body=query, sender_email="")
     except Exception:
         return decision
 
