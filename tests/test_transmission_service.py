@@ -169,3 +169,218 @@ def test_phase5_regression_zero_stock_preserved(seeded_dms):
     assert answer.status == "resolved"
     assert answer.aggregate_available == 0
     assert answer.inventory_available is False
+
+
+# ------------------------------------------------------------------
+# Phase 7 — JEV Shadow Mode Tests
+# ------------------------------------------------------------------
+
+def test_jev_shadow_disabled_does_not_call_classifier(monkeypatch, seeded_dms):
+    """When JEV_SHADOW_ENABLED is not set, classify_shadow is never invoked."""
+    monkeypatch.delenv("JEV_SHADOW_ENABLED", raising=False)
+
+    called = {"count": 0}
+
+    def fake_classify(*args, **kwargs):
+        called["count"] += 1
+        return None
+
+    monkeypatch.setattr(
+        "parrts.transmission.service.classify_shadow",
+        fake_classify,
+        raising=False,
+    )
+
+    answer = answer_transmission_inquiry(
+        "Do you have a pump for a 2011 Tahoe 6L80?", seeded_dms
+    )
+
+    assert answer.status == "resolved"
+    assert answer.sku == "6L80-PUMP-01"
+    assert called["count"] == 0
+
+
+def test_jev_shadow_resolved_result_observed(monkeypatch, seeded_dms, caplog):
+    """Resolved deterministic result is observed by JEV shadow."""
+    monkeypatch.setenv("JEV_SHADOW_ENABLED", "1")
+
+    def fake_classify(subject, body, sender_email=""):
+        return {
+            "label": "parts_availability",
+            "choice_confidence": 0.92,
+            "needs_human": False,
+            "noul_probability": 0.05,
+            "model": "jev-latest",
+        }
+
+    monkeypatch.setattr(
+        "parrts.transmission.service.classify_shadow",
+        fake_classify,
+    )
+
+    answer = answer_transmission_inquiry(
+        "Do you have a pump for a 2011 Tahoe 6L80?", seeded_dms
+    )
+
+    assert answer.status == "resolved"
+    assert answer.sku == "6L80-PUMP-01"
+    assert answer.aggregate_available == 3
+    assert answer.inventory_available is True
+
+    # Verify diagnostic log was emitted
+    assert any(
+        "jev_shadow_transmission" in record.message
+        for record in caplog.records
+    )
+
+
+def test_jev_shadow_ambiguous_remains_ambiguous(monkeypatch, seeded_dms):
+    """Ambiguous deterministic result stays ambiguous even with confident JEV."""
+    monkeypatch.setenv("JEV_SHADOW_ENABLED", "1")
+
+    def fake_classify(subject, body, sender_email=""):
+        return {
+            "label": "parts_availability",
+            "choice_confidence": 0.88,
+            "needs_human": False,
+        }
+
+    monkeypatch.setattr(
+        "parrts.transmission.service.classify_shadow",
+        fake_classify,
+    )
+
+    # Force an ambiguous situation by inserting duplicate identifiers
+    seeded_dms.store.execute(
+        "INSERT INTO part_identifiers (sku, identifier_type, identifier_value, created_at) "
+        "VALUES (?, ?, ?, ?)",
+        ("AMBIG-TEST-A", "test", "AMBIG-001", "2026-01-01"),
+    )
+    seeded_dms.store.execute(
+        "INSERT INTO part_identifiers (sku, identifier_type, identifier_value, created_at) "
+        "VALUES (?, ?, ?, ?)",
+        ("AMBIG-TEST-B", "test", "AMBIG-001", "2026-01-01"),
+    )
+    seeded_dms.store.commit()
+
+    answer = answer_transmission_inquiry("Do you have AMBIG-001?", seeded_dms)
+
+    assert answer.status == "ambiguous"
+    assert answer.sku is None
+
+
+def test_jev_shadow_no_match_remains_unresolved(monkeypatch, seeded_dms):
+    """No-match/insufficient result stays unresolved regardless of JEV."""
+    monkeypatch.setenv("JEV_SHADOW_ENABLED", "1")
+
+    def fake_classify(subject, body, sender_email=""):
+        return {"label": "parts_availability", "choice_confidence": 0.95}
+
+    monkeypatch.setattr(
+        "parrts.transmission.service.classify_shadow",
+        fake_classify,
+    )
+
+    answer = answer_transmission_inquiry("Do you have FAKE-PART-999?", seeded_dms)
+
+    assert answer.status in ("no_match", "insufficient")
+    assert answer.sku is None
+
+
+def test_jev_shadow_zero_stock_remains_zero_stock(monkeypatch, seeded_dms):
+    """Zero-stock resolved result remains resolved with zero quantity."""
+    monkeypatch.setenv("JEV_SHADOW_ENABLED", "1")
+
+    def fake_classify(subject, body, sender_email=""):
+        return {"label": "parts_availability", "choice_confidence": 0.90}
+
+    monkeypatch.setattr(
+        "parrts.transmission.service.classify_shadow",
+        fake_classify,
+    )
+
+    answer = answer_transmission_inquiry("Do you have an 8HP70 pump?", seeded_dms)
+
+    assert answer.status == "resolved"
+    assert answer.aggregate_available == 0
+    assert answer.inventory_available is False
+
+
+def test_jev_shadow_returns_none_is_logged_as_no_result(monkeypatch, seeded_dms, caplog):
+    """JEV returning None is recorded as no_result without affecting inquiry."""
+    monkeypatch.setenv("JEV_SHADOW_ENABLED", "1")
+
+    def fake_classify(subject, body, sender_email=""):
+        return None
+
+    monkeypatch.setattr(
+        "parrts.transmission.service.classify_shadow",
+        fake_classify,
+    )
+
+    answer = answer_transmission_inquiry(
+        "Do you have a pump for a 2011 Tahoe 6L80?", seeded_dms
+    )
+
+    assert answer.status == "resolved"
+    assert any(
+        getattr(r, "jev_evaluation_status", None) == "no_result"
+        or "no_result" in getattr(r, "message", "")
+        for r in caplog.records
+    )
+
+
+def test_jev_shadow_exception_is_isolated(monkeypatch, seeded_dms):
+    """JEV exception does not break the deterministic inquiry."""
+    monkeypatch.setenv("JEV_SHADOW_ENABLED", "1")
+
+    def fake_classify(subject, body, sender_email=""):
+        raise RuntimeError("synthetic JEV failure")
+
+    monkeypatch.setattr(
+        "parrts.transmission.service.classify_shadow",
+        fake_classify,
+    )
+
+    answer = answer_transmission_inquiry(
+        "Do you have a pump for a 2011 Tahoe 6L80?", seeded_dms
+    )
+
+    assert answer.status == "resolved"
+    assert answer.sku == "6L80-PUMP-01"
+
+
+def test_jev_shadow_disagreement_cannot_alter_result(monkeypatch, seeded_dms):
+    """A deliberately contradictory JEV result cannot change deterministic answer."""
+    monkeypatch.setenv("JEV_SHADOW_ENABLED", "1")
+
+    def fake_classify(subject, body, sender_email=""):
+        # Contradictory: deterministic is ambiguous, JEV claims high-confidence resolved
+        return {
+            "label": "parts_availability",
+            "choice_confidence": 0.99,
+            "needs_human": False,
+        }
+
+    monkeypatch.setattr(
+        "parrts.transmission.service.classify_shadow",
+        fake_classify,
+    )
+
+    # Create ambiguity
+    seeded_dms.store.execute(
+        "INSERT INTO part_identifiers (sku, identifier_type, identifier_value, created_at) "
+        "VALUES (?, ?, ?, ?)",
+        ("AMBIG-TEST-A", "test", "AMBIG-001", "2026-01-01"),
+    )
+    seeded_dms.store.execute(
+        "INSERT INTO part_identifiers (sku, identifier_type, identifier_value, created_at) "
+        "VALUES (?, ?, ?, ?)",
+        ("AMBIG-TEST-B", "test", "AMBIG-001", "2026-01-01"),
+    )
+    seeded_dms.store.commit()
+
+    answer = answer_transmission_inquiry("Do you have AMBIG-001?", seeded_dms)
+
+    assert answer.status == "ambiguous"
+    assert answer.sku is None  # JEV cannot override
