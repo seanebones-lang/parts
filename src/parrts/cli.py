@@ -509,6 +509,35 @@ def cmd_transmission_jev_report(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_transmission_import(args: argparse.Namespace) -> int:
+    """Preview (default) or explicitly commit a transmission pilot CSV."""
+    from parrts.dms.service import DmsService
+    from parrts.transmission.importer import (
+        commit_transmission_import,
+        preview_transmission_import,
+    )
+
+    path = Path(args.csv_path)
+    if not path.is_file():
+        print(json.dumps({"ok": False, "error": f"file not found: {path}"}, indent=2))
+        return 1
+    csv_text = path.read_text(encoding="utf-8")
+    root = _root_from_args(args)
+    dms = DmsService(root)
+    source = getattr(args, "source", None) or f"pilot_csv:{path.name}"
+    allow = bool(getattr(args, "allow_new_locations", False))
+    if bool(getattr(args, "commit", False)):
+        result = commit_transmission_import(
+            csv_text, dms, source=source, allow_new_locations=allow
+        )
+    else:
+        result = preview_transmission_import(
+            csv_text, dms, source=source, allow_new_locations=allow
+        )
+    print(json.dumps(result, indent=2, default=str))
+    return 0 if result.get("ok") or result.get("mode") == "preview" else 1
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="parrts",
@@ -830,6 +859,28 @@ def build_parser() -> argparse.ArgumentParser:
         help="How many recent observations to include in the sample",
     )
     p_tjev.set_defaults(func=cmd_transmission_jev_report)
+
+    p_timp = sub.add_parser(
+        "transmission-import",
+        help="Preview/commit transmission pilot CSV (preview default; --commit to write)",
+    )
+    p_timp.add_argument("csv_path", help="Path to transmission pilot CSV")
+    p_timp.add_argument(
+        "--commit",
+        action="store_true",
+        help="Explicitly apply validated rows (default is preview-only)",
+    )
+    p_timp.add_argument(
+        "--source",
+        default=None,
+        help="Source label stored on catalog rows (default pilot_csv:<filename>)",
+    )
+    p_timp.add_argument(
+        "--allow-new-locations",
+        action="store_true",
+        help="Allow creating unknown location codes during commit",
+    )
+    p_timp.set_defaults(func=cmd_transmission_import)
 
     return parser
 
