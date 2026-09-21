@@ -109,10 +109,7 @@ def answer_transmission_inquiry(query: str, dms: DmsService) -> TransmissionInqu
         human_readable=human
     )
 
-    try:
-        _observe_jev_shadow(query, answer)
-    except Exception:
-        pass  # Shadow failure must never affect deterministic result
+    _observe_jev_shadow(query, answer)
     return answer
 
 def _build_human_readable(
@@ -157,39 +154,64 @@ def _build_no_match_summary(query: str, low_level: TransmissionInquiryResult) ->
 def _observe_jev_shadow(query: str, answer: TransmissionInquiryAnswer) -> None:
     """Run JEV in shadow mode after deterministic resolution.
 
-    This function never modifies the answer and never raises into the caller.
+    Never modifies the answer. Never raises into the caller.
+    Safe for every deterministic status path.
     """
-    if os.environ.get("JEV_SHADOW_ENABLED", "").strip().lower() not in ("1", "true", "yes", "on"):
-        return
-
     try:
+        if os.environ.get("JEV_SHADOW_ENABLED", "").strip().lower() not in (
+            "1",
+            "true",
+            "yes",
+            "on",
+        ):
+            return
+
         from parrts.email.jev_shadow import classify_shadow
 
+        # subject=truncated query, body=full query (benchmark-compatible shape)
         shadow = classify_shadow(subject=query[:200], body=query, sender_email="")
+
+        base = {
+            "query": query,
+            "deterministic_status": answer.status,
+            "deterministic_sku": answer.sku,
+            "deterministic_inventory_available": answer.inventory_available,
+        }
 
         if shadow is None:
             logger.info(
                 "jev_shadow_transmission",
-                extra={
-                    "query": query,
-                    "deterministic_status": answer.status,
-                    "deterministic_sku": answer.sku,
-                    "jev_evaluation_status": "no_result",
-                },
+                extra={**base, "jev_evaluation_status": "no_result"},
+            )
+            return
+
+        if not isinstance(shadow, dict):
+            logger.info(
+                "jev_shadow_transmission",
+                extra={**base, "jev_evaluation_status": "no_result"},
             )
             return
 
         logger.info(
             "jev_shadow_transmission",
             extra={
-                "query": query,
-                "deterministic_status": answer.status,
-                "deterministic_sku": answer.sku,
+                **base,
                 "jev_evaluation_status": "result",
-                "jev_label": getattr(shadow, "get", lambda k: None)("label") if shadow else None,
-                "jev_needs_human": getattr(shadow, "get", lambda k: None)("needs_human") if shadow else None,
-                "jev_choice_confidence": getattr(shadow, "get", lambda k: None)("choice_confidence") if shadow else None,
+                "jev_label": shadow.get("label"),
+                "jev_needs_human": shadow.get("needs_human"),
+                "jev_choice_confidence": shadow.get("choice_confidence"),
+                "jev_noul_probability": shadow.get("noul_probability"),
+                "jev_model": shadow.get("model"),
             },
         )
     except Exception as exc:
-        logger.warning("jev_shadow_transmission_failed", extra={"error": str(exc)})
+        # Import failures, classifier exceptions, logging issues — all contained.
+        logger.warning(
+            "jev_shadow_transmission_failed",
+            extra={
+                "query": query,
+                "deterministic_status": answer.status,
+                "deterministic_sku": answer.sku,
+                "error": str(exc),
+            },
+        )
