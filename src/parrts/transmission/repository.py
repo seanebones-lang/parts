@@ -68,3 +68,42 @@ class TransmissionRepository:
         sql = "SELECT identifier_type, identifier_value FROM part_identifiers WHERE sku = ?"
         rows = self.dms.store.fetchall(sql, (sku,))
         return [dict(r) for r in rows]
+
+    def find_families_for_vehicle(
+        self,
+        *,
+        model: str,
+        make: str | None = None,
+    ) -> list[str]:
+        """Return distinct transmission families linked to a vehicle model in fitment rows.
+
+        Uses canonical part_fitments only — no invented mappings.
+        """
+        model_l = (model or "").strip()
+        if not model_l:
+            return []
+        if make:
+            sql = """
+                SELECT DISTINCT transmission_family
+                FROM part_fitments
+                WHERE lower(model) = lower(?)
+                  AND lower(make) = lower(?)
+                  AND transmission_family IS NOT NULL
+                  AND trim(transmission_family) != ''
+            """
+            rows = self.dms.store.fetchall(sql, (model_l, make.strip()))
+        else:
+            sql = """
+                SELECT DISTINCT transmission_family
+                FROM part_fitments
+                WHERE lower(model) = lower(?)
+                  AND transmission_family IS NOT NULL
+                  AND trim(transmission_family) != ''
+            """
+            rows = self.dms.store.fetchall(sql, (model_l,))
+        out: list[str] = []
+        for r in rows:
+            fam = str(r["transmission_family"] or "").strip()
+            if fam and fam not in out:
+                out.append(fam)
+        return out
