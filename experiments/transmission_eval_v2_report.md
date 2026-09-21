@@ -2,7 +2,7 @@
 
 - Freeze commit (cases): `643ce5c6d91164932effd55c3f92ee68997787db`
 - SUT: `8fd2e28decb8154f61fde49fdc4df37c2ba9096b`
-- Generated: 2026-09-21T16:08:32+00:00
+- Generated: 2026-09-21T16:13:06+00:00
 - Cases: 90
 - Real JP requests: 0
 - Synthetic blind: 90
@@ -23,18 +23,18 @@
 | Metric | Value |
 |--------|-------|
 | Total | 90 |
-| RESOLVED | 52 |
-| NEEDS_HUMAN | 38 |
-| Resolved precision | 0.981 |
-| False-resolution count | 1 |
+| RESOLVED | 51 |
+| NEEDS_HUMAN | 39 |
+| Resolved precision | 1.000 |
+| False-resolution count | 0 |
 | Missed-resolution count | 1 |
-| Correct escalations | 37 |
-| Escalation rate | 0.422 |
-| Override rate | 0.022 |
+| Correct escalations | 38 |
+| Escalation rate | 0.433 |
+| Override rate | 0.011 |
 | Autonomous accepted coverage | 0.567 |
 
 ### False RESOLVED
-- **V2-84** [adversarial] `CVT pump for Prius 6L80` → system=RESOLVED/6L80-PUMP-01 expected=NEEDS_HUMAN/None
+- none
 
 ### Missed resolutions
 - **V2-58** [fitment_interchange] `cross over from 6L90 heavy pump to 6L80` → system=NEEDS_HUMAN expected_sku=6L90-PUMP-01
@@ -48,10 +48,10 @@ Not run or empty.
 | Metric | Eval v1 A | Eval v2 A |
 |--------|-----------|-----------|
 | Cases | 20 | 90 |
-| Resolved precision | 1.000 | 0.9807692307692307 |
-| False resolutions | 0 | 1 |
+| Resolved precision | 1.000 | 1.0 |
+| False resolutions | 0 | 0 |
 | Autonomous coverage | 0.700 | 0.567 |
-| Escalation rate | 0.300 | 0.422 |
+| Escalation rate | 0.300 | 0.433 |
 
 ## Recommendations (do not implement yet)
 

@@ -55,6 +55,8 @@ def _parse_vehicle(q: str) -> tuple[str | None, str | None]:
         return "Ford", "F-150"
     if "silverado" in q:
         return "Chevrolet", "Silverado"
+    if "prius" in q:
+        return "Toyota", "Prius"
     return None, None
 
 
@@ -195,8 +197,23 @@ def resolve_inquiry(query: str, dms: DmsService) -> TransmissionInquiryResult:
     if model:
         vehicle_families = repo.find_families_for_vehicle(model=model, make=make)
 
-    # Conflict safety: vehicle-implied families vs stated families
-    if stated_families and vehicle_families:
+    # Conflict / no-fitment safety: vehicle cue vs stated families
+    # Uses canonical part_fitments only (find_families_for_vehicle).
+    if stated_families and model:
+        if not vehicle_families:
+            # Vehicle recognized but no canonical fitment rows at all for it —
+            # do not bluff a family+part RESOLVED (Eval v2 V2-84 class).
+            result.fitment_status = "insufficient"
+            reason = (
+                "vehicle/transmission fitment could not be verified: "
+                f"vehicle={model} has no canonical fitment rows for "
+                f"stated family={','.join(stated_families)}"
+            )
+            if re.search(r"\bcvt\b", q):
+                reason += "; query also names CVT which conflicts with the stated family"
+            result.uncertainty.append(reason)
+            result.transmission_family = stated_families[0]
+            return result
         compatible = [f for f in stated_families if f in vehicle_families]
         if not compatible:
             result.fitment_status = "insufficient"
