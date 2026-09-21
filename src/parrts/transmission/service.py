@@ -15,6 +15,7 @@ from .repository import TransmissionRepository
 
 from parrts.email.jev_shadow import is_shadow_enabled, classify_shadow
 import logging
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -49,21 +50,25 @@ def answer_transmission_inquiry(query: str, dms: DmsService) -> TransmissionInqu
 
     if not low_level.matched_skus:
         status: Status = "no_match" if low_level.fitment_status == "no_match" else "insufficient"
-        return TransmissionInquiryAnswer(
+        answer = TransmissionInquiryAnswer(
             query=query,
             status=status,
             uncertainty=low_level.uncertainty,
             human_readable=_build_no_match_summary(query, low_level)
         )
+        _observe_jev_shadow(query, answer)
+        return answer
 
     # Ambiguity: multiple canonical candidates
     if len(low_level.matched_skus) > 1:
-        return TransmissionInquiryAnswer(
+        answer = TransmissionInquiryAnswer(
             query=query,
             status="ambiguous",
             uncertainty=["multiple canonical parts match the inquiry"],
             human_readable="Multiple parts match. Please provide more detail.",
         )
+        _observe_jev_shadow(query, answer)
+        return answer
 
     # Single canonical match
     sku = low_level.matched_skus[0]
@@ -105,23 +110,7 @@ def answer_transmission_inquiry(query: str, dms: DmsService) -> TransmissionInqu
         human_readable=human
     )
 
-    # JEV shadow evaluation (non-authoritative, failure-isolated)
-    if is_shadow_enabled():
-        try:
-            shadow = classify_shadow(subject=query[:200], body=query, sender_email="")
-            logger.info(
-                "jev_shadow_transmission",
-                extra={
-                    "query": query,
-                    "deterministic_status": answer.status,
-                    "deterministic_sku": answer.sku,
-                    "jev_label": getattr(shadow, "get", lambda k: None)("label") if shadow else None,
-                    "jev_needs_human": getattr(shadow, "get", lambda k: None)("needs_human") if shadow else None,
-                },
-            )
-        except Exception as exc:
-            logger.warning("jev_shadow_transmission_failed", extra={"error": str(exc)})
-
+    _observe_jev_shadow(query, answer)
     return answer
 
 def _build_human_readable(
@@ -161,3 +150,44 @@ def _build_no_match_summary(query: str, low_level: TransmissionInquiryResult) ->
     if low_level.uncertainty:
         return f"Unable to resolve: {', '.join(low_level.uncertainty)}"
     return "No matching transmission part found."
+
+
+def _observe_jev_shadow(query: str, answer: TransmissionInquiryAnswer) -> None:
+    """Run JEV in shadow mode after deterministic resolution.
+
+    This function never modifies the answer and never raises into the caller.
+    """
+    if os.environ.get("JEV_SHADOW_ENABLED", "").strip().lower() not in ("1", "true", "yes", "on"):
+        return
+
+    try:
+        from parrts.email.jev_shadow import classify_shadow
+
+        shadow = classify_shadow(subject=query[:200], body=query, sender_email="")
+
+        if shadow is None:
+            logger.info(
+                "jev_shadow_transmission",
+                extra={
+                    "query": query,
+                    "deterministic_status": answer.status,
+                    "deterministic_sku": answer.sku,
+                    "jev_evaluation_status": "no_result",
+                },
+            )
+            return
+
+        logger.info(
+            "jev_shadow_transmission",
+            extra={
+                "query": query,
+                "deterministic_status": answer.status,
+                "deterministic_sku": answer.sku,
+                "jev_evaluation_status": "result",
+                "jev_label": getattr(shadow, "get", lambda k: None)("label") if shadow else None,
+                "jev_needs_human": getattr(shadow, "get", lambda k: None)("needs_human") if shadow else None,
+                "jev_choice_confidence": getattr(shadow, "get", lambda k: None)("choice_confidence") if shadow else None,
+            },
+        )
+    except Exception as exc:
+        logger.warning("jev_shadow_transmission_failed", extra={"error": str(exc)})
