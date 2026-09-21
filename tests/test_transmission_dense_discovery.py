@@ -84,6 +84,57 @@ def test_product_class_inventory_matches(dense_dms, query, expect_family, expect
     assert r.sku is None
     c0 = r.discovery["candidates"][0]
     assert "sku" in c0 and "available" in c0 and "location_code" in c0
+    for c in r.discovery["candidates"]:
+        actual = c.get("actual_part_category") or c.get("part_type_label")
+        assert actual == expect_cat, (query, c["sku"], actual)
+
+
+def test_candidate_purity_no_description_contamination(dense_dms):
+    """Cores mentioning pump/converter in NOTES must not appear in pump/converter browse."""
+    for q, expect_cat in [
+        ("10L80 pump", "pump"),
+        ("10L80 converter", "torque converter"),
+        ("6L80 pump", "pump"),
+        ("6L80 torque converter", "torque converter"),
+        ("4L60E valve body", "valve body"),
+        ("4L60E sun shell", "sun shell"),
+        ("10R80 core", "complete core"),
+    ]:
+        r = counter_search(q, dense_dms)
+        # Empty stock after pure filter is OK (e.g. 10L80 pump only has 10L90 pumps in seed)
+        if r.search_mode != "inventory_matches":
+            assert r.search_mode == "needs_review", (q, r.search_mode)
+            assert (r.discovery or {}).get("candidate_count", 0) == 0 or not r.discovery
+            continue
+        assert r.discovery and r.discovery["candidates"]
+        for c in r.discovery["candidates"]:
+            actual = c.get("actual_part_category") or c.get("part_type_label")
+            assert actual == expect_cat, (q, c["sku"], c["name"], actual)
+            if expect_cat in ("pump", "torque converter"):
+                assert "core assembly" not in (c["name"] or "").lower(), (q, c["name"])
+
+
+def test_variant_isolation(dense_dms):
+    cases = [
+        ("10L80 converter", "10L80"),
+        ("10L90 converter", "10L90"),
+        ("10L80 core", "10L80"),
+        ("10L90 core", "10L90"),
+        ("4L60E valve body", "4L60E"),
+        ("4L65E valve body", "4L65E"),
+        ("4L70E valve body", "4L70E"),
+    ]
+    for q, expect_var in cases:
+        r = counter_search(q, dense_dms)
+        assert r.search_mode == "inventory_matches", (q, r.search_mode, r.human_readable)
+        assert r.discovery and r.discovery["candidate_count"] >= 1, q
+        for c in r.discovery["candidates"]:
+            var = (c.get("transmission_variant") or "").upper()
+            fam = (c.get("transmission_family") or "").upper()
+            if var:
+                assert var == expect_var, (q, c["sku"], var, fam)
+            else:
+                assert fam == expect_var, (q, c["sku"], var, fam)
 
 
 def test_exact_sku(dense_dms):

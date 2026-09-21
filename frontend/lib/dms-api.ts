@@ -1009,6 +1009,7 @@ export type DiscoveryCandidate = {
   transmission_family?: string;
   transmission_variant?: string;
   part_type_label?: string;
+  actual_part_category?: string;
   condition?: string;
   location_code?: string;
   location_name?: string;

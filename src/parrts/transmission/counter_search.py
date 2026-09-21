@@ -339,19 +339,28 @@ def counter_search(query: str, dms: DmsService) -> CounterSearchResult:
     # Multi SKU from resolver (e.g. multi identifier) → inventory lots for those SKUs
     if len(low.matched_skus) > 1:
         # If competing already handled; this is multi-lot not cross-family conflict
+        cat = part_category_in_query(q) or low.part_type
+        # Explicit single family token in the query → isolate that variant
+        qv = fams[0] if len(fams) == 1 else None
         disc = discover_inventory(
             dms,
-            family=low.transmission_family,
-            part_category=None,
+            family=None,
+            part_category=cat,
             sku_filter=list(low.matched_skus),
+            query_variant=qv,
         )
         if disc.candidate_count > 0:
             elapsed = (time.perf_counter() - t0) * 1000
             if not disc.part_category:
-                disc.part_category = low.part_type
+                disc.part_category = cat
+            if not disc.family and fams:
+                disc.family = fams[0]
+            if qv and not disc.family:
+                disc.family = qv
             return _inventory_match_result(
                 q, disc, elapsed_ms=elapsed, reason="resolver_multi_sku"
             )
+        # multi SKU but none survive category/variant filter → fall through to class discovery
 
     # Resolver uncertainty that is true conflict (vehicle etc.) without clear single class
     uncertainty = " ".join(low.uncertainty or []).lower()
@@ -382,7 +391,12 @@ def counter_search(query: str, dms: DmsService) -> CounterSearchResult:
                 answer = answer_transmission_inquiry(q, dms)
                 elapsed = (time.perf_counter() - t0) * 1000
                 return _needs_review_from_answer(answer, elapsed)
-            disc = discover_inventory(dms, family=family, part_category=category)
+            disc = discover_inventory(
+                dms,
+                family=family,
+                part_category=category,
+                query_variant=family,
+            )
             elapsed = (time.perf_counter() - t0) * 1000
             if disc.candidate_count > 0:
                 return _inventory_match_result(

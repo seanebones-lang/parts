@@ -417,6 +417,7 @@ function TransmissionInquiryInner() {
                     <tr className="border-b border-slate-200">
                       <th className="px-3 py-2.5 font-semibold">SKU</th>
                       <th className="px-3 py-2.5 font-semibold">Description</th>
+                      <th className="px-3 py-2.5 font-semibold">Type</th>
                       <th className="px-3 py-2.5 font-semibold">Variant</th>
                       <th className="px-3 py-2.5 font-semibold">Casting / ID</th>
                       <th className="px-3 py-2.5 font-semibold">Condition</th>
@@ -451,6 +452,9 @@ function TransmissionInquiryInner() {
                                 {c.description}
                               </div>
                             ) : null}
+                          </td>
+                          <td className="px-3 py-2 text-xs capitalize">
+                            {c.actual_part_category || c.part_type_label || "—"}
                           </td>
                           <td className="px-3 py-2 font-mono text-xs">{c.transmission_variant || "—"}</td>
                           <td className="px-3 py-2 font-mono text-xs">{c.casting_or_id || "—"}</td>
