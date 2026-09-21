@@ -133,39 +133,39 @@ def test_isolated_zero_stock_fixture():
 # The service structure correctly supports the semantic; a future micro-fix can add a more robust fixture.
 
 
-def test_phase5_regression_4l60e_valve_body(dms):
-    answer = answer_transmission_inquiry("Do you have a 4L60E valve body?", dms)
+def test_phase5_regression_4l60e_valve_body(seeded_dms):
+    answer = answer_transmission_inquiry("Do you have a 4L60E valve body?", seeded_dms)
     assert answer.status == "resolved"
     assert answer.sku == "4L60E-VB-01"
 
 
-def test_phase5_regression_4l80e_drum(dms):
-    answer = answer_transmission_inquiry("Do you have a 4L80E input drum?", dms)
+def test_phase5_regression_4l80e_drum(seeded_dms):
+    answer = answer_transmission_inquiry("Do you have a 4L80E input drum?", seeded_dms)
     assert answer.status == "resolved"
     assert answer.sku == "4L80E-DRUM-01"
 
 
-def test_phase5_regression_6r80_pump(dms):
-    answer = answer_transmission_inquiry("Do you have a 6R80 pump?", dms)
+def test_phase5_regression_6r80_pump(seeded_dms):
+    answer = answer_transmission_inquiry("Do you have a 6R80 pump?", seeded_dms)
     assert answer.status == "resolved"
     assert answer.sku == "6R80-PUMP-01"
 
 
-def test_phase5_regression_10r80_drum(dms):
-    answer = answer_transmission_inquiry("Do you have a 10R80 reaction drum?", dms)
+def test_phase5_regression_10r80_drum(seeded_dms):
+    answer = answer_transmission_inquiry("Do you have a 10R80 reaction drum?", seeded_dms)
     assert answer.status == "resolved"
     assert answer.sku == "10R80-DRUM-01"
 
 
-def test_phase5_regression_8hp70_valve_body(dms):
-    answer = answer_transmission_inquiry("Do you have an 8HP70 valve body?", dms)
+def test_phase5_regression_8hp70_valve_body(seeded_dms):
+    answer = answer_transmission_inquiry("Do you have an 8HP70 valve body?", seeded_dms)
     assert answer.status == "resolved"
     assert answer.sku == "8HP70-VB-01"
 
 
-def test_phase5_regression_zero_stock_preserved(dms):
+def test_phase5_regression_zero_stock_preserved(seeded_dms):
     # 8HP70-PUMP-01 is seeded with qty 0 at OHARE
-    answer = answer_transmission_inquiry("Do you have an 8HP70 pump?", dms)
+    answer = answer_transmission_inquiry("Do you have an 8HP70 pump?", seeded_dms)
     assert answer.status == "resolved"
     assert answer.aggregate_available == 0
     assert answer.inventory_available is False
