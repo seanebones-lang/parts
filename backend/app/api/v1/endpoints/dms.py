@@ -1645,13 +1645,17 @@ async def ops_release(
     reservation_id: int,
     actor: str = "counter",
     notes: str = "",
+    idempotency_key: Optional[str] = None,
     current_user: Optional[User] = Depends(require_user_if_production),
     svc: DmsService = Depends(get_dms_service),
 ):
     _ = current_user
     try:
         return _ops(svc).release_reservation(
-            reservation_id=reservation_id, actor=actor, notes=notes
+            reservation_id=reservation_id,
+            actor=actor,
+            notes=notes,
+            idempotency_key=idempotency_key,
         )
     except Exception as exc:
         raise _ops_http(exc) from exc
@@ -1743,12 +1747,15 @@ async def ops_remove_quote_line(
 async def ops_reserve_quote(
     quote_id: int,
     actor: str = "counter",
+    idempotency_key: Optional[str] = None,
     current_user: Optional[User] = Depends(require_user_if_production),
     svc: DmsService = Depends(get_dms_service),
 ):
     _ = current_user
     try:
-        return _ops(svc).reserve_quote(quote_id=quote_id, actor=actor)
+        return _ops(svc).reserve_quote(
+            quote_id=quote_id, actor=actor, idempotency_key=idempotency_key
+        )
     except Exception as exc:
         raise _ops_http(exc) from exc
 
@@ -1757,12 +1764,15 @@ async def ops_reserve_quote(
 async def ops_cancel_quote(
     quote_id: int,
     actor: str = "counter",
+    idempotency_key: Optional[str] = None,
     current_user: Optional[User] = Depends(require_user_if_production),
     svc: DmsService = Depends(get_dms_service),
 ):
     _ = current_user
     try:
-        return _ops(svc).cancel_quote(quote_id=quote_id, actor=actor)
+        return _ops(svc).cancel_quote(
+            quote_id=quote_id, actor=actor, idempotency_key=idempotency_key
+        )
     except Exception as exc:
         raise _ops_http(exc) from exc
 
@@ -1771,12 +1781,15 @@ async def ops_cancel_quote(
 async def ops_convert_quote(
     quote_id: int,
     actor: str = "counter",
+    idempotency_key: Optional[str] = None,
     current_user: Optional[User] = Depends(require_user_if_production),
     svc: DmsService = Depends(get_dms_service),
 ):
     _ = current_user
     try:
-        return _ops(svc).convert_quote_to_order(quote_id=quote_id, actor=actor)
+        return _ops(svc).convert_quote_to_order(
+            quote_id=quote_id, actor=actor, idempotency_key=idempotency_key
+        )
     except Exception as exc:
         raise _ops_http(exc) from exc
 
@@ -1809,12 +1822,15 @@ async def ops_get_order(
 async def ops_complete_order(
     order_id: int,
     actor: str = "counter",
+    idempotency_key: Optional[str] = None,
     current_user: Optional[User] = Depends(require_user_if_production),
     svc: DmsService = Depends(get_dms_service),
 ):
     _ = current_user
     try:
-        return _ops(svc).complete_order(order_id=order_id, actor=actor)
+        return _ops(svc).complete_order(
+            order_id=order_id, actor=actor, idempotency_key=idempotency_key
+        )
     except Exception as exc:
         raise _ops_http(exc) from exc
 
@@ -1823,11 +1839,14 @@ async def ops_complete_order(
 async def ops_cancel_order(
     order_id: int,
     actor: str = "counter",
+    idempotency_key: Optional[str] = None,
     current_user: Optional[User] = Depends(require_user_if_production),
     svc: DmsService = Depends(get_dms_service),
 ):
     _ = current_user
     try:
-        return _ops(svc).cancel_order(order_id=order_id, actor=actor)
+        return _ops(svc).cancel_order(
+            order_id=order_id, actor=actor, idempotency_key=idempotency_key
+        )
     except Exception as exc:
         raise _ops_http(exc) from exc

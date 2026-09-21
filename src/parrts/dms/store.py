@@ -393,6 +393,16 @@ class DmsStore:
             );
             CREATE INDEX IF NOT EXISTS idx_reservations_status ON inventory_reservations(status);
             CREATE INDEX IF NOT EXISTS idx_reservations_sku ON inventory_reservations(sku);
+
+            -- Lifecycle action keys (release / quote reserve|cancel|convert / order complete|cancel)
+            CREATE TABLE IF NOT EXISTS ops_idempotency_keys (
+                idempotency_key TEXT PRIMARY KEY,
+                action TEXT NOT NULL,
+                entity_type TEXT NOT NULL,
+                entity_id INTEGER NOT NULL,
+                created_at TEXT NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_ops_idem_action ON ops_idempotency_keys(action, entity_type, entity_id);
             """
         )
         conn.commit()

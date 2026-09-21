@@ -136,6 +136,35 @@ class InventoryOps:
                 (on_hand, reserved, sku, lid),
             )
 
+    def _idem_lookup(self, key: str | None) -> dict[str, Any] | None:
+        """Return prior ops_idempotency_keys row for a request key, if any."""
+        if not key:
+            return None
+        row = self.store.fetchone(
+            "SELECT * FROM ops_idempotency_keys WHERE idempotency_key = ?",
+            (str(key),),
+        )
+        return dict(row) if row is not None else None
+
+    def _idem_put(
+        self,
+        *,
+        key: str | None,
+        action: str,
+        entity_type: str,
+        entity_id: int,
+    ) -> None:
+        if not key:
+            return
+        self.store.execute(
+            """
+            INSERT OR IGNORE INTO ops_idempotency_keys
+              (idempotency_key, action, entity_type, entity_id, created_at)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (str(key), action, entity_type, int(entity_id), _utc_now()),
+        )
+
     def _record_event(
         self,
         *,
@@ -630,10 +659,19 @@ class InventoryOps:
         reservation_id: int,
         actor: str = "counter",
         notes: str = "",
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         self.ensure()
         try:
             self._begin()
+            prior = self._idem_lookup(idempotency_key)
+            if prior is not None and prior.get("action") == "reservation_release":
+                self._commit()
+                return {
+                    "ok": True,
+                    "idempotent": True,
+                    "reservation_id": int(prior["entity_id"]),
+                }
             row = self.store.fetchone(
                 "SELECT * FROM inventory_reservations WHERE id = ?",
                 (int(reservation_id),),
@@ -664,6 +702,13 @@ class InventoryOps:
                 actor=actor,
                 ref_type="reservation",
                 ref_id=str(reservation_id),
+                idempotency_key=f"evt-rel-{idempotency_key}" if idempotency_key else None,
+            )
+            self._idem_put(
+                key=idempotency_key,
+                action="reservation_release",
+                entity_type="reservation",
+                entity_id=int(reservation_id),
             )
             self._commit()
         except Exception:
@@ -873,13 +918,36 @@ class InventoryOps:
         self.store.commit()
         return self.get_quote(quote_id)
 
-    def reserve_quote(self, *, quote_id: int, actor: str = "counter") -> dict[str, Any]:
+    def reserve_quote(
+        self, *, quote_id: int, actor: str = "counter", idempotency_key: str | None = None
+    ) -> dict[str, Any]:
         self.ensure()
+        prior = self._idem_lookup(idempotency_key)
+        if prior is not None and prior.get("action") == "quote_reserve":
+            q = self.get_quote(int(prior["entity_id"]))
+            q = dict(q)
+            q["ok"] = True
+            q["idempotent"] = True
+            return q
         q = self.get_quote(quote_id)
         if q["status"] == QUOTE_RESERVED:
             q = dict(q)
             q["ok"] = True
             q["idempotent"] = True
+            # Bind key to existing reserved quote so retries with the same key stay safe.
+            if idempotency_key:
+                try:
+                    self._begin()
+                    self._idem_put(
+                        key=idempotency_key,
+                        action="quote_reserve",
+                        entity_type="quote",
+                        entity_id=int(quote_id),
+                    )
+                    self._commit()
+                except Exception:
+                    self._rollback()
+                    raise
             return q
         if q["status"] not in (QUOTE_OPEN, QUOTE_DRAFT):
             raise OpsConflictError("Only open quotes can reserve inventory.")
@@ -888,6 +956,15 @@ class InventoryOps:
         # reserve each line under one transaction by calling reserve internals carefully
         try:
             self._begin()
+            # re-check key inside txn (race)
+            prior2 = self._idem_lookup(idempotency_key)
+            if prior2 is not None and prior2.get("action") == "quote_reserve":
+                self._commit()
+                out = self.get_quote(int(prior2["entity_id"]))
+                out = dict(out)
+                out["ok"] = True
+                out["idempotent"] = True
+                return out
             # re-read status
             st = self.store.fetchone("SELECT status FROM quotes WHERE id = ?", (int(quote_id),))
             if st is None or str(st["status"]) not in (QUOTE_OPEN, QUOTE_DRAFT):
@@ -924,10 +1001,19 @@ class InventoryOps:
                     actor=actor,
                     ref_type="quote",
                     ref_id=str(quote_id),
+                    idempotency_key=(
+                        f"evt-qres-{idempotency_key}-{ln['id']}" if idempotency_key else None
+                    ),
                 )
             self.store.execute(
                 "UPDATE quotes SET status = ?, updated_at = ? WHERE id = ?",
                 (QUOTE_RESERVED, _utc_now(), int(quote_id)),
+            )
+            self._idem_put(
+                key=idempotency_key,
+                action="quote_reserve",
+                entity_type="quote",
+                entity_id=int(quote_id),
             )
             self._commit()
         except Exception:
@@ -940,13 +1026,48 @@ class InventoryOps:
         )
         return self.get_quote(quote_id)
 
-    def cancel_quote(self, *, quote_id: int, actor: str = "counter") -> dict[str, Any]:
+    def cancel_quote(
+        self, *, quote_id: int, actor: str = "counter", idempotency_key: str | None = None
+    ) -> dict[str, Any]:
         self.ensure()
+        prior = self._idem_lookup(idempotency_key)
+        if prior is not None and prior.get("action") == "quote_cancel":
+            q = self.get_quote(int(prior["entity_id"]))
+            q = dict(q)
+            q["ok"] = True
+            q["idempotent"] = True
+            return q
         q = self.get_quote(quote_id)
-        if q["status"] in (QUOTE_CONVERTED, QUOTE_CANCELLED):
+        if q["status"] == QUOTE_CANCELLED:
+            q = dict(q)
+            q["ok"] = True
+            q["idempotent"] = True
+            if idempotency_key:
+                try:
+                    self._begin()
+                    self._idem_put(
+                        key=idempotency_key,
+                        action="quote_cancel",
+                        entity_type="quote",
+                        entity_id=int(quote_id),
+                    )
+                    self._commit()
+                except Exception:
+                    self._rollback()
+                    raise
+            return q
+        if q["status"] == QUOTE_CONVERTED:
             raise OpsConflictError("This quote is already closed.")
         try:
             self._begin()
+            prior2 = self._idem_lookup(idempotency_key)
+            if prior2 is not None and prior2.get("action") == "quote_cancel":
+                self._commit()
+                out = self.get_quote(int(prior2["entity_id"]))
+                out = dict(out)
+                out["ok"] = True
+                out["idempotent"] = True
+                return out
             # release active reservations
             rows = self.store.fetchall(
                 "SELECT * FROM inventory_reservations WHERE quote_id = ? AND status = 'active'",
@@ -974,10 +1095,19 @@ class InventoryOps:
                     actor=actor,
                     ref_type="quote",
                     ref_id=str(quote_id),
+                    idempotency_key=(
+                        f"evt-qcan-{idempotency_key}-{row['id']}" if idempotency_key else None
+                    ),
                 )
             self.store.execute(
                 "UPDATE quotes SET status = ?, updated_at = ? WHERE id = ?",
                 (QUOTE_CANCELLED, _utc_now(), int(quote_id)),
+            )
+            self._idem_put(
+                key=idempotency_key,
+                action="quote_cancel",
+                entity_type="quote",
+                entity_id=int(quote_id),
             )
             self._commit()
         except Exception:
@@ -990,15 +1120,57 @@ class InventoryOps:
         )
         return self.get_quote(quote_id)
 
-    def convert_quote_to_order(self, *, quote_id: int, actor: str = "counter") -> dict[str, Any]:
+    def convert_quote_to_order(
+        self, *, quote_id: int, actor: str = "counter", idempotency_key: str | None = None
+    ) -> dict[str, Any]:
         self.ensure()
+        prior = self._idem_lookup(idempotency_key)
+        if prior is not None and prior.get("action") == "quote_convert":
+            out = self.get_order(int(prior["entity_id"]))
+            out = dict(out)
+            out["ok"] = True
+            out["idempotent"] = True
+            return out
         q = self.get_quote(quote_id)
+        if q["status"] == QUOTE_CONVERTED:
+            existing = self.store.fetchone(
+                "SELECT id FROM orders WHERE quote_id = ? ORDER BY id DESC LIMIT 1",
+                (int(quote_id),),
+            )
+            if existing is None:
+                raise OpsConflictError("Quote is converted but order is missing.")
+            out = self.get_order(int(existing["id"]))
+            out = dict(out)
+            out["ok"] = True
+            out["idempotent"] = True
+            if idempotency_key:
+                try:
+                    self._begin()
+                    self._idem_put(
+                        key=idempotency_key,
+                        action="quote_convert",
+                        entity_type="order",
+                        entity_id=int(existing["id"]),
+                    )
+                    self._commit()
+                except Exception:
+                    self._rollback()
+                    raise
+            return out
         if q["status"] != QUOTE_RESERVED:
             raise OpsConflictError("Reserve inventory on the quote before converting to an order.")
         if not q["lines"]:
             raise OpsValidationError("Quote has no lines")
         try:
             self._begin()
+            prior2 = self._idem_lookup(idempotency_key)
+            if prior2 is not None and prior2.get("action") == "quote_convert":
+                self._commit()
+                out = self.get_order(int(prior2["entity_id"]))
+                out = dict(out)
+                out["ok"] = True
+                out["idempotent"] = True
+                return out
             st = self.store.fetchone("SELECT status FROM quotes WHERE id = ?", (int(quote_id),))
             if st is None or str(st["status"]) != QUOTE_RESERVED:
                 raise OpsConflictError("Quote state changed. Refresh and try again.")
@@ -1059,6 +1231,12 @@ class InventoryOps:
             self.store.execute(
                 "UPDATE quotes SET status = ?, updated_at = ? WHERE id = ?",
                 (QUOTE_CONVERTED, now, int(quote_id)),
+            )
+            self._idem_put(
+                key=idempotency_key,
+                action="quote_convert",
+                entity_type="order",
+                entity_id=oid,
             )
             self._commit()
         except Exception:
@@ -1121,15 +1299,30 @@ class InventoryOps:
             )
         return [self.get_order(int(r["id"])) for r in rows]
 
-    def complete_order(self, *, order_id: int, actor: str = "counter") -> dict[str, Any]:
+    def complete_order(
+        self, *, order_id: int, actor: str = "counter", idempotency_key: str | None = None
+    ) -> dict[str, Any]:
         self.ensure()
         try:
             self._begin()
+            prior = self._idem_lookup(idempotency_key)
+            if prior is not None and prior.get("action") == "order_complete":
+                self._commit()
+                out = self.get_order(int(prior["entity_id"]))
+                out["ok"] = True
+                out["idempotent"] = True
+                return out
             o = self.store.fetchone("SELECT * FROM orders WHERE id = ?", (int(order_id),))
             if o is None:
                 raise OpsValidationError("Order not found")
             if str(o["status"]) == ORDER_COMPLETED:
                 # Double-submit safe: inventory already consumed once.
+                self._idem_put(
+                    key=idempotency_key,
+                    action="order_complete",
+                    entity_type="order",
+                    entity_id=int(order_id),
+                )
                 self._commit()
                 out = self.get_order(order_id)
                 out["ok"] = True
@@ -1169,6 +1362,9 @@ class InventoryOps:
                         actor=actor,
                         ref_type="order",
                         ref_id=str(order_id),
+                        idempotency_key=(
+                            f"evt-sale-{idempotency_key}-{row['id']}" if idempotency_key else None
+                        ),
                     )
             else:
                 # fallback: decrement from order lines (legacy path without reservation)
@@ -1198,10 +1394,21 @@ class InventoryOps:
                         actor=actor,
                         ref_type="order",
                         ref_id=str(order_id),
+                        idempotency_key=(
+                            f"evt-sale-{idempotency_key}-ol-{ln['id']}"
+                            if idempotency_key
+                            else None
+                        ),
                     )
             self.store.execute(
                 "UPDATE orders SET status = ? WHERE id = ?",
                 (ORDER_COMPLETED, int(order_id)),
+            )
+            self._idem_put(
+                key=idempotency_key,
+                action="order_complete",
+                entity_type="order",
+                entity_id=int(order_id),
             )
             self._commit()
         except Exception:
@@ -1215,10 +1422,19 @@ class InventoryOps:
         )
         return order
 
-    def cancel_order(self, *, order_id: int, actor: str = "counter") -> dict[str, Any]:
+    def cancel_order(
+        self, *, order_id: int, actor: str = "counter", idempotency_key: str | None = None
+    ) -> dict[str, Any]:
         self.ensure()
         try:
             self._begin()
+            prior = self._idem_lookup(idempotency_key)
+            if prior is not None and prior.get("action") == "order_cancel":
+                self._commit()
+                out = self.get_order(int(prior["entity_id"]))
+                out["ok"] = True
+                out["idempotent"] = True
+                return out
             o = self.store.fetchone("SELECT * FROM orders WHERE id = ?", (int(order_id),))
             if o is None:
                 raise OpsValidationError("Order not found")
@@ -1227,7 +1443,17 @@ class InventoryOps:
                     "Completed sales cannot be cancelled here. Use a return/correction if needed."
                 )
             if str(o["status"]) == ORDER_CANCELLED:
-                raise OpsConflictError("Order already cancelled.")
+                self._idem_put(
+                    key=idempotency_key,
+                    action="order_cancel",
+                    entity_type="order",
+                    entity_id=int(order_id),
+                )
+                self._commit()
+                out = self.get_order(order_id)
+                out["ok"] = True
+                out["idempotent"] = True
+                return out
             rows = self.store.fetchall(
                 "SELECT * FROM inventory_reservations WHERE order_id = ? AND status = 'active'",
                 (int(order_id),),
@@ -1254,10 +1480,19 @@ class InventoryOps:
                     actor=actor,
                     ref_type="order",
                     ref_id=str(order_id),
+                    idempotency_key=(
+                        f"evt-ocan-{idempotency_key}-{row['id']}" if idempotency_key else None
+                    ),
                 )
             self.store.execute(
                 "UPDATE orders SET status = ? WHERE id = ?",
                 (ORDER_CANCELLED, int(order_id)),
+            )
+            self._idem_put(
+                key=idempotency_key,
+                action="order_cancel",
+                entity_type="order",
+                entity_id=int(order_id),
             )
             self._commit()
         except Exception:
