@@ -1001,4 +1001,41 @@ export async function exportDmsCompliance(days = 90): Promise<Record<string, unk
   return (asRecord(raw) as Record<string, unknown>) ?? {};
 }
 
+// --- Transmission Hard Parts Inquiry (Phase 5) ---
+
+export type TransmissionInquiryResponse = {
+  query: string;
+  status: string;
+  sku: string | null;
+  transmission_family: string | null;
+  part_type: string | null;
+  fitment_status: string | null;
+  inventory_available: boolean;
+  aggregate_available: number;
+  verification_status: string | null;
+  human_readable: string;
+  inventory: Array<{
+    location?: string;
+    location_name?: string;
+    qty?: number;
+    condition?: string;
+    bin?: string;
+  }>;
+  identifiers: Array<{
+    identifier_type?: string;
+    identifier_value?: string;
+  }>;
+  interchanges: Array<{
+    target_sku?: string;
+    relationship_type?: string;
+    verification_status?: string;
+  }>;
+};
+
+export async function transmissionInquiry(
+  query: string
+): Promise<TransmissionInquiryResponse> {
+  return dmsPost<TransmissionInquiryResponse>("/transmission/inquiry", { query });
+}
+
 export { API_BASE_URL, ApiError };
