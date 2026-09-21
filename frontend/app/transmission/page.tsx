@@ -63,35 +63,102 @@ export default function TransmissionInquiryPage() {
   const renderResult = () => {
     if (!result) return null;
 
-    const { status, sku, human_readable, inventory_available, aggregate_available, inventory, identifiers, interchanges, transmission_family, part_type, verification_status, fitment_status } = result;
+    const {
+      status,
+      sku,
+      human_readable,
+      inventory_available,
+      aggregate_available,
+      inventory,
+      identifiers,
+      interchanges,
+      transmission_family,
+      part_type,
+      verification_status,
+      fitment_status,
+      outcome,
+      confidence,
+      recommended_action,
+      ambiguity_reason,
+    } = result;
 
-    if (status === "ambiguous") {
+    const unitOutcome =
+      outcome ||
+      (status === "resolved" ? "RESOLVED" : "NEEDS_HUMAN");
+    const needsHuman = unitOutcome === "NEEDS_HUMAN";
+
+    const decisionBanner = (
+      <div
+        className={
+          needsHuman
+            ? "mb-4 rounded-lg border border-amber-400 bg-amber-50 px-4 py-3"
+            : "mb-4 rounded-lg border border-emerald-400 bg-emerald-50 px-4 py-3"
+        }
+      >
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            {needsHuman ? (
+              <Badge className="bg-amber-700 text-sm px-3 py-1">NEEDS HUMAN REVIEW</Badge>
+            ) : (
+              <Badge className="bg-emerald-700 text-sm px-3 py-1">RESOLVED</Badge>
+            )}
+            {typeof confidence === "number" ? (
+              <span className="font-mono text-xs text-muted-foreground">
+                confidence {confidence.toFixed(2)}
+              </span>
+            ) : null}
+          </div>
+        </div>
+        {recommended_action ? (
+          <p className="mt-2 text-sm text-slate-800">
+            <strong>Next action:</strong> {recommended_action}
+          </p>
+        ) : null}
+        {ambiguity_reason ? (
+          <p className="mt-1 text-sm text-amber-900">
+            <strong>Why:</strong> {ambiguity_reason}
+          </p>
+        ) : null}
+      </div>
+    );
+
+    if (status === "ambiguous" || (needsHuman && status === "ambiguous")) {
       return (
-        <Card className="border-amber-200 bg-amber-50">
-          <CardHeader>
-            <CardTitle className="text-amber-900">More information needed</CardTitle>
-            <CardDescription>The inquiry matches multiple parts. Provide additional identifying information (SKU, casting number, or OEM number).</CardDescription>
-          </CardHeader>
-        </Card>
+        <div>
+          {decisionBanner}
+          <Card className="border-amber-200 bg-amber-50">
+            <CardHeader>
+              <CardTitle className="text-amber-900">More information needed</CardTitle>
+              <CardDescription>
+                {ambiguity_reason ||
+                  "The inquiry matches multiple parts. Provide additional identifying information (SKU, casting number, or OEM number)."}
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        </div>
       );
     }
 
     if (status === "no_match" || status === "insufficient") {
       return (
-        <Card className="border-slate-200">
-          <CardHeader>
-            <CardTitle>Part not identified</CardTitle>
-            <CardDescription>{human_readable}</CardDescription>
-          </CardHeader>
-        </Card>
+        <div>
+          {decisionBanner}
+          <Card className="border-slate-200">
+            <CardHeader>
+              <CardTitle>Part not identified</CardTitle>
+              <CardDescription>{human_readable}</CardDescription>
+            </CardHeader>
+          </Card>
+        </div>
       );
     }
 
-    // resolved (with or without stock)
+    // resolved (with or without stock) — still show decision banner
     const isZeroStock = aggregate_available === 0;
 
     return (
       <div className="space-y-6">
+        {decisionBanner}
         <Card>
           <CardHeader>
             <div>

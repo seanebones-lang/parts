@@ -1031,6 +1031,17 @@ export type TransmissionInquiryResponse = {
     relationship_type?: string;
     verification_status?: string;
   }>;
+  /** Formal unit-of-work outcome: RESOLVED | NEEDS_HUMAN */
+  outcome?: string | null;
+  confidence?: number | null;
+  recommended_action?: string | null;
+  ambiguity_reason?: string | null;
+  intent?: string | null;
+  candidate_match_quality?: string | null;
+  evidence_sufficiency?: string | null;
+  decision_source?: string | null;
+  request_id?: string | null;
+  decision?: Record<string, unknown> | null;
 };
 
 export async function transmissionInquiry(

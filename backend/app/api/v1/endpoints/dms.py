@@ -1199,6 +1199,17 @@ class TransmissionInquiryResponse(BaseModel):
     inventory: list[dict] = Field(default_factory=list)
     identifiers: list[dict] = Field(default_factory=list)
     interchanges: list[dict] = Field(default_factory=list)
+    # Formal unit-of-work decision (RESOLVED | NEEDS_HUMAN)
+    outcome: Optional[str] = None
+    confidence: Optional[float] = None
+    recommended_action: Optional[str] = None
+    ambiguity_reason: Optional[str] = None
+    intent: Optional[str] = None
+    candidate_match_quality: Optional[str] = None
+    evidence_sufficiency: Optional[str] = None
+    decision_source: Optional[str] = None
+    request_id: Optional[str] = None
+    decision: Optional[dict] = None
 
 
 @router.post("/transmission/inquiry", response_model=TransmissionInquiryResponse)
@@ -1226,6 +1237,16 @@ async def transmission_inquiry(
             inventory=answer.inventory,
             identifiers=answer.identifiers,
             interchanges=answer.interchanges,
+            outcome=answer.outcome,
+            confidence=answer.confidence,
+            recommended_action=answer.recommended_action,
+            ambiguity_reason=answer.ambiguity_reason,
+            intent=answer.intent,
+            candidate_match_quality=answer.candidate_match_quality,
+            evidence_sufficiency=answer.evidence_sufficiency,
+            decision_source=answer.decision_source,
+            request_id=answer.request_id,
+            decision=answer.decision,
         )
     except Exception as exc:
         raise HTTPException(

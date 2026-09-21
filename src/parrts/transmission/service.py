@@ -41,6 +41,17 @@ class TransmissionInquiryAnswer:
     verification_status: str | None = None
     uncertainty: list[str] = field(default_factory=list)
     human_readable: str = ""
+    # Formal unit-of-work decision (RESOLVED | NEEDS_HUMAN)
+    outcome: str | None = None
+    confidence: float | None = None
+    recommended_action: str | None = None
+    ambiguity_reason: str | None = None
+    intent: str | None = None
+    candidate_match_quality: str | None = None
+    evidence_sufficiency: str | None = None
+    decision_source: str | None = None
+    request_id: str | None = None
+    decision: dict | None = None
 
 
 def answer_transmission_inquiry(query: str, dms: DmsService) -> TransmissionInquiryAnswer:
@@ -56,6 +67,7 @@ def answer_transmission_inquiry(query: str, dms: DmsService) -> TransmissionInqu
             uncertainty=low_level.uncertainty,
             human_readable=_build_no_match_summary(query, low_level)
         )
+        _finalize_unit_of_work(answer, root=dms.root)
         _observe_jev_shadow(query, answer, root=dms.root)
         return answer
 
@@ -67,6 +79,7 @@ def answer_transmission_inquiry(query: str, dms: DmsService) -> TransmissionInqu
             uncertainty=["multiple canonical parts match the inquiry"],
             human_readable="Multiple parts match. Please provide more detail.",
         )
+        _finalize_unit_of_work(answer, root=dms.root)
         _observe_jev_shadow(query, answer, root=dms.root)
         return answer
 
@@ -110,8 +123,45 @@ def answer_transmission_inquiry(query: str, dms: DmsService) -> TransmissionInqu
         human_readable=human
     )
 
+    _finalize_unit_of_work(answer, root=dms.root)
     _observe_jev_shadow(query, answer, root=dms.root)
     return answer
+
+
+def _finalize_unit_of_work(
+    answer: TransmissionInquiryAnswer,
+    *,
+    root: Path | str | None = None,
+) -> None:
+    """Attach bounded RESOLVED/NEEDS_HUMAN decision and best-effort ledger log."""
+    try:
+        from parrts.transmission.decision import (
+            build_unit_of_work,
+            persist_unit_of_work,
+        )
+
+        uow = build_unit_of_work(answer)
+        d = uow.decision
+        answer.outcome = d.outcome
+        answer.confidence = d.confidence
+        answer.recommended_action = d.recommended_action
+        answer.ambiguity_reason = d.ambiguity_reason
+        answer.intent = d.intent
+        answer.candidate_match_quality = d.candidate_match_quality
+        answer.evidence_sufficiency = d.evidence_sufficiency
+        answer.decision_source = d.decision_source
+        answer.request_id = uow.request_id
+        answer.decision = uow.to_dict()
+        persist_unit_of_work(root, uow)
+    except Exception as exc:
+        logger.warning("transmission_uow_finalize_failed: %s", exc)
+        # Fail closed toward human review rather than silent resolve.
+        if answer.outcome is None:
+            answer.outcome = "NEEDS_HUMAN" if answer.status != "resolved" else "RESOLVED"
+            answer.confidence = 0.5 if answer.status == "resolved" else 0.3
+            answer.recommended_action = answer.recommended_action or (
+                "Review evidence manually — decision layer unavailable."
+            )
 
 def _build_human_readable(
     query: str,
