@@ -24,6 +24,7 @@ import {
   type TransmissionImportRollbackPreview,
   type TransmissionImportRowPlan,
 } from "@/lib/dms-api";
+import { isTransmissionDemo } from "@/lib/demo-vertical";
 
 function catalogActionLabel(action?: string): string {
   switch (action) {
@@ -211,7 +212,9 @@ export default function TransmissionImportPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Pilot Data Import</h1>
           <p className="mt-1 text-muted-foreground">
-            Manager/operator inventory onboarding · preview first · explicit commit
+            {isTransmissionDemo()
+              ? "Preview inventory data before anything is written to the system."
+              : "Manager/operator inventory onboarding · preview first · explicit commit"}
           </p>
         </div>
         <Button asChild variant="outline">
@@ -223,6 +226,12 @@ export default function TransmissionImportPage() {
         Existing catalog identity is preserved for matching SKUs. This workflow loads
         physical inventory and new pilot SKUs only. Fitment and interchange are not
         invented from the CSV.
+        {isTransmissionDemo() ? (
+          <>
+            {" "}
+            Demo files are synthetic evaluation data — not a real JP inventory export.
+          </>
+        ) : null}
       </div>
 
       <Card className="mb-6">
@@ -549,7 +558,9 @@ export default function TransmissionImportPage() {
             <div>
               <CardTitle>Import History</CardTitle>
               <CardDescription>
-                Successful pilot imports with rollback eligibility
+                {isTransmissionDemo()
+                  ? "Review and safely reverse a pilot import when the affected inventory has not changed since."
+                  : "Successful pilot imports with rollback eligibility"}
               </CardDescription>
             </div>
             <Button variant="outline" size="sm" onClick={() => void refreshHistory()}>

@@ -1,10 +1,17 @@
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { MapPin, Search, Shield, Database, Truck, Mail } from 'lucide-react'
+import { isTransmissionDemo } from '@/lib/demo-vertical'
 
 export default function HomePage() {
+  // JP presentation mode: land on the transmission counter, not the generic dealership home.
+  if (isTransmissionDemo()) {
+    redirect('/transmission')
+  }
+
   return (
     <div className="container mx-auto p-6">
       <div className="mb-6 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900">

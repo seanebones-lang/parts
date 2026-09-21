@@ -4,19 +4,21 @@ import './globals.css'
 import { Navigation } from './navigation'
 import { OfflineQueueBanner } from '@/components/offline-queue-banner'
 import { PwaRegister } from '@/components/pwa-register'
+import { getBrand } from '@/lib/demo-vertical'
 
 const inter = Inter({ subsets: ['latin'] })
 
+const brand = getBrand()
+
 export const metadata: Metadata = {
-  title: 'Parts — Dealership Parts System | NextEleven',
-  description:
-    'Multi-location dealership parts system: AI search, DMS inventory/orders, OEM feed ingest.',
-  applicationName: 'Parts',
+  title: brand.documentTitle,
+  description: brand.documentDescription,
+  applicationName: brand.applicationName,
   manifest: '/manifest.webmanifest',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'Parts',
+    title: brand.applicationName,
   },
 }
 
@@ -42,12 +44,12 @@ export default function RootLayout({
               <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div className="flex items-center gap-3">
                   <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-900 text-sm font-bold text-white">
-                    P
+                    {brand.mark}
                   </div>
                   <div>
-                    <h1 className="text-lg font-bold leading-tight">Parts</h1>
+                    <h1 className="text-lg font-bold leading-tight">{brand.title}</h1>
                     <p className="text-xs text-muted-foreground">
-                      NextEleven · dealership parts system
+                      {brand.subtitle}
                     </p>
                   </div>
                 </div>

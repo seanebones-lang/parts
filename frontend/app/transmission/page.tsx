@@ -6,6 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { transmissionInquiry, TransmissionInquiryResponse } from "@/lib/dms-api";
+import {
+  formatTransmissionLocationLine,
+  isTransmissionDemo,
+} from "@/lib/demo-vertical";
 
 const QUICK_QUERIES = [
   "Do you have a pump for a 2011 Tahoe 6L80?",
@@ -134,18 +138,30 @@ export default function TransmissionInquiryPage() {
               <div>
                 <div className="mb-2 font-medium text-muted-foreground">Inventory Locations</div>
                 <div className="space-y-1 text-sm">
-                  {inventory.map((inv, idx) => (
+                  {inventory.map((inv, idx) => {
+                    const loc = isTransmissionDemo()
+                      ? formatTransmissionLocationLine(inv)
+                      : {
+                          title: inv.location_name || inv.location || "Location",
+                          subtitle: inv.bin
+                            ? `Bin ${inv.bin}`
+                            : inv.location || "",
+                        };
+                    return (
                     <div key={idx} className="flex justify-between items-center rounded border bg-muted/40 px-3 py-2 text-sm">
                       <div>
-                        <div className="font-medium">{inv.location_name || inv.location}</div>
-                        <div className="font-mono text-xs text-muted-foreground">Bin {inv.bin}</div>
+                        <div className="font-medium">{loc.title}</div>
+                        <div className="font-mono text-xs text-muted-foreground">
+                          {loc.subtitle || (inv.bin ? `Bin ${inv.bin}` : "")}
+                        </div>
                       </div>
                       <div className="text-right font-mono">
                         <div className={inv.qty === 0 ? "text-red-600 font-semibold" : "font-semibold"}>{inv.qty}</div>
                         <div className="text-[10px] text-muted-foreground">{inv.condition}</div>
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -183,13 +199,19 @@ export default function TransmissionInquiryPage() {
   return (
     <div className="container mx-auto max-w-5xl p-6">
       <div className="mb-6 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-        <strong>DEMO DATA — UNVERIFIED</strong> — This page demonstrates the transmission hard-parts inquiry workflow and architecture for JP Transmission evaluation. All fitment, interchange, and compatibility data is synthetic demo data and not an authoritative catalog.
+        <strong>DEMO DATA — UNVERIFIED</strong> — This page demonstrates the transmission
+        hard-parts inquiry workflow for JP Transmission evaluation. All fitment, interchange,
+        and compatibility data is synthetic demo data and not an authoritative catalog.
       </div>
 
       <div className="mb-8 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Transmission Hard Parts</h1>
-          <p className="mt-2 text-muted-foreground">Internal counter intelligence tool • Read-only DMS inquiry</p>
+          <p className="mt-2 text-muted-foreground">
+            {isTransmissionDemo()
+              ? "Counter inventory intelligence · Safe read-only lookup"
+              : "Internal counter intelligence tool • Read-only DMS inquiry"}
+          </p>
         </div>
         <Button asChild variant="outline">
           <Link href="/transmission/import">Pilot Data Import</Link>
