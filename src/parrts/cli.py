@@ -496,6 +496,19 @@ def cmd_auto_to_order(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_transmission_jev_report(args: argparse.Namespace) -> int:
+    """Read-only JEV shadow observation report (engineering/admin)."""
+    from parrts.transmission.jev_shadow_report import build_transmission_jev_shadow_report
+
+    report = build_transmission_jev_shadow_report(
+        _root_from_args(args),
+        limit=int(getattr(args, "limit", 500) or 500),
+        recent=int(getattr(args, "recent", 20) or 20),
+    )
+    print(json.dumps(report, indent=2, default=str))
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="parrts",
@@ -799,6 +812,24 @@ def build_parser() -> argparse.ArgumentParser:
         help="Actually create order (default: preview only)",
     )
     p_auto_eo.set_defaults(func=cmd_auto_to_order)
+
+    p_tjev = sub.add_parser(
+        "transmission-jev-report",
+        help="Read-only report of transmission JEV shadow observations",
+    )
+    p_tjev.add_argument(
+        "--limit",
+        type=int,
+        default=500,
+        help="Max observations to load from automation ledger",
+    )
+    p_tjev.add_argument(
+        "--recent",
+        type=int,
+        default=20,
+        help="How many recent observations to include in the sample",
+    )
+    p_tjev.set_defaults(func=cmd_transmission_jev_report)
 
     return parser
 

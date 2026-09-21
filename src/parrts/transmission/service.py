@@ -6,6 +6,7 @@ Does not expose repository, resolver internals, or DMS details.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Literal
 
 from parrts.dms.service import DmsService
@@ -55,7 +56,7 @@ def answer_transmission_inquiry(query: str, dms: DmsService) -> TransmissionInqu
             uncertainty=low_level.uncertainty,
             human_readable=_build_no_match_summary(query, low_level)
         )
-        _observe_jev_shadow(query, answer)
+        _observe_jev_shadow(query, answer, root=dms.root)
         return answer
 
     # Ambiguity: multiple canonical candidates
@@ -66,7 +67,7 @@ def answer_transmission_inquiry(query: str, dms: DmsService) -> TransmissionInqu
             uncertainty=["multiple canonical parts match the inquiry"],
             human_readable="Multiple parts match. Please provide more detail.",
         )
-        _observe_jev_shadow(query, answer)
+        _observe_jev_shadow(query, answer, root=dms.root)
         return answer
 
     # Single canonical match
@@ -109,7 +110,7 @@ def answer_transmission_inquiry(query: str, dms: DmsService) -> TransmissionInqu
         human_readable=human
     )
 
-    _observe_jev_shadow(query, answer)
+    _observe_jev_shadow(query, answer, root=dms.root)
     return answer
 
 def _build_human_readable(
@@ -151,11 +152,19 @@ def _build_no_match_summary(query: str, low_level: TransmissionInquiryResult) ->
     return "No matching transmission part found."
 
 
-def _observe_jev_shadow(query: str, answer: TransmissionInquiryAnswer) -> None:
+def _observe_jev_shadow(
+    query: str,
+    answer: TransmissionInquiryAnswer,
+    *,
+    root: Path | str | None = None,
+) -> None:
     """Run JEV in shadow mode after deterministic resolution.
 
     Never modifies the answer. Never raises into the caller.
     Safe for every deterministic status path.
+
+    When ``root`` is provided, best-effort persists a diagnostic record to
+    the separate automation ledger (``.parrts/automation.db``), never DMS.
     """
     try:
         if os.environ.get("JEV_SHADOW_ENABLED", "").strip().lower() not in (
@@ -167,6 +176,9 @@ def _observe_jev_shadow(query: str, answer: TransmissionInquiryAnswer) -> None:
             return
 
         from parrts.email.jev_shadow import classify_shadow
+        from parrts.transmission.jev_shadow_report import (
+            persist_transmission_jev_shadow_observation,
+        )
 
         # subject=truncated query, body=full query (benchmark-compatible shape)
         shadow = classify_shadow(subject=query[:200], body=query, sender_email="")
@@ -178,18 +190,19 @@ def _observe_jev_shadow(query: str, answer: TransmissionInquiryAnswer) -> None:
             "deterministic_inventory_available": answer.inventory_available,
         }
 
-        if shadow is None:
+        if shadow is None or not isinstance(shadow, dict):
             logger.info(
                 "jev_shadow_transmission",
                 extra={**base, "jev_evaluation_status": "no_result"},
             )
-            return
-
-        if not isinstance(shadow, dict):
-            logger.info(
-                "jev_shadow_transmission",
-                extra={**base, "jev_evaluation_status": "no_result"},
-            )
+            if root is not None:
+                persist_transmission_jev_shadow_observation(
+                    root,
+                    query=query,
+                    answer=answer,
+                    jev_evaluation_status="no_result",
+                    shadow=None,
+                )
             return
 
         logger.info(
@@ -204,6 +217,14 @@ def _observe_jev_shadow(query: str, answer: TransmissionInquiryAnswer) -> None:
                 "jev_model": shadow.get("model"),
             },
         )
+        if root is not None:
+            persist_transmission_jev_shadow_observation(
+                root,
+                query=query,
+                answer=answer,
+                jev_evaluation_status="result",
+                shadow=shadow,
+            )
     except Exception as exc:
         # Import failures, classifier exceptions, logging issues — all contained.
         logger.warning(
@@ -215,3 +236,19 @@ def _observe_jev_shadow(query: str, answer: TransmissionInquiryAnswer) -> None:
                 "error": str(exc),
             },
         )
+        if root is not None:
+            try:
+                from parrts.transmission.jev_shadow_report import (
+                    persist_transmission_jev_shadow_observation,
+                )
+
+                persist_transmission_jev_shadow_observation(
+                    root,
+                    query=query,
+                    answer=answer,
+                    jev_evaluation_status="error",
+                    shadow=None,
+                    error=str(exc),
+                )
+            except Exception:
+                pass
