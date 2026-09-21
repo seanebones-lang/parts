@@ -14,16 +14,41 @@ from parrts.email.store import EmailStore
 class EmailService:
     """Product email desk: ingest, auto-answer, traffic-light, searchable store, IMAP/SMTP."""
 
-    def __init__(self, root: Path | str, engine: Any | None = None) -> None:
+    def __init__(
+        self,
+        root: Path | str,
+        engine: Any | None = None,
+        *,
+        vertical: str | None = None,
+    ) -> None:
+        from parrts.email.vertical import resolve_parrts_vertical
+
         self.root = Path(root).resolve()
         self.store = EmailStore(self.root)
         self.store.ensure_schema()
         self._engine = engine
         self._pipeline: EmailPipeline | None = None
+        self.vertical = resolve_parrts_vertical(vertical)
 
     def _get_engine(self) -> Any | None:
         if self._engine is not None:
             return self._engine
+        # Transmission vertical: DMS + counter_search ONLY — never PartsRAGEngine
+        if self.vertical == "transmission":
+            try:
+                from parrts.email.transmission_parts import TransmissionPartsAdapter
+
+                eng = TransmissionPartsAdapter(root=self.root)
+                eng.ensure_ready()
+                self._engine = eng
+                return eng
+            except Exception:
+                # Fail closed: adapter that always escalates (still no generic RAG)
+                from parrts.email.transmission_parts import TransmissionPartsAdapter
+
+                eng = TransmissionPartsAdapter(root=self.root)
+                self._engine = eng
+                return eng
         try:
             from parrts.embeddings import HashingEmbedder
             from parrts.engine import PartsRAGEngine
@@ -60,9 +85,16 @@ class EmailService:
         human = self.store.fetchone("SELECT COUNT(*) AS c FROM emails WHERE requires_human = 1")
         sent = self.store.fetchone("SELECT COUNT(*) AS c FROM emails WHERE response_sent = 1")
         mb = mailbox_status()
+        inv_src = (
+            "transmission_dms"
+            if self.vertical == "transmission"
+            else "parts_rag"
+        )
         return {
             "ok": True,
             "db_path": str(self.store.db_path),
+            "vertical": self.vertical,
+            "inventory_source": inv_src,
             "total": int(total["c"]) if total else 0,
             "requires_human": int(human["c"]) if human else 0,
             "response_sent": int(sent["c"]) if sent else 0,
@@ -99,6 +131,13 @@ class EmailService:
     ) -> dict[str, Any]:
         from parrts.email.seed_data import demo_emails_for_vertical
 
+        # When seeding transmission demos, force transmission inventory path for this process
+        seed_v = (vertical or "").strip().lower()
+        if seed_v in ("transmission", "jp", "jp_transmission", "tx"):
+            if self.vertical != "transmission":
+                self.vertical = "transmission"
+                self._engine = None
+                self._pipeline = None
         self.ensure_schema()
         if clear:
             self.store.execute("DELETE FROM emails")
@@ -136,7 +175,8 @@ class EmailService:
         return {
             "ok": True,
             "seeded": created,
-            "vertical": (vertical or "default").strip().lower() or "default",
+            "vertical": (vertical or self.vertical or "default").strip().lower() or "default",
+            "inventory_source": st.get("inventory_source"),
             "emails": results,
             "status": st,
         }

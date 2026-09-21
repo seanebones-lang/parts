@@ -11,7 +11,7 @@ Pilot DB is **isolated** — never the default developer `.parrts/dms.db`.
 | SQLite DMS | `<pilot-root>/.parrts/dms.db` |
 | Real telemetry source | `jp_real_pilot` |
 | Demo/test sources | `jp_demo` · `test` |
-| Env (backend) | `PARRTS_ROOT` · `JP_PILOT_MODE=real` · `COUNTER_TELEMETRY_SOURCE=jp_real_pilot` |
+| Env (backend) | `PARRTS_ROOT` · `PARRTS_VERTICAL=transmission` · `JP_PILOT_MODE=real` · `COUNTER_TELEMETRY_SOURCE=jp_real_pilot` |
 | Env (frontend) | `NEXT_PUBLIC_DEMO_VERTICAL=transmission` · `NEXT_PUBLIC_JP_PILOT_MODE=real` |
 
 Production RBAC / public deploy: **BLOCKED**. This is a laptop/internal pilot only.
@@ -34,6 +34,7 @@ PYTHONPATH=src:backend /tmp/phase4-integrated-venv/bin/python \
 
 ```bash
 export PARRTS_ROOT="$(pwd)/.pilot/jp"
+export PARRTS_VERTICAL=transmission
 export JP_PILOT_MODE=real
 export COUNTER_TELEMETRY_SOURCE=jp_real_pilot
 export AUTH_MODE=demo ENVIRONMENT=development DEBUG=true
@@ -53,6 +54,28 @@ npm run dev -- -p 3000 -H 127.0.0.1
 ```
 
 Restart FE after changing any `NEXT_PUBLIC_*` var.
+
+**Email Desk inventory authority:** with `PARRTS_VERTICAL=transmission`, email specialists use **DMS + counter_search only**. They must **never** fall back to legacy PartsRAGEngine / Civic brake pads. If transmission inventory cannot answer → human review.
+
+## Email demo reseed (pre-pilot only)
+
+Only when **no real JP emails** exist and real pilot counter count is still 0:
+
+```bash
+export PARRTS_ROOT="$(pwd)/.pilot/jp"
+export PARRTS_VERTICAL=transmission
+PYTHONPATH=src:backend /tmp/phase4-integrated-venv/bin/python <<'PY'
+from parrts.email.service import EmailService
+from pathlib import Path
+root = Path(".pilot/jp").resolve()
+svc = EmailService(root=root, vertical="transmission")
+# refuse if non-demo message_ids appear
+rows = svc.list(limit=500)
+realish = [r for r in rows if not str(r.get("message_id") or "").startswith("tx-demo-")]
+assert not realish, f"refusing clear — non-demo emails: {realish[:3]}"
+print(svc.seed_demo(clear=True, process=True, vertical="transmission"))
+PY
+```
 
 ## D. Health
 

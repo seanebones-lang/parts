@@ -72,7 +72,7 @@ def _build_query(subject: str, body: str, classification: dict[str, Any]) -> str
 
 
 class PartsQuoteSpecialist:
-    """Expert: quote / availability using hybrid RAG + traffic light."""
+    """Expert: quote / availability — generic RAG or transmission DMS adapter."""
 
     name = "parts_quote"
 
@@ -86,6 +86,10 @@ class PartsQuoteSpecialist:
         sim = None
         stock = None
         answer = None
+        search_mode = None
+        inventory_source = None
+        is_tx = bool(getattr(self.engine, "is_transmission_adapter", False))
+
         if self.engine is not None:
             try:
                 self.engine.ensure_ready()
@@ -97,46 +101,137 @@ class PartsQuoteSpecialist:
                 sim = tl.get("similarity")
                 stock = tl.get("stock")
                 answer = d.get("answer")
+                search_mode = d.get("search_mode")
+                inventory_source = d.get("inventory_source") or (
+                    "transmission_dms" if is_tx else "parts_rag"
+                )
+                if is_tx and d.get("error") and not hits and not answer:
+                    return SpecialistResult(
+                        ok=True,
+                        specialist=self.name,
+                        suggested_response="\n".join(
+                            [
+                                _greeting(classification),
+                                "",
+                                str(d.get("answer") or "A team member must review this request."),
+                                _signoff(),
+                            ]
+                        ),
+                        data={
+                            "query": q,
+                            "search_mode": "needs_review",
+                            "inventory_source": "transmission_dms",
+                            "error": d.get("error"),
+                        },
+                        message="transmission inventory unavailable — human review",
+                        parts_traffic_light="yellow",
+                        hits=[],
+                    )
             except Exception as exc:
+                if is_tx:
+                    # NEVER fall back to generic catalog in transmission mode
+                    return SpecialistResult(
+                        ok=True,
+                        specialist=self.name,
+                        suggested_response="\n".join(
+                            [
+                                _greeting(classification),
+                                "",
+                                "Thanks for the request. Transmission inventory lookup is unavailable. "
+                                "A parts team member will review this — we will not pull from a generic auto-parts catalog.",
+                                _signoff(),
+                            ]
+                        ),
+                        data={
+                            "query": q,
+                            "search_mode": "needs_review",
+                            "inventory_source": "transmission_dms",
+                            "error": str(exc),
+                        },
+                        message=f"transmission path failed safely: {exc}",
+                        parts_traffic_light="yellow",
+                        hits=[],
+                    )
                 return SpecialistResult(
                     ok=False,
                     specialist=self.name,
                     suggested_response="",
                     message=f"RAG failed: {exc}",
                 )
+        elif is_tx or self.engine is None and False:
+            pass
 
-        lines = [_greeting(classification), "", "Thanks for reaching out about parts availability."]
-        if hits:
-            lines.append("Here is what I found across our locations:")
-            for i, h in enumerate(hits[:5], 1):
-                part = h.get("part") or h
-                name = part.get("name") or part.get("title") or "Part"
-                sku = part.get("sku") or part.get("part_number") or "?"
-                loc = part.get("location") or part.get("location_name") or "?"
-                stk = part.get("stock", part.get("qty", "?"))
-                price = part.get("price", part.get("list_price"))
-                price_s = f"${float(price):.2f}" if isinstance(price, (int, float)) else (str(price) if price else "—")
-                score = h.get("score")
-                score_s = f" (match {float(score):.2f})" if isinstance(score, (int, float)) else ""
-                lines.append(f"  {i}. {name} — SKU {sku} @ {loc}, stock {stk}, {price_s}{score_s}")
-            if tl_color:
-                lines.append(f"\nConfidence band: {tl_color.upper()}.")
+        lines = [_greeting(classification), ""]
+        if is_tx:
+            # Transmission drafts use counter_search answer text (no legacy price/score chrome)
             if answer:
                 lines.append(str(answer))
-            lines.append("Reply YES with the SKU and pickup/ship preference to proceed.")
+            elif hits:
+                lines.append("Here is what I found in transmission inventory:")
+                for i, h in enumerate(hits[:6], 1):
+                    part = h.get("part") or h
+                    name = part.get("name") or h.get("name") or "Part"
+                    sku = part.get("sku") or h.get("sku") or "?"
+                    loc = part.get("location") or h.get("location") or h.get("location_name") or "?"
+                    stk = part.get("stock", h.get("available", h.get("stock", "?")))
+                    lines.append(f"  {i}. {name} — SKU {sku} @ {loc}, available {stk}")
+                lines.append(
+                    "\nA parts team member should confirm the correct unit before finalizing."
+                )
+            else:
+                lines.append(
+                    "Thanks for the request. We need one more piece of information before "
+                    "confirming the correct transmission part."
+                )
+                tl_color = tl_color or "yellow"
+            if tl_color:
+                lines.append(f"\nDesk band: {str(tl_color).upper()}.")
         else:
-            lines.append(
-                "I could not find a confident catalog match yet. "
-                "Please reply with year/make/model and the part description or OEM number."
-            )
-            tl_color = tl_color or "red"
+            lines.append("Thanks for reaching out about parts availability.")
+            if hits:
+                lines.append("Here is what I found across our locations:")
+                for i, h in enumerate(hits[:5], 1):
+                    part = h.get("part") or h
+                    name = part.get("name") or part.get("title") or "Part"
+                    sku = part.get("sku") or part.get("part_number") or "?"
+                    loc = part.get("location") or part.get("location_name") or "?"
+                    stk = part.get("stock", part.get("qty", "?"))
+                    price = part.get("price", part.get("list_price"))
+                    price_s = (
+                        f"${float(price):.2f}"
+                        if isinstance(price, (int, float))
+                        else (str(price) if price else "—")
+                    )
+                    score = h.get("score")
+                    score_s = (
+                        f" (match {float(score):.2f})" if isinstance(score, (int, float)) else ""
+                    )
+                    lines.append(
+                        f"  {i}. {name} — SKU {sku} @ {loc}, stock {stk}, {price_s}{score_s}"
+                    )
+                if tl_color:
+                    lines.append(f"\nConfidence band: {tl_color.upper()}.")
+                if answer:
+                    lines.append(str(answer))
+                lines.append("Reply YES with the SKU and pickup/ship preference to proceed.")
+            else:
+                lines.append(
+                    "I could not find a confident catalog match yet. "
+                    "Please reply with year/make/model and the part description or OEM number."
+                )
+                tl_color = tl_color or "red"
 
         lines.append(_signoff())
         return SpecialistResult(
             ok=True,
             specialist=self.name,
             suggested_response="\n".join(lines),
-            data={"query": q},
+            data={
+                "query": q,
+                "search_mode": search_mode,
+                "inventory_source": inventory_source
+                or ("transmission_dms" if is_tx else "parts_rag"),
+            },
             message="parts quote drafted",
             parts_traffic_light=tl_color,
             parts_similarity=float(sim) if sim is not None else None,

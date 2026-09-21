@@ -155,6 +155,7 @@ def main() -> int:
     print()
     print("=== startup (copy/paste) ===")
     print(f"export PARRTS_ROOT={root}")
+    print("export PARRTS_VERTICAL=transmission")
     print("export JP_PILOT_MODE=real")
     print("export COUNTER_TELEMETRY_SOURCE=jp_real_pilot")
     print("export AUTH_MODE=demo ENVIRONMENT=development DEBUG=true JEV_DECISION_ENABLED=0")
