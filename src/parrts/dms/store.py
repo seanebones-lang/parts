@@ -249,11 +249,8 @@ CREATE TABLE IF NOT EXISTS part_fitments (
     FOREIGN KEY (sku) REFERENCES catalog_parts(sku)
 );
 
--- Extend catalog_parts with transmission columns (SQLite safe pattern)
-ALTER TABLE catalog_parts ADD COLUMN transmission_family TEXT DEFAULT '';
-ALTER TABLE catalog_parts ADD COLUMN transmission_variant TEXT DEFAULT '';
-ALTER TABLE catalog_parts ADD COLUMN verification_status TEXT DEFAULT 'unverified';
-ALTER TABLE inventory_levels ADD COLUMN condition TEXT DEFAULT 'new';
+-- Extend catalog_parts / inventory via soft-add in ensure_schema()
+-- (unconditional ALTER TABLE is not idempotent on SQLite)
 
 CREATE INDEX IF NOT EXISTS idx_part_identifiers_sku ON part_identifiers(sku);
 CREATE INDEX IF NOT EXISTS idx_part_interchanges_source ON part_interchanges(source_sku);
@@ -293,8 +290,9 @@ class DmsStore:
         # Soft-add org_id on locations for multi-rooftop (SQLite)
         try:
             conn.execute("ALTER TABLE locations ADD COLUMN org_id INTEGER")
-        except Exception:  # noqa: BLE001 — column may already exist
-            pass
+        except sqlite3.OperationalError as exc:
+            if "duplicate column" not in str(exc).lower():
+                raise
         for col_sql in (
             "ALTER TABLE orders ADD COLUMN payment_status TEXT DEFAULT ''",
             "ALTER TABLE orders ADD COLUMN last_payment_id TEXT DEFAULT ''",
@@ -302,11 +300,18 @@ class DmsStore:
             "ALTER TABLE orders ADD COLUMN ship_status TEXT DEFAULT ''",
             "ALTER TABLE orders ADD COLUMN tracking_code TEXT DEFAULT ''",
             "ALTER TABLE orders ADD COLUMN last_shipment_id TEXT DEFAULT ''",
+            # Transmission vertical extensions (idempotent soft-add)
+            "ALTER TABLE catalog_parts ADD COLUMN transmission_family TEXT DEFAULT ''",
+            "ALTER TABLE catalog_parts ADD COLUMN transmission_variant TEXT DEFAULT ''",
+            "ALTER TABLE catalog_parts ADD COLUMN verification_status TEXT DEFAULT 'unverified'",
+            "ALTER TABLE inventory_levels ADD COLUMN condition TEXT DEFAULT 'new'",
         ):
             try:
                 conn.execute(col_sql)
-            except Exception:  # noqa: BLE001 — column may already exist
-                pass
+            except sqlite3.OperationalError as exc:
+                # Column already present on upgraded DBs — expected and safe.
+                if "duplicate column" not in str(exc).lower():
+                    raise
         conn.commit()
 
     def execute(self, sql: str, params: tuple[Any, ...] | list[Any] = ()) -> sqlite3.Cursor:
