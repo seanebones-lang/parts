@@ -133,10 +133,13 @@ export async function getEmail(id: number): Promise<{ ok?: boolean; email: DeskE
 export async function seedEmails(opts?: {
   clear?: boolean;
   process?: boolean;
-}): Promise<{ ok?: boolean; seeded?: number; emails?: DeskEmail[]; status?: EmailStatus }> {
+  /** "transmission" for JP vertical seed; omit/default for generic PARTS seed */
+  vertical?: string;
+}): Promise<{ ok?: boolean; seeded?: number; emails?: DeskEmail[]; status?: EmailStatus; vertical?: string }> {
   return emailPost("/seed", {
     clear: opts?.clear ?? false,
     process: opts?.process ?? true,
+    vertical: opts?.vertical,
   });
 }
 

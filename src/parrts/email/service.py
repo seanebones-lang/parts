@@ -8,7 +8,6 @@ from typing import Any
 from parrts.email.mail_io import MailboxConfig, fetch_imap_messages, mailbox_status
 from parrts.email.pipeline import EmailPipeline
 from parrts.email.polish import llm_polish_available
-from parrts.email.seed_data import DEMO_EMAILS
 from parrts.email.store import EmailStore
 
 
@@ -91,7 +90,15 @@ class EmailService:
             "selling_point": "inbound parts email auto-answer + green/yellow/red desk",
         }
 
-    def seed_demo(self, *, process: bool = True, clear: bool = False) -> dict[str, Any]:
+    def seed_demo(
+        self,
+        *,
+        process: bool = True,
+        clear: bool = False,
+        vertical: str | None = None,
+    ) -> dict[str, Any]:
+        from parrts.email.seed_data import demo_emails_for_vertical
+
         self.ensure_schema()
         if clear:
             self.store.execute("DELETE FROM emails")
@@ -103,7 +110,8 @@ class EmailService:
 
         created = 0
         results = []
-        for item in DEMO_EMAILS:
+        seed_rows = demo_emails_for_vertical(vertical)
+        for item in seed_rows:
             row = self.pipeline.ingest(
                 subject=item["subject"],
                 body_text=item["body"],
@@ -125,7 +133,13 @@ class EmailService:
                 }
             )
         st = self.status()
-        return {"ok": True, "seeded": created, "emails": results, "status": st}
+        return {
+            "ok": True,
+            "seeded": created,
+            "vertical": (vertical or "default").strip().lower() or "default",
+            "emails": results,
+            "status": st,
+        }
 
     def ingest(self, **kwargs: Any) -> dict[str, Any]:
         return self.pipeline.ingest(**kwargs)

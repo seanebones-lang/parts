@@ -12,7 +12,6 @@ import {
 } from "@/components/jp/ui";
 import {
   formatTransmissionLocationLine,
-  isTransmissionDemo,
 } from "@/lib/demo-vertical";
 import {
   getDmsStatus,
@@ -23,6 +22,11 @@ import {
 } from "@/lib/dms-api";
 import { getEmailStatus, type EmailStatus } from "@/lib/email-api";
 import { getAutomationResults, type AutomationRun } from "@/lib/automation-api";
+import {
+  humanizeActivitySummary,
+  humanizeImportHistoryItem,
+  trafficCountClass,
+} from "@/lib/ops-language";
 
 function qtyOf(row: DmsInventoryRow): number {
   const q = row.qty ?? row.quantity ?? row.on_hand;
@@ -174,13 +178,13 @@ export default function JpOverviewPage() {
                 <div className="text-[11px] uppercase text-slate-500">Total</div>
               </div>
               <div>
-                <div className="text-2xl font-semibold tabular-nums text-amber-700">
-                  {emailSt.requires_human ?? 0}
+                <div className={`text-2xl font-semibold tabular-nums ${trafficCountClass("yellow")}`}>
+                  {emailSt.requires_human ?? emailSt.by_traffic_light?.yellow ?? 0}
                 </div>
                 <div className="text-[11px] uppercase text-slate-500">Needs review</div>
               </div>
               <div>
-                <div className="text-2xl font-semibold tabular-nums text-emerald-700">
+                <div className={`text-2xl font-semibold tabular-nums ${trafficCountClass("green")}`}>
                   {emailSt.by_traffic_light?.green ?? 0}
                 </div>
                 <div className="text-[11px] uppercase text-slate-500">Handled</div>
@@ -207,22 +211,23 @@ export default function JpOverviewPage() {
         >
           {latestImport ? (
             <div className="space-y-1 text-sm">
-              <div className="font-medium text-slate-900">
-                {String(latestImport.source || latestImport.summary || `Import #${latestImport.id}`)}
-              </div>
-              <div className="text-xs text-slate-500">
-                {latestImport.created_at
-                  ? new Date(latestImport.created_at).toLocaleString()
-                  : "—"}
-                {latestImport.rollback_status
-                  ? ` · Rollback: ${latestImport.rollback_status}`
-                  : ""}
-              </div>
-              <div className="text-xs text-slate-600">
-                {(latestImport as { valid_count?: number }).valid_count != null
-                  ? `${(latestImport as { valid_count?: number }).valid_count} records processed`
-                  : latestImport.summary || "Import recorded"}
-              </div>
+              {(() => {
+                const h = humanizeImportHistoryItem(latestImport);
+                return (
+                  <>
+                    <div className="font-medium text-slate-900">{h.title}</div>
+                    <div className="text-xs text-slate-500">
+                      {latestImport.created_at
+                        ? new Date(latestImport.created_at).toLocaleString()
+                        : "—"}
+                      {latestImport.rollback_status
+                        ? ` · Rollback: ${latestImport.rollback_status}`
+                        : ""}
+                    </div>
+                    <div className="text-xs text-slate-600">{h.stats}</div>
+                  </>
+                );
+              })()}
             </div>
           ) : (
             <EmptyState
@@ -292,15 +297,22 @@ export default function JpOverviewPage() {
             />
           ) : (
             <ul className="space-y-2">
-              {runs.slice(0, 8).map((r) => (
+              {runs.slice(0, 8).map((r) => {
+                const hum = humanizeActivitySummary(
+                  r.kind,
+                  r.summary,
+                  Boolean(r.requires_human)
+                );
+                return (
                 <li
                   key={r.id}
                   className="flex items-start justify-between gap-2 border-b border-slate-50 pb-2 text-sm last:border-0"
                 >
                   <div className="min-w-0">
                     <div className="truncate font-medium text-slate-800">
-                      {humanKind(r.kind)} · {r.summary || r.status || "—"}
+                      {hum.title}
                     </div>
+                    <div className="truncate text-xs text-slate-500">{hum.detail}</div>
                     <div className="text-[11px] text-slate-400">
                       {r.created_at ? new Date(r.created_at).toLocaleString() : ""}
                     </div>
@@ -311,7 +323,8 @@ export default function JpOverviewPage() {
                     </span>
                   ) : null}
                 </li>
-              ))}
+                );
+              })}
             </ul>
           )}
         </Panel>
@@ -322,27 +335,4 @@ export default function JpOverviewPage() {
       </p>
     </JpPage>
   );
-}
-
-function humanKind(kind?: string): string {
-  switch (kind) {
-    case "transmission_request_uow":
-      return "Parts inquiry";
-    case "transmission_import":
-      return "Inventory import";
-    case "transmission_import_rollback":
-      return "Import rollback";
-    case "transmission_jev_shadow":
-      return "Decision observe";
-    case "email_process":
-      return "Email processed";
-    default:
-      return kind || "Activity";
-  }
-}
-
-/** Only used when JP demo flag is on; full PARTS home remains separate. */
-export function JpOverviewGate() {
-  if (!isTransmissionDemo()) return null;
-  return <JpOverviewPage />;
 }

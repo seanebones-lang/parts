@@ -65,6 +65,8 @@ class ProcessBody(BaseModel):
 class SeedBody(BaseModel):
     clear: bool = False
     process: bool = True
+    # demo vertical isolation: "transmission" | "default" (or omit)
+    vertical: Optional[str] = None
 
 
 class FetchImapBody(BaseModel):
@@ -197,7 +199,11 @@ async def seed_emails(
 ):
     _ = current_user
     payload = body or SeedBody()
-    return get_email_service().seed_demo(clear=payload.clear, process=payload.process)
+    return get_email_service().seed_demo(
+        clear=payload.clear,
+        process=payload.process,
+        vertical=payload.vertical,
+    )
 
 
 @router.post("/fetch-imap")
