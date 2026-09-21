@@ -10,8 +10,10 @@ const QUICK_QUERIES = [
   "Do you have a pump for a 2011 Tahoe 6L80?",
   "Do you have 24264418?",
   "Do you have 6L80-PUMP-01?",
-  "Do you have 6L90 valve body?",
-  "Do you have 4L60E input drum?",
+  "Do you have a 4L60E pump?",
+  "Do you have a 6R80 pump?",
+  "Do you have a 4L60E valve body?",
+  "Do you have an 8HP70 valve body?",
 ];
 
 export default function TransmissionInquiryPage() {

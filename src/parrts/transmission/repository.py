@@ -23,7 +23,9 @@ class TransmissionRepository:
             WHERE transmission_family = ? 
               AND (name LIKE ? OR description LIKE ? OR category LIKE ?)
         """
-        like = f"%{part_type}%"
+        # Normalize part_type for matching (handle both "valve_body" and "valve body")
+        normalized = part_type.replace("_", " ")
+        like = f"%{normalized}%"
         rows = self.dms.store.fetchall(sql, (family, like, like, like))
         return [dict(r) for r in rows]
 

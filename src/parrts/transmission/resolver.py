@@ -34,11 +34,23 @@ def resolve_inquiry(query: str, dms: DmsService) -> TransmissionInquiryResult:
         result.transmission_family = "6L80"
     elif "6l90" in q:
         result.transmission_family = "6L90"
+    elif "4l60e" in q:
+        result.transmission_family = "4L60E"
+    elif "4l80e" in q:
+        result.transmission_family = "4L80E"
+    elif "6r80" in q:
+        result.transmission_family = "6R80"
+    elif "10r80" in q:
+        result.transmission_family = "10R80"
+    elif "8hp70" in q:
+        result.transmission_family = "8HP70"
 
     if "pump" in q:
         result.part_type = "pump"
-    elif "valve body" in q:
-        result.part_type = "valve_body"
+    elif "valve body" in q or "valve_body" in q:
+        result.part_type = "valve body"
+    elif "input drum" in q or "reaction drum" in q:
+        result.part_type = "drum"
 
     # Identifier-first lookup (required for Phase 2)
     identifier_tokens = re.findall(r"\b([A-Z0-9-]{6,})\b", query.upper())
