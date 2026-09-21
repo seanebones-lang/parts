@@ -1,0 +1,71 @@
+{
+  "canonical_topup_rows": 3,
+  "conditions": {
+    "core": 124,
+    "used": 379
+  },
+  "csv_path": "/Users/nexteleven/Desktop/Parrts-Dist-RAG/data/jp_demo/jp_demo_inventory_seed.csv",
+  "csv_sha256": "72e6f99538c99c6d78c277b46e01735545b48a9403f122458dff61dc07de6a77",
+  "emitted_rows": 503,
+  "families": {
+    "10L80": 38,
+    "10R80": 44,
+    "4L60E": 92,
+    "4L80E": 47,
+    "4R70W": 7,
+    "5R55S": 12,
+    "68RFE": 29,
+    "6L80": 85,
+    "6L90": 47,
+    "6R80": 56,
+    "8HP70": 26,
+    "Allison 1000": 20
+  },
+  "identifiers_with_casting": 500,
+  "locations": {
+    "CHI-N": 398,
+    "OHARE": 105
+  },
+  "new_jp_skus": 500,
+  "notes": [
+    "SYNTHETIC DEMO INVENTORY \u2014 not verified live JP stock.",
+    "Workbook qty_reserved ignored; import leaves reserved_qty at 0.",
+    "Fitment/interchange not generated from this CSV (canonical seed only).",
+    "Identifiers come only from workbook casting_or_id column as casting.",
+    "list_price from workbook unit_price is synthetic demo pricing.",
+    "Locations mapped to CHI-N (Main Warehouse) and OHARE (Front Counter)."
+  ],
+  "part_types": {
+    "Bellhousing": 11,
+    "Case / Housing": 17,
+    "Complete core": 140,
+    "Extension Housing": 16,
+    "Input Drum": 24,
+    "Input Shaft": 13,
+    "Output Shaft": 16,
+    "Planetary Assembly - Front": 30,
+    "Planetary Assembly - Rear": 30,
+    "Pump Assembly": 39,
+    "Reverse Input Drum": 17,
+    "Servo Assembly": 15,
+    "Sun Shell / Reaction Shell": 32,
+    "TEHCM / Control Module": 10,
+    "Torque converter": 46,
+    "Valve Body": 44,
+    "pump": 2,
+    "valve body": 1
+  },
+  "pricing_included": 500,
+  "reserved_from_workbook_ignored": 117,
+  "skipped": [],
+  "source_path": "/Users/nexteleven/Desktop/Parrts-Dist-RAG/data/jp_demo/JP_Transmission_Synthetic_Inventory.xlsx",
+  "source_sha256": "f7437d61cbd2cd9650d3e9686b9445d5f75a5e2cfa59251cf0f03a7b37cca0f8",
+  "stock_states": {
+    "in": 409,
+    "low": 89,
+    "out": 5
+  },
+  "unique_skus": 503,
+  "warnings": [],
+  "workbook_inventory_rows": 500
+}
