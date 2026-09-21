@@ -58,6 +58,119 @@ def _parse_vehicle(q: str) -> tuple[str | None, str | None]:
     return None, None
 
 
+# Ordered part-type detectors (word-boundary; inspectable; not a fuzzy NLP table)
+_PART_TYPE_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
+    # optional plural: "pump" / "pumps" (substring "pump" matched pre-guard)
+    ("pump", re.compile(r"\bpumps?\b", re.IGNORECASE)),
+    ("valve body", re.compile(r"\bvalve\s+bod(?:y|ies)\b|\bvalve_body\b", re.IGNORECASE)),
+    ("drum", re.compile(r"\b(?:input\s+|reaction\s+)?drums?\b", re.IGNORECASE)),
+]
+
+
+def _part_types_in_query(q: str) -> list[str]:
+    """All hard-part types present in the query (stable order, de-duped)."""
+    found: list[str] = []
+    seen: set[str] = set()
+    for name, pat in _PART_TYPE_PATTERNS:
+        if pat.search(q) and name not in seen:
+            found.append(name)
+            seen.add(name)
+    return found
+
+
+def _part_type_mention_count(q: str, part_type: str) -> int:
+    """How many times a part-type token appears (for symmetric comparisons)."""
+    if part_type == "valve body":
+        return len(
+            re.findall(
+                r"\bvalve\s+bod(?:y|ies)\b|\bvalve_body\b", q, flags=re.IGNORECASE
+            )
+        )
+    if part_type == "drum":
+        return len(
+            re.findall(r"\b(?:input\s+|reaction\s+)?drums?\b", q, flags=re.IGNORECASE)
+        )
+    if part_type == "pump":
+        return len(re.findall(r"\bpumps?\b", q, flags=re.IGNORECASE))
+    return 0
+
+
+def competing_signal_reason(q: str, stated_families: list[str]) -> str | None:
+    """Detect competing requested meanings that make a single-SKU answer unsafe.
+
+    Deterministic and inspectable. Multi-family alone is NOT enough (vehicle /
+    fitment disambiguation may still pick one family safely). Targets:
+    multi-part-type, multi-item, comparative/substitution, and which-one choice.
+    """
+    part_types = _part_types_in_query(q)
+    families = list(stated_families)
+
+    # 1) Multiple distinct part types → do not pick one
+    if len(part_types) >= 2:
+        return (
+            "competing part-type signals: "
+            f"{', '.join(part_types)} — cannot return a single SKU"
+        )
+
+    # 2) Explicit multi-item language with a part request
+    #    e.g. "… both now" after naming more than one thing; covered above when
+    #    two part types appear. Also catch "and … both" with multi-family noise.
+    if re.search(r"\bboth\b", q) and len(part_types) >= 1 and len(families) >= 2:
+        # "6L80 6L90 pump both" style multi-family multi-item without second type
+        if re.search(r"\band\b", q) or re.search(r"\bwhich\b", q):
+            return (
+                "multi-item request with competing family signals — "
+                "single-SKU unit of work cannot resolve"
+            )
+
+    # 3) Comparison / substitution / which-one across multiple families
+    if len(families) >= 2:
+        if re.search(r"\bwhich one\b", q):
+            return (
+                "multiple transmission families with an explicit which-one choice"
+            )
+        if re.search(r"\binstead of\b", q):
+            return "substitution request across transmission families"
+        if re.search(r"\bcan i use\b", q):
+            return "substitution/compatibility ask across transmission families"
+        if re.search(r"\bcross[\s-]*over\b", q):
+            return "crossover request across transmission families"
+
+        # Symmetric "same as" comparison: part type appears on both sides
+        # ("is 6R80 pump same as 6L80 pump?"). Asymmetric identify forms
+        # ("same as 6L90 pump but for 6L80?") keep a single part-type mention
+        # and remain eligible for ordinary resolve.
+        if re.search(r"\bsame as\b", q) and part_types:
+            if _part_type_mention_count(q, part_types[0]) >= 2:
+                return (
+                    "comparative same-as between two family+part claims"
+                )
+
+        # Disjunctive family choice: "6L80 or 6L90 pump"
+        if re.search(r"\bor\b", q) and part_types:
+            # "pump or valve body" already handled by multi part-type.
+            # Family A or Family B (+ optional shared part type):
+            fam_alt = re.search(
+                r"\b(?:4l60e|4l80e|6l80|6l90|6r80|10r80|8hp70)\b"
+                r"\s+or\s+"
+                r"\b(?:4l60e|4l80e|6l80|6l90|6r80|10r80|8hp70)\b",
+                q,
+                flags=re.IGNORECASE,
+            )
+            if fam_alt:
+                return "disjunctive transmission-family choice"
+
+    # 4) Explicit uncertainty with competing part-type language already covered;
+    #    "not sure which" + multi family without vehicle disambiguation path:
+    if (
+        re.search(r"\bnot sure which\b", q)
+        and len(part_types) >= 2
+    ):
+        return "explicit uncertainty with competing part-type signals"
+
+    return None
+
+
 def resolve_inquiry(query: str, dms: DmsService) -> TransmissionInquiryResult:
     """Resolve a transmission inquiry against the canonical DMS."""
     repo = TransmissionRepository(dms)
@@ -103,13 +216,22 @@ def resolve_inquiry(query: str, dms: DmsService) -> TransmissionInquiryResult:
         # unless we also have part type (do not expand behavior beyond conflict safety).
         pass
 
-    # Part type (after normalization so VB/pmp/valv are covered)
-    if "pump" in q:
-        result.part_type = "pump"
-    elif "valve body" in q or "valve_body" in q:
-        result.part_type = "valve body"
-    elif "input drum" in q or "reaction drum" in q or re.search(r"\bdrum\b", q):
-        result.part_type = "drum"
+    # Part types (collect all; single type still drives ordinary resolve)
+    part_types = _part_types_in_query(q)
+    if part_types:
+        result.part_type = part_types[0]
+
+    # Competing-signal safety: multi-part / comparative / multi-item requests
+    # must not collapse into one high-confidence family+part SKU.
+    # Runs before identifier and catalog match so a single SKU is never emitted.
+    # Vehicle/family conflict already returned above; E09-style vehicle-consistent
+    # multi-family without comparison language is intentionally not blocked here.
+    competing = competing_signal_reason(q, stated_families)
+    if competing:
+        result.fitment_status = "insufficient"
+        result.uncertainty.append(competing)
+        result.matched_skus = []
+        return result
 
     # Identifier-first lookup (required for Phase 2)
     identifier_tokens = re.findall(r"\b([A-Z0-9-]{6,})\b", query.upper())
