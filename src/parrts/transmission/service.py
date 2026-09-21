@@ -13,6 +13,11 @@ from .models import TransmissionInquiryResult
 from .resolver import resolve_inquiry
 from .repository import TransmissionRepository
 
+from parrts.email.jev_shadow import is_shadow_enabled, classify_shadow
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 Status = Literal["resolved", "ambiguous", "no_match", "insufficient"]
 
@@ -83,7 +88,7 @@ def answer_transmission_inquiry(query: str, dms: DmsService) -> TransmissionInqu
         verification=low_level.notes
     )
 
-    return TransmissionInquiryAnswer(
+    answer = TransmissionInquiryAnswer(
         query=query,
         status="resolved",
         sku=sku,
@@ -100,6 +105,24 @@ def answer_transmission_inquiry(query: str, dms: DmsService) -> TransmissionInqu
         human_readable=human
     )
 
+    # JEV shadow evaluation (non-authoritative, failure-isolated)
+    if is_shadow_enabled():
+        try:
+            shadow = classify_shadow(subject=query[:200], body=query, sender_email="")
+            logger.info(
+                "jev_shadow_transmission",
+                extra={
+                    "query": query,
+                    "deterministic_status": answer.status,
+                    "deterministic_sku": answer.sku,
+                    "jev_label": getattr(shadow, "get", lambda k: None)("label") if shadow else None,
+                    "jev_needs_human": getattr(shadow, "get", lambda k: None)("needs_human") if shadow else None,
+                },
+            )
+        except Exception as exc:
+            logger.warning("jev_shadow_transmission_failed", extra={"error": str(exc)})
+
+    return answer
 
 def _build_human_readable(
     query: str,
